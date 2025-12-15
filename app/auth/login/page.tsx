@@ -1,73 +1,133 @@
-// app/auth/login/page.tsx
 'use client'
 
-import { login } from '@/actions/auth' // Importing the action we created in Phase 4
-import { useActionState } from 'react' // Hook to handle form state
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { createClient } from '@/utils/supabase/client'
+import { Building, Lock, User, ArrowLeft, AlertCircle } from 'lucide-react'
 
 export default function LoginPage() {
-  // useActionState handles the form submission and any errors returned by the server
-  // [state, action, pending]
-  // We initialize the state with null (no error yet)
-  const [state, action, isPending] = useActionState(async (previousState: any, formData: FormData) => {
-      const result = await login(formData);
-      return result;
-  }, null)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  
+  const router = useRouter()
+  const supabase = createClient()
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    // 1. Proses Login Auth
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (authError) {
+      setError('Email atau password salah, jika sudah benar pastikan email sudah diverifikasi lewat link yang dikirimkan.')
+      setLoading(false)
+      return
+    }
+
+    if (authData.user) {
+      // 2. CEK ROLE DARI DATABASE (Langkah Kunci!)
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', authData.user.id)
+        .single()
+
+      // 3. LOGIC REDIRECT BERDASARKAN ROLE
+      const role = profile?.role || 'PENCAKER'
+      
+      if (role === 'ADMIN_DINAS') {
+        router.push('/dashboard/dinas')
+      } else if (role === 'ADMIN_LPK') {
+        router.push('/dashboard/lpk') // Pastikan halaman ini nanti dibuat
+      } else if (role === 'ADMIN_PERUSAHAAN') {
+        router.push('/dashboard/perusahaan') // Pastikan halaman ini nanti dibuat
+      } else {
+        router.push('/dashboard/pencaker')
+      }
+      
+      // Refresh agar Navbar update state
+      router.refresh()
+    }
+  }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-md">
-        <h2 className="mb-6 text-center text-2xl font-bold text-gray-800">Login to SIPENSIL</h2>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 font-sans">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden animate-fade-in-up">
         
-        <form action={action} className="space-y-4">
-          
-          {/* Email Input */}
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Email</label>
-            <input
-              name="email"
-              type="email"
-              required
-              className="w-full rounded border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
-              placeholder="user@example.com"
-            />
-          </div>
-
-          {/* Password Input */}
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Password</label>
-            <input
-              name="password"
-              type="password"
-              required
-              className="w-full rounded border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
-              placeholder="********"
-            />
-          </div>
-
-          {/* Error Message Display */}
-          {state?.error && (
-            <div className="text-center text-sm text-red-500">
-              {state.error}
-            </div>
+        {/* Header Biru */}
+        <div className="bg-blue-900 p-8 text-center text-white relative">
+          <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+          <Building className="w-12 h-12 mx-auto mb-4 opacity-90 relative z-10" />
+          <h2 className="text-2xl font-bold relative z-10">Login SIPENSIL</h2>
+          <p className="text-blue-100 text-sm mt-1 relative z-10">Masuk ke akun Anda</p>
+        </div>
+        
+        <form onSubmit={handleLogin} className="p-8 space-y-6">
+          {error && (
+             <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg border border-red-200 flex items-center gap-2">
+                <AlertCircle size={16} /> {error}
+             </div>
           )}
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isPending}
-            className="w-full rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {isPending ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">Email</label>
+            <div className="relative">
+               <User className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
+               <input 
+                 required 
+                 type="email" 
+                 value={email}
+                 onChange={(e) => setEmail(e.target.value)}
+                 className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                 placeholder="nama@email.com"
+               />
+            </div>
+          </div>
 
-        <p className="mt-4 text-center text-sm text-gray-600">
-          Don't have an account?{' '}
-          <Link href="/auth/register" className="text-blue-600 hover:underline">
-            Register
-          </Link>
-        </p>
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">Password</label>
+            <div className="relative">
+               <Lock className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
+               <input 
+                 required 
+                 type="password" 
+                 value={password}
+                 onChange={(e) => setPassword(e.target.value)}
+                 className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                 placeholder="••••••••"
+               />
+            </div>
+          </div>
+
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-3 rounded-lg shadow-md transition-transform hover:scale-[1.02] disabled:bg-blue-700"
+          >
+            {loading ? 'Memproses...' : 'Masuk'}
+          </button>
+
+          <div className="text-center pt-2">
+             <p className="text-sm text-gray-600">
+                 Belum punya akun? <Link href="/auth/register" className="text-blue-600 font-bold hover:underline">Daftar Disini</Link>
+             </p>
+          </div>
+          
+          <div className="text-center mt-4">
+             <Link href="/" className="flex items-center justify-center gap-1 text-sm text-gray-500 hover:text-blue-600 transition">
+                <ArrowLeft size={14} /> Kembali ke Beranda
+             </Link>
+          </div>
+
+        </form>
       </div>
     </div>
   )

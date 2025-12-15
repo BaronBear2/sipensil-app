@@ -1,134 +1,126 @@
+// app/dashboard/pencaker/page.tsx
 import { createClient } from '@/utils/supabase/server'
-import { logout } from '@/actions/auth'
-import Image from 'next/image' // Next.js optimized image
+import { redirect } from 'next/navigation'
+import { ShieldCheck, AlertCircle, AlertTriangle, User, ClipboardList, Edit } from 'lucide-react'
+import Navbar from '@/components/Navbar'
+import Link from 'next/link'
+import TrainingCard from '@/components/TrainingCard'
 
-export default async function PencakerDashboard() {
+export default async function DashboardPencaker() {
   const supabase = await createClient()
+  
+  // 1. Cek User Login
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
 
-  // 1. Fetch available trainings
-  const { data: trainings } = await supabase
-    .from('blk_trainings')
-    .select('*')
-    .order('start_date', { ascending: true })
+  // 2. Fetch Data
+  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+  const { data: trainings } = await supabase.from('blk_trainings').select('*')
 
-  // 2. Fetch my applications (to see what I already applied for)
-  const { data: myRegistrations } = await supabase
-    .from('training_registrations')
-    .select('training_id, status')
-    .eq('user_id', user?.id)
+  // Logic Warna Status
+  const statusColor = 
+    profile?.account_status === 'verified' ? 'green' : 
+    profile?.account_status === 'rejected' ? 'red' : 'yellow';
 
-  // Helper to check if applied
-  const getStatus = (trainingId: string) => {
-    const reg = myRegistrations?.find(r => r.training_id === trainingId)
-    return reg ? reg.status : null
-  }
+  const statusText = 
+    profile?.account_status === 'verified' ? 'AKUN TERVERIFIKASI' :
+    profile?.account_status === 'rejected' ? 'VERIFIKASI DITOLAK' :
+    profile?.account_status === 'pending' ? 'MENUNGGU VERIFIKASI' : 'BELUM LENGKAP';
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 font-sans">
+      <Navbar />
       
-      {/* 🟢 Modern Navbar */}
-      <nav className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <span className="text-2xl font-bold text-green-600">SIPENSIL</span>
-              <span className="ml-2 text-sm text-gray-500 hidden md:block">| Portal Pencaker</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-medium text-gray-900">{user?.user_metadata.full_name}</p>
-                <p className="text-xs text-gray-500">Job Seeker</p>
-              </div>
-              <form action={logout}>
-                <button className="rounded-full bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200">
-                  Logout
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* 🖼️ Hero Section */}
-      <div className="bg-green-700 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">Find Your New Skill</h1>
-          <p className="text-green-100 max-w-2xl">
-            Explore free certified training programs provided by the government to boost your career.
-          </p>
-        </div>
-      </div>
-
-      {/* 📦 Content Area */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
         
-        <h2 className="text-xl font-bold text-gray-800 mb-6">Available Training Programs</h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {trainings?.map((training) => {
-            const status = getStatus(training.id)
-            
-            return (
-              <div key={training.id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden flex flex-col">
-                {/* Card Image */}
-                <div className="relative h-48 w-full bg-gray-200">
-                  {training.image_url ? (
-                    <img 
-                      src={training.image_url} 
-                      alt={training.title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-gray-400">No Image</div>
-                  )}
-                  {status && (
-                    <div className="absolute top-2 right-2">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold shadow-sm ${
-                        status === 'APPROVED' ? 'bg-green-500 text-white' : 
-                        status === 'REJECTED' ? 'bg-red-500 text-white' : 
-                        'bg-yellow-400 text-yellow-900'
-                      }`}>
-                        {status}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Card Body */}
-                <div className="p-5 flex-1 flex flex-col">
-                  <div className="mb-2">
-                    <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded">
-                      {training.batch_name}
-                    </span>
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">{training.title}</h3>
-                  <p className="text-sm text-gray-600 line-clamp-2 mb-4 flex-1">
-                    {training.description}
-                  </p>
-                  
-                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                    <span>📅 {new Date(training.start_date).toLocaleDateString()}</span>
-                    <span>👥 {training.capacity} Seats</span>
-                  </div>
-
-                  {/* Action Button */}
-                  {status ? (
-                    <button disabled className="w-full py-2 rounded-lg bg-gray-100 text-gray-400 font-medium cursor-not-allowed">
-                      Applied
-                    </button>
-                  ) : (
-                    // We will wrap this in a Server Action form next
-                    <button className="w-full py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition shadow-sm">
-                      Apply Now
-                    </button>
-                  )}
-                </div>
+        {/* NOTIFIKASI JIKA DITOLAK */}
+        {profile?.account_status === 'rejected' && (
+           <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg mb-6 flex items-start gap-4 shadow-sm">
+              <AlertTriangle className="text-red-500 mt-1" size={24}/>
+              <div>
+                  <h4 className="font-bold text-red-800 text-lg">Verifikasi Ditolak</h4>
+                  <p className="text-red-700 mt-1">"{profile.rejection_message}"</p>
+                  <p className="text-sm text-red-600 mt-2">Silakan klik tombol Edit Profil di bawah untuk memperbaiki data.</p>
               </div>
-            )
-          })}
+           </div>
+        )}
+
+        {/* HEADER DASHBOARD (KARTU UTAMA) */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                 <div>
+                    <h2 className="text-2xl font-bold text-gray-800">Halo, {profile?.full_name} 👋</h2>
+                    <p className="text-gray-500 text-sm mt-1">
+                        NIK: {profile?.nik ? profile.nik : <span className="text-red-500 italic">(Belum diisi)</span>}
+                    </p>
+                 </div>
+
+                 {/* --- INI TOMBOL YANG ANDA CARI --- */}
+                 <Link 
+                    href="/dashboard/pencaker/profile" 
+                    className="mt-4 md:mt-0 flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition shadow-md active:scale-95"
+                 >
+                    <User size={18}/> 
+                    {profile?.account_status === 'unverified' ? 'Lengkapi Profil Sekarang' : 'Lihat & Edit Profil'}
+                 </Link>
+                 {/* ---------------------------------- */}
+            </div>
+
+            {/* STATUS BAR */}
+            <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2 mb-3">
+                     <h4 className={`font-bold text-gray-700 flex items-center gap-2`}>
+                        <ShieldCheck size={20} className={`text-${statusColor}-600`}/> Status Akun
+                     </h4>
+                     <span className={`px-3 py-1 rounded-full text-xs font-bold w-fit bg-${statusColor}-100 text-${statusColor}-700 border border-${statusColor}-200`}>
+                        {statusText}
+                     </span>
+                 </div>
+                 
+                 {/* Progress Bar Visual */}
+                 <div className="h-3 bg-gray-200 rounded-full overflow-hidden mt-2 relative">
+                    <div 
+                        className={`h-full bg-${statusColor}-500 transition-all duration-1000 absolute top-0 left-0`} 
+                        style={{width: profile?.account_status === 'verified' ? '100%' : '50%'}}
+                    ></div>
+                 </div>
+                 
+                 {/* Pesan Bantuan di Bawah Status */}
+                 <div className="mt-3 text-sm">
+                    {profile?.account_status === 'pending' && (
+                        <p className="text-yellow-700 flex items-center gap-2 bg-yellow-50 p-2 rounded border border-yellow-100">
+                            <AlertCircle size={16}/> 
+                            Data Anda sedang diperiksa oleh Admin Dinas. Mohon tunggu 1x24 jam.
+                        </p>
+                    )}
+                    {profile?.account_status === 'unverified' && (
+                        <p className="text-gray-600 flex items-center gap-2">
+                            <Edit size={16} className="text-blue-500"/> 
+                            Silakan klik tombol biru di atas untuk melengkapi data agar bisa diverifikasi.
+                        </p>
+                    )}
+                    {profile?.account_status === 'verified' && (
+                        <p className="text-green-700 flex items-center gap-2">
+                            <ShieldCheck size={16}/> 
+                            Akun aman. Anda dapat mendaftar pelatihan di bawah ini.
+                        </p>
+                    )}
+                 </div>
+            </div>
         </div>
-      </main>
+
+        {/* LIST PELATIHAN */}
+        <h3 className="font-bold text-gray-700 text-lg mb-4 flex items-center gap-2 border-b pb-2">
+            <ClipboardList size={22} className="text-blue-600"/> Program Pelatihan Tersedia
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {trainings?.map((item: any) => (
+             <TrainingCard key={item.id} item={item} userStatus={profile?.account_status || 'unverified'} />
+          ))}
+        </div>
+
+      </div>
     </div>
   )
 }
