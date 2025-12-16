@@ -119,14 +119,26 @@ export default function LpkReportForm({ profile, initialData }: { profile: any, 
         setReportData({ ...reportData, [section]: newData })
     }
 
+    // State for Confirmation Modal
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+
     const handleSubmit = async () => {
-        if (!confirm("Apakah data laporan sudah benar? Data akan dikirim ke Dinas untuk verifikasi.")) return
+        // Validasi simple (optional)
+        if (!reportData.namaLpk) return alert("Nama LPK tidak boleh kosong")
+
+        // Open Modal Confirmation
+        setIsConfirmOpen(true)
+    }
+
+    const executeSubmit = async () => {
         setLoading(true)
+        setIsConfirmOpen(false) // Close modal immediately or keep open? Better close to show loading toast or simple alert later.
 
         // Clean up empty rows if necessary? No, just send as is.
         const res = await submitLpkReport(reportData)
-        if (res.error) alert(res.error)
-        else {
+        if (res.error) {
+            alert(res.error)
+        } else {
             alert(res.success)
             window.location.reload()
         }
@@ -139,6 +151,39 @@ export default function LpkReportForm({ profile, initialData }: { profile: any, 
 
     return (
         <div className="space-y-8 animate-fade-in pb-10">
+
+            {/* CONFIRMATION MODAL */}
+            {isConfirmOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in-up">
+                        <div className="p-6 text-center">
+                            <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <FileText size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-800 mb-2">Kirim Laporan?</h3>
+                            <p className="text-sm text-gray-600 mb-6">
+                                Pastikan seluruh data yang Anda isi sudah benar. <br />
+                                Data akan dikirim ke Dinas untuk diverifikasi.
+                            </p>
+                            <div className="flex gap-3 justify-center">
+                                <button
+                                    onClick={() => setIsConfirmOpen(false)}
+                                    className="px-5 py-2.5 rounded-lg border font-bold text-gray-600 hover:bg-gray-50 text-sm"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    onClick={executeSubmit}
+                                    disabled={loading}
+                                    className="px-5 py-2.5 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 text-sm shadow-md"
+                                >
+                                    Ya, Kirim Laporan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* PESAN JIKA REVISI */}
             {initialData && initialData.status === 'REJECTED' && (
