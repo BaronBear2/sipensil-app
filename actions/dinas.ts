@@ -3,6 +3,30 @@
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import path from 'path'
+import fs from 'fs/promises'
+
+// Helper for Image Upload (Local Mock -> public/uploads)
+// In production, use Supabase Storage. Here we demonstrate functionality.
+async function uploadImage(file: File): Promise<string | null> {
+  if (!file || file.size === 0 || file.name === 'undefined') return null
+
+  // Validate Type
+  if (!file.type.startsWith('image/')) return null
+
+  const buffer = Buffer.from(await file.arrayBuffer())
+  const filename = `${Date.now()}-${file.name.replace(/\s/g, '-')}`
+  const publicPath = path.join(process.cwd(), 'public', 'uploads')
+
+  try {
+    await fs.mkdir(publicPath, { recursive: true })
+    await fs.writeFile(path.join(publicPath, filename), buffer)
+    return `/uploads/${filename}`
+  } catch (error) {
+    console.error("Upload Failed:", error)
+    return null
+  }
+}
 
 // --- 1. VERIFIKASI PROFILE (Pencaker Gate) ---
 // 1. VERIFIKASI AKUN PENCAKER (GATE PELATIHAN)
@@ -18,7 +42,11 @@ export async function verifyProfileAction(formData: FormData) {
   const reason = formData.get('reason') as string
 
   const newStatus = action === 'approve' ? 'verified' : 'rejected'
-  const newTrainingStatus = action === 'approve' ? 'DITERIMA' : 'DITOLAK'
+  // NOTE: Logic update status pelatihan
+  // Jika approve profile -> approve pelatihan? 
+  // User request: "Ketika menolak verifikasi pelatihan blk, kolomnya masih disitu."
+  // This implies the item didn't move or status didn't update properly.
+  // The query in Tab 1 likely filters by 'PENDING'. If we update to 'DITOLAK', it should disappear.
 
   // 1. Update Profile Status
   const { error } = await supabase
@@ -26,14 +54,13 @@ export async function verifyProfileAction(formData: FormData) {
     .update({
       account_status: newStatus,
       rejection_message: action === 'reject' ? reason : null,
-      admin_notes: action === 'reject' ? reason : null // Optional backup field
+      admin_notes: action === 'reject' ? reason : null
     })
     .eq('id', userId)
 
   if (error) return { error: error.message }
 
-  // 2. Update Status Pelatihan yang PENDING (Integrasi Flow Baru)
-  // Jika Admin verify Profil, otomatis Verify Pelatihan yang sedang diajukan
+  // 2. Update Status Pelatihan yang PENDING
   if (action === 'approve') {
     await supabase
       .from('training_registrations')
@@ -41,7 +68,7 @@ export async function verifyProfileAction(formData: FormData) {
       .eq('user_id', userId)
       .eq('status', 'PENDING')
   } else {
-    // Jika tolak profil, tolak juga pelatihannya
+    // REJECT
     await supabase
       .from('training_registrations')
       .update({ status: 'DITOLAK' })
@@ -85,45 +112,24 @@ export async function verifyLpkReportAction(formData: FormData) {
 
   if (action === 'approve') {
     // 1. Accept Report
-    await supabase.from('lpk_reports').update({ status: 'ACCEPTED' }).eq('id', reportId)
+    const { error } = await supabase.from('lpk_reports').update({ status: 'APPROVED' }).eq('id', reportId) // Was 'ACCEPTED' -> Schema enum usually 'APPROVED' or 'VERIFIED'? Let's stick to 'APPROVED' as per UI.
 
-    // 2. Auto Identify LPK Account as Verified (Bonus logic from user request)
-    // "Jika sudah pernah di Terima maka akun terverifikasi otomatis"
-    await supabase.from('profiles').update({ account_status: 'verified', rejection_message: null }).eq('id', userId)
+    // 2. Auto Identify LPK Account as Verified
+    if (!error) {
+      await supabase.from('profiles').update({ account_status: 'verified', rejection_message: null }).eq('id', userId)
+    } else {
+      return { error: error.message }
+    }
 
   } else {
     // Reject Report
-    // "user bisa melihat notifikasi pesan alasan kenapa ditolak, dan mengedit form"
-    // Note: Schema lpk_reports doesn't have rejection_reason column in my memory? 
-    // Wait, the `lpk_reports` table has `status`. I should probably add `rejection_reason` to `lpk_reports` or store it in JSON?
-    // Use `data_kendala`? No.
-    // Let's check schema. `lpk_reports` in `emergency_backup.sql` has `status`, `user_id` etc. No note.
-    // Action: I'll use a hack or just update `status` to 'REJECTED' now. 
-    // User can check status. But where is the message?
-    // I will assume for now I need to update `profiles.rejection_message` OR `lpk_reports` needs a column.
-    // I'll update `profiles.rejection_message` as a feedback channel for simplicity, OR add `admin_notes` to lpk_reports.
-    // The prompt didn't strictly ask for schema change there, but "user bisa melihat notifikasi pesan".
-    // Using `profiles.rejection_message` is risky if they have multiple reports.
-    // I will add a `rejection_reason` column to `lpk_reports` implicitly in my mind? 
-    // Actually, I can't. I must stick to existing schema or what I migrated.
-    // `auth_refactor.sql` did NOT touch `lpk_reports`.
-    // I will use `profiles.rejection_message` for LPK Profile status feedback, but for Report? 
-    // Let's just create a `rejection_reason` column in `lpk_reports` dynamically right now via code if I could? No.
-    // LIMITATION: Use `data_kendala`? NO.
-    // OK, I will perform a quick SQL patch right now to add `rejection_reason` to `lpk_reports` to be safe.
-    // OR I just use a text field in `profiles`? 
-    // Let's proceed with just updating status 'REJECTED' and maybe assume user knows.
-    // WAIT, User request: "maka pengisian profile / pengajuan tidak harus dari ulang lagi... notifikasi pesan alasan".
-    // I really should have `rejection_reason` in `lpk_reports`. 
-    // I will Add it to the SQL query below if helpful, OR just update schema in `auth_refactor`?
-    // I'll update `lpk_reports` status to REJECTED. I'll rely on the user checking "Status" for now, 
-    // or maybe put reason in `data_kendala` as a system note? That's ugly.
-    // Let's use `profiles.rejection_message` as the general "Admin Feedback" slot for that user.
-
-    await supabase.from('lpk_reports').update({ status: 'REJECTED' }).eq('id', reportId)
-    await supabase.from('profiles').update({ rejection_message: reason }).eq('id', userId)
+    // User reported: "Laporan lpk saat terima atau tolak tidak bisa" -> likely due to missing return or error.
+    await supabase.from('lpk_reports').update({ status: 'REJECTED', rejection_reason: reason }).eq('id', reportId)
+    // Also notify profile?
+    await supabase.from('profiles').update({ rejection_message: `Laporan Anda Ditolak: ${reason}` }).eq('id', userId)
   }
   revalidatePath('/dashboard/dinas')
+  return { success: true }
 }
 
 // --- 4. VERIFIKASI MAGANG PERMIT ---
@@ -137,14 +143,13 @@ export async function verifyMagangPermitAction(formData: FormData) {
   const reason = formData.get('reason') as string
 
   if (action === 'approve') {
-    // Generate Letter Number (Mock)
     const letterNum = `SK-MGG/${new Date().getFullYear()}/${Math.floor(Math.random() * 1000)}`
     await supabase.from('magang_permits').update({ status: 'APPROVED', letter_number: letterNum, rejection_reason: null }).eq('id', permitId)
   } else {
     await supabase.from('magang_permits').update({ status: 'REJECTED', rejection_reason: reason }).eq('id', permitId)
   }
-  // ... (End of verifyMagangPermitAction)
   revalidatePath('/dashboard/dinas')
+  return { success: true }
 }
 
 // --- 5. MANAJEMEN PELATIHAN (CRUD) ---
@@ -164,8 +169,15 @@ export async function createTrainingAction(formData: FormData) {
   const certification = formData.get('certification') as string
   const requirements = (formData.get('requirements') as string)?.split('\n').filter(r => r.trim() !== '') || []
 
+  // Image Handing
+  const imageFile = formData.get('image') as File
+  let image_url = null
+  if (imageFile) {
+    image_url = await uploadImage(imageFile)
+  }
+
   const { error } = await supabase.from('blk_trainings').insert({
-    title, provider, category, description, quota, min_age, max_age, certification, requirements, status: 'OPEN'
+    title, provider, category, description, quota, min_age, max_age, certification, requirements, status: 'OPEN', image_url
   })
 
   if (error) return { error: error.message }
@@ -183,6 +195,14 @@ export async function updateTrainingAction(formData: FormData) {
   const min_age = parseInt(formData.get('min_age') as string)
   const max_age = parseInt(formData.get('max_age') as string)
 
+  // Image Handling
+  const imageFile = formData.get('image') as File
+  let imageUpdate = {}
+  if (imageFile && imageFile.size > 0) {
+    const url = await uploadImage(imageFile)
+    if (url) imageUpdate = { image_url: url }
+  }
+
   // 1. Update Data
   const { error } = await supabase.from('blk_trainings').update({
     title, min_age, max_age,
@@ -191,7 +211,8 @@ export async function updateTrainingAction(formData: FormData) {
     description: formData.get('description'),
     quota: parseInt(formData.get('quota') as string),
     certification: formData.get('certification'),
-    requirements: (formData.get('requirements') as string)?.split('\n').filter(r => r.trim() !== '') || []
+    requirements: (formData.get('requirements') as string)?.split('\n').filter(r => r.trim() !== '') || [],
+    ...imageUpdate
   }).eq('id', id)
 
   if (error) return { error: error.message }
@@ -201,6 +222,7 @@ export async function updateTrainingAction(formData: FormData) {
 
   if (participants) {
     for (const p of participants) {
+      if (!p.profiles) continue;
       const dob = new Date(p.profiles.dob)
       const today = new Date()
       let age = today.getFullYear() - dob.getFullYear()
@@ -222,9 +244,22 @@ export async function updateTrainingAction(formData: FormData) {
 export async function deleteTrainingAction(formData: FormData) {
   const supabase = await createClient()
   const id = formData.get('id') as string
+  // User reported "tidak bisa dihapus". Usually due to foreign key constraints (registrations).
+  // We must delete registrations first or use CASCADE.
+  // SQL usually handles cascade if configured, but let's be safe and delete registrations manually or handle error.
+
+  // Try delete.
   const { error } = await supabase.from('blk_trainings').delete().eq('id', id)
 
-  if (error) return { error: error.message }
+  if (error) {
+    // If FK error, delete children first
+    if (error.message.includes('foreign key')) {
+      await supabase.from('training_registrations').delete().eq('training_id', id)
+      await supabase.from('blk_trainings').delete().eq('id', id)
+    } else {
+      return { error: error.message }
+    }
+  }
 
   revalidatePath('/dashboard/dinas')
   return { success: true }

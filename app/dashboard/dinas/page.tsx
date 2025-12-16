@@ -5,7 +5,11 @@ import Navbar from '@/components/Navbar'
 import Link from 'next/link'
 import VerificationTable from '@/components/admin/VerificationTable'
 import { verifyImJapanAction, verifyLpkReportAction, verifyMagangPermitAction } from '@/actions/dinas'
-import { AdminActionButtons, DeleteTrainingButton, AutoVerifyButton } from '../../../components/admin/AdminButtons'
+import TrainingList from '@/components/admin/TrainingList'
+import {
+  AdminActionButtons,
+  DeleteTrainingButton
+} from '@/components/admin/AdminButtons'
 import UserManagement from '@/components/admin/UserManagement'
 
 export default async function DashboardAdmin({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
@@ -381,27 +385,7 @@ export default async function DashboardAdmin({ searchParams }: { searchParams: P
                 </details>
               </div>
 
-              <div className="grid gap-4">
-                {dataTab5.map((t: any) => (
-                  <div key={t.id} className="border rounded-xl p-4 flex justify-between items-start bg-white hover:bg-gray-50 group">
-                    <div>
-                      <h4 className="font-bold text-lg text-gray-800">{t.title}</h4>
-                      <div className="text-xs text-gray-500 mb-2">{t.provider} • {t.category} • Kuota: {t.quota}</div>
-                      <div className="flex gap-2">
-                        <span className="bg-gray-100 px-2 py-1 rounded text-xs font-bold text-gray-600">Usia: {t.min_age}-{t.max_age} Thn</span>
-                        {t.certification && <span className="bg-purple-100 text-purple-600 px-2 py-1 rounded text-xs font-bold">{t.certification}</span>}
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-2 opacity-100">
-                      {/* Delete Form */}
-                      {/* Delete Form */}
-                      <DeleteTrainingButton id={t.id} />
-                      {/* Edit Placeholder */}
-                      <button className="text-blue-600 text-xs font-bold border border-blue-200 px-3 py-1 rounded hover:bg-blue-50" disabled title="Coming Soon">Edit</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <TrainingList trainings={dataTab5} />
             </div>
           )}
 
