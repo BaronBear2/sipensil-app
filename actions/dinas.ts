@@ -222,8 +222,12 @@ export async function updateTrainingAction(formData: FormData) {
 export async function deleteTrainingAction(formData: FormData) {
   const supabase = await createClient()
   const id = formData.get('id') as string
-  await supabase.from('blk_trainings').delete().eq('id', id)
+  const { error } = await supabase.from('blk_trainings').delete().eq('id', id)
+
+  if (error) return { error: error.message }
+
   revalidatePath('/dashboard/dinas')
+  return { success: true }
 }
 
 
