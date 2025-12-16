@@ -6,14 +6,14 @@ import { revalidatePath } from 'next/cache'
 // --- 1. LOGIC LPK (SIMPAN/UPDATE LAPORAN) ---
 export async function submitLpkReport(data: any) {
   const supabase = await createClient()
-  
+
   // 1. Cek User
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Unauthorized' }
 
   // 2. Cek Status Profil
   const { data: profile } = await supabase.from('profiles').select('account_status').eq('id', user.id).single()
-  
+
   // LOGIC BARU: Boleh submit jika Verified ATAU Pending (artinya sudah isi profil)
   if (profile?.account_status === 'unverified') {
     return { error: 'Profil Lembaga belum lengkap. Silakan edit profil terlebih dahulu sebelum mengisi laporan.' }
@@ -30,7 +30,7 @@ export async function submitLpkReport(data: any) {
     .single()
 
   let error;
-  
+
   if (existing) {
     // UPDATE (Revisi/Draft)
     const { error: err } = await supabase
@@ -38,11 +38,18 @@ export async function submitLpkReport(data: any) {
       .update({
         nama_lpk: data.namaLpk,
         no_reg: data.noReg,
-        data_karyawan: data.karyawan,
-        data_penyelenggaraan: data.penyelenggaraan,
-        data_uji_kompetensi: data.ujiKompetensi,
-        data_mitra: data.mitra,
-        data_kendala: data.kendala,
+
+        // Update all JSONB columns
+        data_akreditasi: data.data_akreditasi,
+        data_karyawan: data.data_karyawan,
+        data_pengembangan_program: data.data_pengembangan_program,
+        data_penyelenggaraan: data.data_penyelenggaraan,
+        data_tuk: data.data_tuk,
+        data_uji_kompetensi: data.data_uji_kompetensi,
+        data_pengembangan_kelembagaan: data.data_pengembangan_kelembagaan,
+        data_mitra: data.data_mitra,
+        data_kendala: data.data_kendala,
+
         status: 'SUBMITTED', // Status kembali ke Submitted agar Admin notif
         updated_at: new Date() // Trigger update timestamp
       })
@@ -56,24 +63,31 @@ export async function submitLpkReport(data: any) {
       tahun: data.tahun,
       nama_lpk: data.namaLpk,
       no_reg: data.noReg,
-      data_karyawan: data.karyawan,
-      data_penyelenggaraan: data.penyelenggaraan,
-      data_uji_kompetensi: data.ujiKompetensi,
-      data_mitra: data.mitra,
-      data_kendala: data.kendala,
+
+      // All JSONB columns
+      data_akreditasi: data.data_akreditasi,
+      data_karyawan: data.data_karyawan,
+      data_pengembangan_program: data.data_pengembangan_program,
+      data_penyelenggaraan: data.data_penyelenggaraan,
+      data_tuk: data.data_tuk,
+      data_uji_kompetensi: data.data_uji_kompetensi,
+      data_pengembangan_kelembagaan: data.data_pengembangan_kelembagaan,
+      data_mitra: data.data_mitra,
+      data_kendala: data.data_kendala,
+
       status: 'SUBMITTED'
     })
     error = err;
   }
 
   if (error) return { error: 'Gagal mengirim laporan: ' + error.message }
-  
+
   revalidatePath('/dashboard/lpk')
   return { success: 'Laporan berhasil disimpan & dikirim ke Dinas!' }
 }
 
 // --- 2. LOGIC PERUSAHAAN (Untuk nanti) ---
 export async function submitMagangAgreement(formData: FormData) {
-    // ... (Akan kita update nanti sesuai request revisi perusahaan)
-    return { error: "Fitur sedang dalam pengembangan revisi" }
+  // ... (Akan kita update nanti sesuai request revisi perusahaan)
+  return { error: "Fitur sedang dalam pengembangan revisi" }
 }

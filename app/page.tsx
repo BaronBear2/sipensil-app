@@ -1,13 +1,46 @@
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link';
-import { 
-  Phone, Mail, Search, LogIn, Menu, ChevronDown, 
-  GraduationCap, Briefcase, Plane, FileCheck2, 
-  Calendar, ArrowRight, MapPin, Facebook, Instagram, Twitter, Youtube 
+import {
+  Phone, Mail, Search, LogIn, Menu, ChevronDown,
+  GraduationCap, Briefcase, Plane, FileCheck2,
+  Calendar, ArrowRight, MapPin, Facebook, Instagram, Twitter, Youtube
 } from 'lucide-react';
+import Modal from '@/components/ui/Modal';
+import AuthModalContent from '@/components/auth/AuthModalContent';
+import Image from 'next/image';
+import logoSipensil from '../assets/logo/logo-sipensil.jpeg';
+import logoPemkab from '../assets/logo/logo-pemkabbek.jpeg';
 
 export default function LandingPage() {
+  const [isAuthModalOpen, setAuthModalOpen] = useState(false)
+  const [authView, setAuthView] = useState<'LOGIN' | 'REGISTER'>('LOGIN')
+
+  const openAuth = (view: 'LOGIN' | 'REGISTER') => {
+    setAuthView(view)
+    setAuthModalOpen(true)
+  }
+
   return (
-    <div className="bg-white text-slate-800 antialiased min-h-screen flex flex-col">
+    <div className="bg-white text-slate-800 antialiased min-h-screen flex flex-col font-sans">
+
+      {/* AUTH MODAL */}
+      <Modal isOpen={isAuthModalOpen} onClose={() => setAuthModalOpen(false)} title={authView === 'LOGIN' ? 'Masuk' : 'Daftar'}>
+        <AuthModalContent
+          initialView={authView}
+          onSwitch={(view) => {
+            if (view === 'LOGIN' || view === 'REGISTER') setAuthView(view)
+            // If switch to Verify Success, we just let the component handle rendering, 
+            // but usually we might want to update title? 
+            // Actually AuthModalContent handles it internally, but the Title prop is static here.
+            // We can make Title dynamic or hide header.
+            // For MVP, just keep "Masuk" / "Daftar" or generic.
+            // Better: Let internal component handle title? Modal prop title is optional.
+          }}
+          onClose={() => setAuthModalOpen(false)}
+        />
+      </Modal>
 
       {/* 1. TOP BAR */}
       <div className="bg-slate-900 text-slate-300 text-xs py-2 hidden md:block border-b border-slate-800">
@@ -34,15 +67,27 @@ export default function LandingPage() {
       <nav className="bg-white shadow-sm sticky top-0 z-50 border-b border-slate-100">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="flex justify-between items-center h-20">
-            
+
             {/* Logo Area */}
             <div className="flex items-center gap-3 group cursor-pointer">
-              <img 
-                src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Lambang_Kabupaten_Bekasi.png/618px-Lambang_Kabupaten_Bekasi.png" 
-                alt="Logo Pemkab" 
-                className="h-10 w-auto" 
-              />
-              <div className="border-l border-slate-300 h-8 mx-1"></div>
+              <div className="flex items-center gap-3">
+                {/* Logo Pemkab */}
+                <Image
+                  src={logoPemkab}
+                  alt="Logo Pemkab Bekasi"
+                  className="h-10 w-auto"
+                  priority
+                />
+                <div className="border-l border-slate-300 h-8"></div>
+                {/* Logo Sipensil */}
+                <Image
+                  src={logoSipensil}
+                  alt="Logo Sipensil"
+                  className="h-10 w-auto"
+                  priority
+                />
+              </div>
+
               <div className="flex flex-col">
                 <span className="font-bold text-xl text-slate-800 leading-none tracking-tight group-hover:text-blue-700 transition">SIPENSIL</span>
                 <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mt-1">Dinas Ketenagakerjaan</span>
@@ -52,7 +97,7 @@ export default function LandingPage() {
             {/* Desktop Menu */}
             <div className="hidden lg:flex items-center gap-1 text-sm font-medium text-slate-600">
               <Link href="/" className="px-4 py-2 rounded-md bg-blue-50 text-blue-700 font-semibold">Beranda</Link>
-              
+
               <div className="relative group">
                 <button className="px-4 py-2 rounded-md hover:bg-slate-50 hover:text-blue-700 flex items-center gap-1 transition">
                   Profil <ChevronDown size={14} />
@@ -75,12 +120,15 @@ export default function LandingPage() {
               <button className="hidden md:flex p-2 text-slate-500 hover:text-blue-700 hover:bg-slate-100 rounded-full transition">
                 <Search size={20} />
               </button>
-              
-              {/* CONNECTED TO YOUR LOGIN PAGE */}
-              <Link href="/auth/login" className="bg-blue-700 hover:bg-blue-800 text-white px-5 py-2.5 rounded-md font-medium text-sm transition shadow-sm flex items-center gap-2">
+
+              {/* MODAL TRIGGER: LOGIN */}
+              <button
+                onClick={() => openAuth('LOGIN')}
+                className="bg-blue-700 hover:bg-blue-800 text-white px-5 py-2.5 rounded-md font-medium text-sm transition shadow-sm flex items-center gap-2"
+              >
                 <LogIn size={16} /> Masuk
-              </Link>
-              
+              </button>
+
               <button className="lg:hidden text-slate-600 p-2">
                 <Menu size={24} />
               </button>
@@ -92,10 +140,10 @@ export default function LandingPage() {
       {/* 3. HERO SECTION */}
       <header className="relative h-[500px] flex items-center overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img 
-            src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1920&q=80" 
-            alt="Background Office" 
-            className="w-full h-full object-cover" 
+          <img
+            src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1920&q=80"
+            alt="Background Office"
+            className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-slate-900/70"></div>
         </div>
@@ -106,17 +154,22 @@ export default function LandingPage() {
               PORTAL PELAYANAN SATU PINTU
             </span>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight tracking-tight">
-              Membangun SDM Kompeten <br/>
+              Membangun SDM Kompeten <br />
               <span className="text-blue-400">Siap Kerja & Berdaya Saing</span>
             </h1>
             <p className="text-lg text-slate-200 mb-8 max-w-2xl font-light leading-relaxed">
               Akses mudah pendaftaran pelatihan kerja, sertifikasi kompetensi, dan informasi lowongan magang resmi dari Dinas Ketenagakerjaan.
             </p>
-            
+
             <div className="flex flex-wrap gap-4">
-              <Link href="/auth/register" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-md font-semibold transition shadow-md border border-transparent">
+              {/* MODAL TRIGGER: REGISTER */}
+              <button
+                onClick={() => openAuth('REGISTER')}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-md font-semibold transition shadow-md border border-transparent"
+              >
                 Daftar Sekarang
-              </Link>
+              </button>
+
               <a href="#" className="bg-transparent hover:bg-white/10 text-white px-8 py-3 rounded-md font-semibold transition border border-white">
                 Panduan Layanan
               </a>
@@ -277,7 +330,12 @@ export default function LandingPage() {
             {/* Kolom 1 */}
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center gap-3 mb-6">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Lambang_Kabupaten_Bekasi.png/618px-Lambang_Kabupaten_Bekasi.png" alt="Logo" className="h-10 w-auto opacity-80 grayscale hover:grayscale-0 transition" />
+                <Image
+                  src={logoSipensil}
+                  alt="Logo Sipensil"
+                  className="h-10 w-auto"
+                  priority
+                />
                 <div>
                   <span className="block font-bold text-xl text-white">SIPENSIL</span>
                   <span className="text-xs uppercase tracking-wider">Dinas Ketenagakerjaan</span>

@@ -20,39 +20,41 @@ export async function applyTraining(formData: FormData) {
     .eq('id', user.id)
     .single()
 
-  // 3. ATURAN VERIFIKASI (Admin verification, not email)
-  if (profile?.account_status !== 'verified') {
-    // Jika masih 'pending' atau 'unverified' atau 'rejected', tolak pendaftaran
-    return { error: 'Data akun Anda belum diverifikasi oleh Admin Dinas. Silakan lengkapi profil dan tunggu verifikasi.' }
-  }
+  // 3. ATURAN VERIFIKASI (Flow Baru: Boleh daftar, tapi status jadi PENDING untuk diverifikasi Admin)
+  const isVerified = profile?.account_status === 'verified'
 
   // 4. CEK ATURAN "1-ON-1" (Tidak boleh daftar jika ada pelatihan belum selesai)
   const { data: activeTraining } = await supabase
     .from('training_registrations')
     .select('status')
     .eq('user_id', user.id)
-    .not('status', 'in', '("SELESAI","DITOLAK","DIBATALKAN")') 
+    .not('status', 'in', '("SELESAI","DITOLAK","DIBATALKAN")')
     .maybeSingle()
 
   if (activeTraining) {
     return { error: 'Anda sedang terdaftar di pelatihan lain. Selesaikan dulu.' }
   }
 
-  // 5. AUTO-ACCEPT LOGIC (Karena akun sudah Verified)
-  // Cek Kuota dulu (Opsional, tapi sebaiknya ada)
+  // 5. AUTO-ACCEPT vs MANUAL VERIFICATION LOGIC
+  // Cek Kuota
   const { data: training } = await supabase.from('blk_trainings').select('quota, filled').eq('id', trainingId).single()
-  
+
   if (training && training.filled >= training.quota) {
     return { error: 'Mohon maaf, kuota pelatihan ini sudah penuh.' }
   }
 
-  // Masukkan data dengan status DITERIMA
+  // Tentukan Status Awal
+  // Jika verified -> DITERIMA
+  // Jika belum -> PENDING (Masuk antrian Admin Dashboard)
+  const initialStatus = isVerified ? 'DITERIMA' : 'PENDING'
+
+  // Masukkan data
   const { error: insertError } = await supabase
     .from('training_registrations')
     .insert({
       user_id: user.id,
       training_id: trainingId,
-      status: 'DITERIMA' // <--- LANGSUNG DITERIMA TANPA VERIFIKASI ULANG
+      status: initialStatus
     })
 
   if (insertError) {
@@ -60,10 +62,16 @@ export async function applyTraining(formData: FormData) {
     return { error: 'Gagal mendaftar: ' + insertError.message }
   }
 
-  // Update jumlah filled kuota (Simple increment)
-  await supabase.rpc('increment_quota', { row_id: trainingId }) 
-  // *Note: Kita perlu buat fungsi RPC SQL ini nanti, tapi untuk sekarang biarkan dulu, data masuk saja.
+  // Update jumlah filled kuota HANYA jika langsung diterima
+  if (initialStatus === 'DITERIMA') {
+    await supabase.rpc('increment_quota', { row_id: trainingId })
+  }
 
   revalidatePath('/dashboard/pencaker')
-  return { success: 'Selamat! Karena akun Anda Terverifikasi, pendaftaran Anda OTOMATIS DITERIMA.' }
+
+  if (initialStatus === 'DITERIMA') {
+    return { success: 'Selamat! Karena akun Anda Terverifikasi, pendaftaran Anda OTOMATIS DITERIMA.' }
+  } else {
+    return { success: 'Pendaftaran Berhasil! Menunggu Verifikasi Admin Dinas (Profil & Pelatihan).' }
+  }
 }

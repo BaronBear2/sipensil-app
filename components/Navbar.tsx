@@ -15,7 +15,7 @@ export default function Navbar() {
     const fetchProfile = async () => {
       // 1. Cek User Login
       const { data: { user } } = await supabase.auth.getUser()
-      
+
       if (user) {
         // 2. AMBIL ROLE LANGSUNG DARI DB (PENTING!)
         const { data, error } = await supabase
@@ -23,7 +23,7 @@ export default function Navbar() {
           .select('*')
           .eq('id', user.id)
           .single()
-        
+
         if (data) {
           console.log("Current User Role:", data.role) // Cek ini di Console Browser (F12)
           setProfile(data)
@@ -44,7 +44,7 @@ export default function Navbar() {
   const getDashboardLink = (role: string) => {
     if (!role) return '/'
     const r = role.toUpperCase() // Paksa huruf besar biar aman
-    
+
     if (r === 'ADMIN_DINAS') return '/dashboard/dinas'
     if (r === 'ADMIN_LPK') return '/dashboard/lpk'
     if (r === 'ADMIN_PERUSAHAAN') return '/dashboard/perusahaan'
@@ -52,7 +52,7 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="bg-white shadow-md sticky top-0 z-50 border-b border-gray-100 font-sans">
+    <nav className="bg-white shadow-md sticky top-0 z-[100] border-b border-gray-100 font-sans">
       <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-3 cursor-pointer group">
           <div className="bg-blue-900 p-2 rounded-lg shadow-sm group-hover:bg-blue-800 transition-colors">
@@ -71,26 +71,23 @@ export default function Navbar() {
 
         {/* Loading State */}
         {loading ? (
-           <div className="text-xs text-gray-400">Loading...</div>
+          <div className="text-xs text-gray-400">Loading...</div>
         ) : profile ? (
           <div className="flex items-center gap-4">
-             <div className="text-right hidden sm:block">
-               <p className="text-xs text-gray-500">Login sebagai:</p>
-               <p className="text-sm font-bold text-gray-800 uppercase">{profile.role.replace('_', ' ')}</p>
-             </div>
-             
-             <div className="flex gap-2">
-                <Link href={getDashboardLink(profile.role)} className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg text-sm font-bold text-blue-700 transition">
-                   <LayoutDashboard size={16}/> Dashboard
-                </Link>
-                <button onClick={handleLogout} className="bg-red-50 hover:bg-red-100 p-2 rounded-lg text-red-600 transition" title="Logout">
-                   <LogOut size={18}/>
-                </button>
-             </div>
+            <div className="text-right hidden sm:block">
+              <p className="text-xs text-gray-500">Login sebagai:</p>
+              <p className="text-sm font-bold text-gray-800 uppercase">{profile.role.replace('_', ' ')}</p>
+            </div>
+
+            <div className="flex gap-2">
+              <button onClick={handleLogout} className="bg-red-50 hover:bg-red-100 p-2 rounded-lg text-red-600 transition" title="Logout">
+                <LogOut size={18} />
+              </button>
+            </div>
           </div>
         ) : (
           <Link href="/auth/login" className="bg-blue-900 hover:bg-blue-800 text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-md transition-all flex items-center gap-2">
-             <User size={16} /> Masuk / Daftar
+            <User size={16} /> Masuk / Daftar
           </Link>
         )}
       </div>
