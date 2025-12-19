@@ -1,140 +1,126 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Navbar from '@/components/Navbar'
-import LpkReportForm from '@/components/lpk/LpkReportForm'
-import { ShieldCheck, FileText, History, Edit, Lock, ChevronRight } from 'lucide-react'
+import { ShieldCheck, FileText, History, Edit, AlertCircle, Briefcase, Users, FileBarChart, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 
-export default async function DashboardLPK({ searchParams }: { searchParams: Promise<{ tab?: string, editId?: string }> }) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+export default async function DashboardLPK() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) redirect('/auth/login')
 
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-  if (profile?.role !== 'ADMIN_LPK') return <div className="p-10 text-red-600 font-bold">Akses Khusus LPK</div>
+    const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
 
-  const params = await searchParams
-  const activeTab = params.tab || 'buat_laporan'
+    // --- REDIRECT LOGIC FOR FIRST TIME LOGIN (Item 15) ---
+    if (profile?.account_status === 'unverified') {
+        // Check if we need to force redirect. Since this IS the dashboard root, yes.
+        redirect('/dashboard/lpk/profile?alert=first_login')
+    }
 
-  // Fetch Riwayat
-  const { data: reports } = await supabase.from('lpk_reports').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
+    // Fetch Summary Stats
+    const { count: reportsCount } = await supabase.from('lpk_reports').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
+    const { count: pendingCount } = await supabase.from('lpk_reports').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'PENDING')
 
-  // Cek Edit Mode
-  let initialData = null
-  if (params.editId) {
-     const { data: report } = await supabase.from('lpk_reports').select('*').eq('id', params.editId).single()
-     initialData = report
-  }
+    // Custom Status Styling
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'verified': return 'bg-green-100 text-green-700 border-green-200'
+            case 'pending': return 'bg-yellow-100 text-yellow-700 border-yellow-200'
+            case 'rejected': return 'bg-red-100 text-red-700 border-red-200'
+            default: return 'bg-gray-100 text-gray-600 border-gray-200'
+        }
+    }
 
-  // --- LOGIC KUNCI ---
-  // Form Terbuka JIKA: Status bukan 'unverified' (Jadi Pending atau Verified BOLEH masuk)
-  const isUnlocked = profile.account_status !== 'unverified'
+    return (
+        <div className="min-h-screen bg-white md:bg-gray-50 font-sans p-4 md:p-8 animate-fade-in">
+            {/* Mobile Navbar Spacer if needed, but Layout handles it. Navbar is removed from here as it's likely handled by Sidebar or Layout for desktop. 
+            Wait, Pencaker used Navbar component. LPK now uses Sidebar. 
+            Mobile view might need a wrapper. Let's keep it simple. 
+        */}
 
-  return (
-    <div className="min-h-screen bg-gray-50 font-sans">
-      <Navbar />
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        
-        {/* HEADER DASHBOARD */}
-        <div className="bg-white rounded-xl shadow-sm border p-6 mb-8">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-white md:bg-transparent p-6 md:p-0 rounded-2xl md:rounded-none shadow-sm md:shadow-none border md:border-none">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                        {profile.company_name || 'Selamat Datang, LPK Baru'} 
-                        {!isUnlocked && <span className="text-xs font-normal text-red-500 bg-red-50 px-2 py-1 rounded border border-red-100">(Data Belum Lengkap)</span>}
-                    </h2>
-                    <p className="text-gray-500 text-sm mt-1">Kelola pelaporan kegiatan pelatihan secara berkala.</p>
+                    <h1 className="text-2xl md:text-3xl font-extrabold text-gray-800">
+                        Dashboard LPK
+                    </h1>
+                    <p className="text-gray-500">Selamat datang, <span className="font-bold text-gray-700">{profile.company_name}</span></p>
                 </div>
-                
-                <div className="mt-4 md:mt-0 flex items-center gap-3">
-                    <div className={`px-3 py-1.5 rounded-lg text-xs font-bold border flex items-center gap-2 ${
-                        profile.account_status === 'verified' ? 'bg-green-50 text-green-700 border-green-200' : 
-                        profile.account_status === 'pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 'bg-gray-100 text-gray-600'
-                    }`}>
-                        <ShieldCheck size={14}/> {profile.account_status === 'unverified' ? 'BELUM DIVERIFIKASI' : profile.account_status.toUpperCase()}
+
+                <div className={`px-4 py-2 rounded-xl text-sm font-bold border flex items-center gap-2 w-fit ${getStatusColor(profile.account_status)}`}>
+                    <ShieldCheck size={18} />
+                    {profile.account_status === 'verified' ? 'TERVERIFIKASI' :
+                        profile.account_status === 'pending' ? 'MENUNGGU VERIFIKASI' : profile.account_status.toUpperCase()}
+                </div>
+            </header>
+
+            {/* STATS GRID */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                    <div className="bg-blue-100 p-4 rounded-full text-blue-600">
+                        <FileText size={24} />
                     </div>
-                    <Link href="/dashboard/lpk/profile" className="flex items-center gap-2 px-4 py-2 bg-white border rounded-lg text-sm font-bold text-blue-600 hover:bg-blue-50 transition shadow-sm">
-                        <Edit size={16}/> {isUnlocked ? 'Edit Profil' : 'Lengkapi Profil'}
-                    </Link>
+                    <div>
+                        <p className="text-sm text-gray-500 font-bold">Total Laporan</p>
+                        <h3 className="text-2xl font-extrabold text-gray-800">{reportsCount || 0}</h3>
+                    </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                    <div className="bg-yellow-100 p-4 rounded-full text-yellow-600">
+                        <History size={24} />
+                    </div>
+                    <div>
+                        <p className="text-sm text-gray-500 font-bold">Menunggu Review</p>
+                        <h3 className="text-2xl font-extrabold text-gray-800">{pendingCount || 0}</h3>
+                    </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+                    <div className="bg-green-100 p-4 rounded-full text-green-600">
+                        <CheckCircle size={24} />
+                    </div>
+                    <div>
+                        <p className="text-sm text-gray-500 font-bold">Status Akun</p>
+                        <h3 className="text-lg font-bold text-gray-800 uppercase">{profile.account_status}</h3>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        {/* TABS NAVIGATION */}
-        <div className="flex gap-2 mb-6 border-b pb-1">
-            <Link href="/dashboard/lpk?tab=buat_laporan" className={`px-4 py-2 text-sm font-bold flex items-center gap-2 rounded-t-lg transition ${activeTab === 'buat_laporan' ? 'bg-white border border-b-0 text-blue-600' : 'text-gray-500 hover:bg-gray-200'}`}>
-                <FileText size={16}/> {params.editId ? 'Edit Laporan' : 'Buat Laporan'}
-            </Link>
-            <Link href="/dashboard/lpk?tab=riwayat" className={`px-4 py-2 text-sm font-bold flex items-center gap-2 rounded-t-lg transition ${activeTab === 'riwayat' ? 'bg-white border border-b-0 text-blue-600' : 'text-gray-500 hover:bg-gray-200'}`}>
-                <History size={16}/> Riwayat
-            </Link>
-        </div>
+            {/* QUICK ACTIONS */}
+            <h3 className="font-bold text-gray-800 text-lg mb-4">Akses Cepat</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-        <div className="bg-white p-6 rounded-b-xl rounded-r-xl border shadow-sm min-h-[600px] relative overflow-hidden">
-            
-            {/* === KONTEN TAB: BUAT LAPORAN === */}
-            {activeTab === 'buat_laporan' && (
-                <div className="relative">
-                    
-                    {/* OVERLAY PENGUNCI (Jika Belum Lengkap) */}
-                    {!isUnlocked && (
-                        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/60 backdrop-blur-sm rounded-xl">
-                            <div className="bg-white p-8 rounded-2xl shadow-2xl border text-center max-w-md animate-bounce-small">
-                                <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <Lock className="text-blue-600 w-8 h-8" />
-                                </div>
-                                <h3 className="text-xl font-bold text-gray-800 mb-2">Formulir Terkunci</h3>
-                                <p className="text-gray-600 mb-6 text-sm">
-                                    Untuk mengisi laporan, Anda wajib melengkapi <strong>Profil Lembaga</strong> terlebih dahulu agar data Anda valid di sistem Dinas.
-                                </p>
-                                <Link href="/dashboard/lpk/profile" className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg hover:shadow-blue-500/30">
-                                    Lengkapi Profil Sekarang <ChevronRight size={18}/>
-                                </Link>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* FORM ASLI (Blur Effect di Background) */}
-                    <div className={!isUnlocked ? 'filter blur-[2px] opacity-40 pointer-events-none select-none grayscale' : ''}>
-                        <LpkReportForm profile={profile} initialData={initialData} />
+                <Link href="/dashboard/lpk/laporan?type=ketersediaan" className="group bg-white p-6 rounded-2xl border border-gray-100 hover:border-blue-200 hover:shadow-lg transition-all flex flex-col items-start gap-4">
+                    <div className="bg-blue-50 p-3 rounded-xl text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                        <FileBarChart size={28} />
                     </div>
+                    <div>
+                        <h4 className="font-bold text-gray-800 group-hover:text-blue-600 transition-colors">Laporan Ketersediaan</h4>
+                        <p className="text-sm text-gray-500 mt-1">Input data pelatihan, instruktur, dan sarana prasarana.</p>
+                    </div>
+                </Link>
 
-                </div>
-            )}
-            
-            {/* === KONTEN TAB: RIWAYAT === */}
-            {activeTab === 'riwayat' && (
-                <div className="space-y-3">
-                    {reports?.length === 0 ? <p className="text-gray-400 italic text-center py-10">Belum ada laporan dikirim.</p> : 
-                        reports?.map((r: any) => (
-                            <div key={r.id} className="flex justify-between items-center p-4 border rounded-lg bg-gray-50 hover:bg-white transition shadow-sm">
-                                <div>
-                                    <div className="font-bold text-gray-800">Laporan Semester {r.semester} {r.tahun}</div>
-                                    <div className="text-xs text-gray-500 mt-1">Dikirim: {new Date(r.created_at).toLocaleDateString()}</div>
-                                </div>
-                                
-                                <div className="flex items-center gap-3">
-                                    {r.status === 'APPROVED' ? (
-                                        <span className="bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-bold border border-green-200">DITERIMA</span>
-                                    ) : r.status === 'REJECTED' ? (
-                                        <span className="bg-red-100 text-red-700 px-3 py-1 rounded text-xs font-bold border border-red-200">DITOLAK (Revisi)</span>
-                                    ) : (
-                                        <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded text-xs font-bold border border-yellow-200">DIPROSES</span>
-                                    )}
+                <Link href="/dashboard/lpk/laporan?type=penempatan" className="group bg-white p-6 rounded-2xl border border-gray-100 hover:border-blue-200 hover:shadow-lg transition-all flex flex-col items-start gap-4">
+                    <div className="bg-emerald-50 p-3 rounded-xl text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                        <Briefcase size={28} />
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-gray-800 group-hover:text-emerald-600 transition-colors">Laporan Penempatan</h4>
+                        <p className="text-sm text-gray-500 mt-1">Input data lulusan dan penempatan kerja alumni.</p>
+                    </div>
+                </Link>
 
-                                    {r.status !== 'APPROVED' && (
-                                        <Link href={`/dashboard/lpk?tab=buat_laporan&editId=${r.id}`} className="text-blue-600 hover:text-blue-800 text-xs font-bold flex items-center gap-1 border px-2 py-1 rounded bg-white hover:bg-blue-50">
-                                            <Edit size={12}/> Edit
-                                        </Link>
-                                    )}
-                                </div>
-                            </div>
-                        ))
-                    }
-                </div>
-            )}
+                <Link href="/dashboard/lpk/riwayat" className="group bg-white p-6 rounded-2xl border border-gray-100 hover:border-purple-200 hover:shadow-lg transition-all flex flex-col items-start gap-4">
+                    <div className="bg-purple-50 p-3 rounded-xl text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                        <History size={28} />
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-gray-800 group-hover:text-purple-600 transition-colors">Riwayat Laporan</h4>
+                        <p className="text-sm text-gray-500 mt-1">Lihat status dan riwayat pelaporan sebelumnya.</p>
+                    </div>
+                </Link>
+            </div>
+
         </div>
-      </div>
-    </div>
-  )
+    )
 }

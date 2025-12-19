@@ -1,17 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link';
 import {
-  Phone, Mail, Search, LogIn, Menu, ChevronDown,
   GraduationCap, Briefcase, Plane, FileCheck2,
-  Calendar, ArrowRight, MapPin, Facebook, Instagram, Twitter, Youtube
+  Calendar, ArrowRight
 } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import AuthModalContent from '@/components/auth/AuthModalContent';
-import Image from 'next/image';
-import logoSipensil from '../assets/logo/logo-sipensil.jpeg';
-import logoPemkab from '../assets/logo/logo-pemkabbek.jpeg';
+import PublicNavbar from '@/components/PublicNavbar';
+import PublicFooter from '@/components/PublicFooter';
 
 export default function LandingPage() {
   const [isAuthModalOpen, setAuthModalOpen] = useState(false)
@@ -25,117 +23,31 @@ export default function LandingPage() {
   return (
     <div className="bg-white text-slate-800 antialiased min-h-screen flex flex-col font-sans">
 
-      {/* AUTH MODAL */}
+      {/* 
+         NOTE: PublicNavbar handles its own Auth Modal for the navbar Login button.
+         However, the LANDING PAGE has a "Daftar Sekarang" button in the HERO section.
+         We still need a way to open the Auth Modal from HERE.
+         Ideally PublicNavbar could share state, but for now we can duplicate the Modal 
+         OR just use the PublicNavbar import and passing props? 
+         PublicNavbar as created does NOT accept props for external control.
+         
+         Workaround: We keep the Modal here LOCALLY for the Hero button usage.
+         PublicNavbar will have its own independent Modal instance.
+         This is fine for Client Components.
+      */}
+
+      {/* Local Auth Modal for Hero Button */}
       <Modal isOpen={isAuthModalOpen} onClose={() => setAuthModalOpen(false)} title={authView === 'LOGIN' ? 'Masuk' : 'Daftar'}>
         <AuthModalContent
           initialView={authView}
           onSwitch={(view) => {
             if (view === 'LOGIN' || view === 'REGISTER') setAuthView(view)
-            // If switch to Verify Success, we just let the component handle rendering, 
-            // but usually we might want to update title? 
-            // Actually AuthModalContent handles it internally, but the Title prop is static here.
-            // We can make Title dynamic or hide header.
-            // For MVP, just keep "Masuk" / "Daftar" or generic.
-            // Better: Let internal component handle title? Modal prop title is optional.
           }}
           onClose={() => setAuthModalOpen(false)}
         />
       </Modal>
 
-      {/* 1. TOP BAR */}
-      <div className="bg-slate-900 text-slate-300 text-xs py-2 hidden md:block border-b border-slate-800">
-        <div className="container mx-auto px-4 lg:px-8 flex justify-between items-center">
-          <div className="flex gap-6 font-medium">
-            <span className="flex items-center gap-2 hover:text-white transition">
-              <Phone size={14} /> (021) 889977
-            </span>
-            <span className="flex items-center gap-2 hover:text-white transition">
-              <Mail size={14} /> disnaker@bekasikab.go.id
-            </span>
-          </div>
-          <div className="flex gap-4">
-            <a href="#" className="hover:text-white transition">Aksesibilitas</a>
-            <span className="text-slate-600">|</span>
-            <a href="#" className="hover:text-white transition">Peta Situs</a>
-            <span className="text-slate-600">|</span>
-            <a href="#" className="hover:text-white transition">FAQ</a>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. NAVBAR */}
-      <nav className="bg-white shadow-sm sticky top-0 z-50 border-b border-slate-100">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-
-            {/* Logo Area */}
-            <div className="flex items-center gap-3 group cursor-pointer">
-              <div className="flex items-center gap-3">
-                {/* Logo Pemkab */}
-                <Image
-                  src={logoPemkab}
-                  alt="Logo Pemkab Bekasi"
-                  className="h-10 w-auto"
-                  priority
-                />
-                <div className="border-l border-slate-300 h-8"></div>
-                {/* Logo Sipensil */}
-                <Image
-                  src={logoSipensil}
-                  alt="Logo Sipensil"
-                  className="h-10 w-auto"
-                  priority
-                />
-              </div>
-
-              <div className="flex flex-col">
-                <span className="font-bold text-xl text-slate-800 leading-none tracking-tight group-hover:text-blue-700 transition">SIPENSIL</span>
-                <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mt-1">Dinas Ketenagakerjaan</span>
-              </div>
-            </div>
-
-            {/* Desktop Menu */}
-            <div className="hidden lg:flex items-center gap-1 text-sm font-medium text-slate-600">
-              <Link href="/" className="px-4 py-2 rounded-md bg-blue-50 text-blue-700 font-semibold">Beranda</Link>
-
-              <div className="relative group">
-                <button className="px-4 py-2 rounded-md hover:bg-slate-50 hover:text-blue-700 flex items-center gap-1 transition">
-                  Profil <ChevronDown size={14} />
-                </button>
-                {/* Dropdown */}
-                <div className="absolute top-full left-0 w-48 bg-white shadow-lg rounded-md border border-slate-100 hidden group-hover:block py-2 mt-1 origin-top-left animate-fade-in">
-                  <a href="#" className="block px-4 py-2 hover:bg-slate-50 text-slate-700">Tentang Kami</a>
-                  <a href="#" className="block px-4 py-2 hover:bg-slate-50 text-slate-700">Visi & Misi</a>
-                  <a href="#" className="block px-4 py-2 hover:bg-slate-50 text-slate-700">Struktur Organisasi</a>
-                </div>
-              </div>
-
-              <a href="#" className="px-4 py-2 rounded-md hover:bg-slate-50 hover:text-blue-700 transition">Pelatihan</a>
-              <a href="#" className="px-4 py-2 rounded-md hover:bg-slate-50 hover:text-blue-700 transition">Pemagangan</a>
-              <a href="#" className="px-4 py-2 rounded-md hover:bg-slate-50 hover:text-blue-700 transition">Berita</a>
-            </div>
-
-            {/* Action Button */}
-            <div className="flex items-center gap-3">
-              <button className="hidden md:flex p-2 text-slate-500 hover:text-blue-700 hover:bg-slate-100 rounded-full transition">
-                <Search size={20} />
-              </button>
-
-              {/* MODAL TRIGGER: LOGIN */}
-              <button
-                onClick={() => openAuth('LOGIN')}
-                className="bg-blue-700 hover:bg-blue-800 text-white px-5 py-2.5 rounded-md font-medium text-sm transition shadow-sm flex items-center gap-2"
-              >
-                <LogIn size={16} /> Masuk
-              </button>
-
-              <button className="lg:hidden text-slate-600 p-2">
-                <Menu size={24} />
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <PublicNavbar />
 
       {/* 3. HERO SECTION */}
       <header className="relative h-[500px] flex items-center overflow-hidden">
@@ -170,9 +82,9 @@ export default function LandingPage() {
                 Daftar Sekarang
               </button>
 
-              <a href="#" className="bg-transparent hover:bg-white/10 text-white px-8 py-3 rounded-md font-semibold transition border border-white">
+              <Link href="/faq" className="bg-transparent hover:bg-white/10 text-white px-8 py-3 rounded-md font-semibold transition border border-white">
                 Panduan Layanan
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -189,40 +101,40 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Service 1 */}
-            <a href="#" className="bg-white p-6 rounded-lg border border-slate-200 service-card flex flex-col items-center text-center group">
+            <Link href="/pelatihan" className="bg-white p-6 rounded-lg border border-slate-200 service-card flex flex-col items-center text-center group">
               <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center mb-5 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
                 <GraduationCap size={28} />
               </div>
               <h3 className="text-lg font-bold text-slate-800 mb-2 group-hover:text-blue-700 transition">Pelatihan Kerja</h3>
               <p className="text-sm text-slate-500 leading-relaxed">Pendaftaran pelatihan berbasis kompetensi di BLK dan LPK swasta.</p>
-            </a>
+            </Link>
 
             {/* Service 2 */}
-            <a href="#" className="bg-white p-6 rounded-lg border border-slate-200 service-card flex flex-col items-center text-center group">
+            <Link href="/pemagangan" className="bg-white p-6 rounded-lg border border-slate-200 service-card flex flex-col items-center text-center group">
               <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center mb-5 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300">
                 <Briefcase size={28} />
               </div>
               <h3 className="text-lg font-bold text-slate-800 mb-2 group-hover:text-emerald-700 transition">Pemagangan</h3>
               <p className="text-sm text-slate-500 leading-relaxed">Program magang dalam dan luar negeri bersertifikat resmi.</p>
-            </a>
+            </Link>
 
             {/* Service 3 */}
-            <a href="#" className="bg-white p-6 rounded-lg border border-slate-200 service-card flex flex-col items-center text-center group">
+            <Link href="/pemagangan" className="bg-white p-6 rounded-lg border border-slate-200 service-card flex flex-col items-center text-center group">
               <div className="w-14 h-14 bg-red-50 text-red-600 rounded-lg flex items-center justify-center mb-5 group-hover:bg-red-600 group-hover:text-white transition-colors duration-300">
                 <Plane size={28} />
               </div>
               <h3 className="text-lg font-bold text-slate-800 mb-2 group-hover:text-red-700 transition">IM Japan</h3>
               <p className="text-sm text-slate-500 leading-relaxed">Seleksi dan pelatihan pra-pemberangkatan magang ke Jepang.</p>
-            </a>
+            </Link>
 
             {/* Service 4 */}
-            <a href="#" className="bg-white p-6 rounded-lg border border-slate-200 service-card flex flex-col items-center text-center group">
+            <Link href="#" className="bg-white p-6 rounded-lg border border-slate-200 service-card flex flex-col items-center text-center group">
               <div className="w-14 h-14 bg-orange-50 text-orange-600 rounded-lg flex items-center justify-center mb-5 group-hover:bg-orange-600 group-hover:text-white transition-colors duration-300">
                 <FileCheck2 size={28} />
               </div>
               <h3 className="text-lg font-bold text-slate-800 mb-2 group-hover:text-orange-700 transition">Perizinan LPK</h3>
               <p className="text-sm text-slate-500 leading-relaxed">Layanan pelaporan dan perizinan untuk Lembaga Pelatihan Kerja.</p>
-            </a>
+            </Link>
           </div>
         </div>
       </section>
@@ -256,9 +168,9 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 lg:px-8">
           <div className="flex justify-between items-end mb-8">
             <h2 className="text-2xl font-bold text-slate-800">Berita & Informasi</h2>
-            <a href="#" className="text-sm text-blue-600 font-semibold hover:underline flex items-center gap-1">
+            <Link href="/berita" className="text-sm text-blue-600 font-semibold hover:underline flex items-center gap-1">
               Arsip Berita <ArrowRight size={14} />
-            </a>
+            </Link>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -278,7 +190,7 @@ export default function LandingPage() {
                 <p className="text-sm text-slate-500 line-clamp-3 mb-4">
                   Dinas Ketenagakerjaan kembali membuka kesempatan bagi masyarakat untuk mengikuti pelatihan kerja gratis di BLK Kabupaten Bekasi...
                 </p>
-                <a href="#" className="text-blue-600 text-sm font-semibold hover:underline">Baca Selengkapnya</a>
+                <Link href="#" className="text-blue-600 text-sm font-semibold hover:underline">Baca Selengkapnya</Link>
               </div>
             </article>
 
@@ -297,7 +209,7 @@ export default function LandingPage() {
                 <p className="text-sm text-slate-500 line-clamp-3 mb-4">
                   Dalam rangka meningkatkan kompetensi tenaga kerja muda, Disnaker mengadakan sosialisasi program magang ke Jepang...
                 </p>
-                <a href="#" className="text-blue-600 text-sm font-semibold hover:underline">Baca Selengkapnya</a>
+                <Link href="#" className="text-blue-600 text-sm font-semibold hover:underline">Baca Selengkapnya</Link>
               </div>
             </article>
 
@@ -316,79 +228,14 @@ export default function LandingPage() {
                 <p className="text-sm text-slate-500 line-clamp-3 mb-4">
                   Kegiatan rutin untuk menyamakan persepsi dan standar mutu pelatihan di seluruh LPK yang terdaftar di Kabupaten Bekasi...
                 </p>
-                <a href="#" className="text-blue-600 text-sm font-semibold hover:underline">Baca Selengkapnya</a>
+                <Link href="#" className="text-blue-600 text-sm font-semibold hover:underline">Baca Selengkapnya</Link>
               </div>
             </article>
           </div>
         </div>
       </section>
 
-      {/* 7. FOOTER */}
-      <footer className="bg-slate-900 text-slate-400 pt-16 pb-8 border-t border-slate-800 mt-auto">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-12 mb-12">
-            {/* Kolom 1 */}
-            <div className="col-span-1 md:col-span-2">
-              <div className="flex items-center gap-3 mb-6">
-                <Image
-                  src={logoSipensil}
-                  alt="Logo Sipensil"
-                  className="h-10 w-auto"
-                  priority
-                />
-                <div>
-                  <span className="block font-bold text-xl text-white">SIPENSIL</span>
-                  <span className="text-xs uppercase tracking-wider">Dinas Ketenagakerjaan</span>
-                </div>
-              </div>
-              <p className="text-sm leading-relaxed mb-6 max-w-sm">
-                Sistem Informasi Pendaftaran dan Pencatatan Pelatihan Kompetensi, Wirausaha, dan Pengembangan Karir Terpadu.
-              </p>
-              <div className="flex gap-4">
-                <a href="#" className="text-slate-400 hover:text-white transition"><Facebook size={20} /></a>
-                <a href="#" className="text-slate-400 hover:text-white transition"><Instagram size={20} /></a>
-                <a href="#" className="text-slate-400 hover:text-white transition"><Twitter size={20} /></a>
-                <a href="#" className="text-slate-400 hover:text-white transition"><Youtube size={20} /></a>
-              </div>
-            </div>
-
-            {/* Kolom 2 */}
-            <div>
-              <h4 className="text-white font-bold mb-6 text-sm uppercase tracking-wide">Tautan Cepat</h4>
-              <ul className="space-y-3 text-sm">
-                <li><a href="#" className="hover:text-white transition">Beranda</a></li>
-                <li><a href="#" className="hover:text-white transition">Profil Dinas</a></li>
-                <li><a href="#" className="hover:text-white transition">Pelatihan BLK</a></li>
-                <li><a href="#" className="hover:text-white transition">Pasar Kerja</a></li>
-                <li><a href="#" className="hover:text-white transition">Unduhan</a></li>
-              </ul>
-            </div>
-
-            {/* Kolom 3 */}
-            <div>
-              <h4 className="text-white font-bold mb-6 text-sm uppercase tracking-wide">Kontak Kami</h4>
-              <ul className="space-y-4 text-sm">
-                <li className="flex gap-3 items-start">
-                  <MapPin className="shrink-0 mt-1" size={16} />
-                  <span>Komplek Perkantoran Pemkab Bekasi, Desa Sukamahi, Kec. Cikarang Pusat.</span>
-                </li>
-                <li className="flex gap-3 items-center">
-                  <Phone className="shrink-0" size={16} />
-                  <span>(021) 889977</span>
-                </li>
-                <li className="flex gap-3 items-center">
-                  <Mail className="shrink-0" size={16} />
-                  <span>disnaker@bekasikab.go.id</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="border-t border-slate-800 pt-8 text-center text-xs text-slate-500">
-            <p>&copy; 2025 Dinas Ketenagakerjaan Kabupaten Bekasi. Hak Cipta Dilindungi Undang-Undang.</p>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }

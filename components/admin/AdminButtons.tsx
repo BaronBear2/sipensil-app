@@ -49,7 +49,10 @@ export function AutoVerifyButton({ userId }: { userId: string }) {
 export function AdminActionButtons({ id, actionFn, idName, extraId, extraIdName }: any) {
     return (
         <div className="flex justify-center gap-2">
-            <form action={actionFn}>
+            <form action={async (fd) => {
+                const res = await actionFn(fd)
+                if (res?.error) alert(res.error)
+            }}>
                 <input type="hidden" name={idName} value={id} />
                 {extraId && <input type="hidden" name={extraIdName} value={extraId} />}
                 <input type="hidden" name="action" value="approve" />
@@ -58,7 +61,10 @@ export function AdminActionButtons({ id, actionFn, idName, extraId, extraIdName 
                 </button>
             </form>
 
-            <form action={actionFn} className="flex items-center gap-1">
+            <form action={async (fd) => {
+                const res = await actionFn(fd)
+                if (res?.error) alert(res.error)
+            }} className="flex items-center gap-1">
                 <input type="hidden" name={idName} value={id} />
                 {extraId && <input type="hidden" name={extraIdName} value={extraId} />}
                 <input type="hidden" name="action" value="reject" />

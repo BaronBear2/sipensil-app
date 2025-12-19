@@ -3,7 +3,7 @@
 import { useState, use } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, User, School, Factory, Lock, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, Lock } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 
 export default function RegisterForm({ params }: { params: Promise<{ role: string }> }) {
@@ -11,7 +11,7 @@ export default function RegisterForm({ params }: { params: Promise<{ role: strin
   const role = resolvedParams.role
 
   const router = useRouter()
-  const supabase = createClient()
+  // const supabase = createClient() // Not needed for Server Action auth
   const [loading, setLoading] = useState(false)
 
   // State yang disederhanakan untuk Register
@@ -47,66 +47,70 @@ export default function RegisterForm({ params }: { params: Promise<{ role: strin
       return
     }
 
-    // 2. Tentukan Role Database
-    const dbRole = role === 'lpk' ? 'ADMIN_LPK' :
-      role === 'perusahaan' ? 'ADMIN_PERUSAHAAN' : 'PENCAKER'
-
-    // 3. SIAPKAN METADATA (Ini kuncinya!)
-    // Kita bungkus NIK, VIN, Phone, dll disini agar langsung masuk database
-    const metadata: any = {
-      full_name: formData.name,
-      role: dbRole,
-      phone: formData.phone, // Nomor HP Admin/HRD
-    }
-
+    // 2. Client-Side Validation (Strict V5.1)
     if (role === 'pencaker') {
-      metadata.nik = formData.nik
-      // Status NIK & Nama langsung tersimpan, sisanya menyusul di Edit Profile
-    } else if (role === 'lpk') {
-      // metadata.vin = formData.vin  <-- Removed old vin field usage if replaced or keep if needed?
-      // Wait, vin is replaced by license_number in profile? No, VIN is still valid. 
-      // But user asked for "Nama LPK", "Nama PJ", etc. VIN is usually separate.
-      // Let's keep VIN as it was in the original form if it makes sense, but the new form didn't ask for VIN explicitly in "Halaman Register (LPK)" section of the prompt?
-      // The prompt said: "Nama LPK", "Nama PJ", "Jabatan PJ", "No HP PJ", "Email PJ".
-      // It did NOT mention VIN in the Register form request.
-      // However, the original code had VIN. I should probably keep it or remove it if not asked.
-      // The user said: "Buat formulir registrasi dengan kolom isian sebagai berikut: ..."
-      // It implies ONLY those fields.
-      // However, usually we need a unique ID or VIN.
-      // Let's look at the "Halaman Edit Profil LPK" request: "Nomor Registrasi (VIN)" is mentioned there.
-      // So VIN is part of the data model. 
-      // I will remove VIN from Register form to strictly follow "Buat formulir registrasi dengan kolom isian sebagai berikut"
-      // BUT, checking my UI update in Step 72/76... I REMOVED VIN field from the UI.
-      // So I should remove it from metadata here too, or just leave it empty.
-
-      metadata.company_name = formData.name
-      metadata.operational_pj = formData.operational_pj
-      metadata.operational_pj_title = formData.operational_pj_title
-      metadata.operational_pj_phone = formData.operational_pj_phone
-      metadata.operational_pj_email = formData.operational_pj_email
-    } else if (role === 'perusahaan') {
-      metadata.nib = formData.nib
-      metadata.company_name = formData.name
+      const nik = formData.nik
+      const nikRegex = /^3216\d{12}$/
+      if (!nikRegex.test(nik)) {
+        alert("NIK Tidak Valid! Harus 16 digit dan berawalan '3216' (Khusus Warga Kabupaten Bekasi).")
+        setLoading(false)
+        return
+      }
     }
 
-    // 4. REGISTER SEKALI JALAN (Atomic)
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: formData.email,
-      password: formData.password,
-      options: {
-        data: metadata, // Kirim paket data lengkap disini
-      },
+    // Strict Password Validation
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&-_])[A-Za-z\d@$!%*#?&-_]{6,}$/
+    if (!passwordRegex.test(formData.password)) {
+      alert("Password Tidak Valid! Harus minimal 6 karakter, mengandung Huruf, Angka, dan Simbol (@$!%*#?&-_).")
+      setLoading(false)
+      return
+    }
+
+    if (role === 'lpk' && formData.operational_pj_phone.length < 10) {
+      alert("Nomor HP Penanggungjawab minimal 10 digit!")
+      setLoading(false)
+      return
+    }
+    if (role === 'perusahaan' && formData.phone.length < 10) {
+      alert("Nomor Telepon HRD minimal 10 digit!")
+      setLoading(false)
+      return
+    }
+
+    // 3. Prep FormData for Server Action
+    const fd = new FormData()
+    // Base Auth
+    fd.append('email', formData.email)
+    fd.append('password', formData.password)
+
+    // Metadata Fields
+    const dbRole = role === 'lpk' ? 'ADMIN_LPK' : role === 'perusahaan' ? 'ADMIN_PERUSAHAAN' : 'PENCAKER'
+    fd.append('role', dbRole)
+    fd.append('fullName', formData.name) // Official field
+    fd.append('name', formData.name) // Fallback for action
+
+    // Extended Fields
+    if (formData.nik) fd.append('nik', formData.nik)
+    if (formData.phone) fd.append('phone', formData.phone)
+    if (formData.nib) fd.append('nib', formData.nib)
+
+    // LPK Specific
+    if (formData.operational_pj) fd.append('operational_pj', formData.operational_pj)
+    if (formData.operational_pj_title) fd.append('operational_pj_title', formData.operational_pj_title)
+    if (formData.operational_pj_phone) fd.append('operational_pj_phone', formData.operational_pj_phone)
+    if (formData.operational_pj_email) fd.append('operational_pj_email', formData.operational_pj_email)
+
+    // 3. Call Server Action
+    import('@/actions/auth').then(async (mod) => {
+      const result = await mod.signup(fd)
+      if (result?.error) {
+        alert("Gagal Registrasi: " + result.error)
+        setLoading(false)
+      } else {
+        alert('Registrasi Berhasil! Silakan cek email Anda untuk verifikasi.')
+        router.push('/auth/login')
+      }
     })
-
-    if (authError) {
-      alert("Gagal Registrasi: " + authError.message)
-    } else {
-      // Tidak perlu coding update terpisah lagi, SQL Trigger yang menanganinya.
-      alert('Registrasi Berhasil! Silakan Login untuk melengkapi profil Anda.')
-      router.push('/auth/verify')
-    }
-
-    setLoading(false)
   }
 
   // --- RENDER FORM ---
@@ -116,8 +120,9 @@ export default function RegisterForm({ params }: { params: Promise<{ role: strin
         <div className="space-y-4">
           {/* HANYA 5 FIELD UTAMA SESUAI REQUEST */}
           <div>
-            <label className="text-xs font-bold block mb-1">NIK (16 Digit)</label>
+            <label className="text-xs font-bold block mb-1">NIK (16 Digit - Khusus Kab. Bekasi)</label>
             <input required name="nik" type="number" onChange={handleChange} className="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="3216xxxxxxxxxxxx" />
+            <p className="text-[10px] text-gray-400 mt-1">*Harus berawalan 3216</p>
           </div>
           <div>
             <label className="text-xs font-bold block mb-1">Nama Lengkap (Sesuai KTP)</label>
@@ -134,21 +139,21 @@ export default function RegisterForm({ params }: { params: Promise<{ role: strin
             <input required name="name" onChange={handleChange} className="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Contoh: LPK Maju Jaya" />
           </div>
           <div>
-            <label className="text-xs font-bold block mb-1">Nama Penanggungjawab Operasional LPK</label>
-            <input required name="operational_pj" onChange={handleChange} className="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Nama Lengkap PJ Operasional" />
+            <label className="text-xs font-bold block mb-1">Nama Penanggungjawab</label>
+            <input required name="operational_pj" onChange={handleChange} className="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Nama Lengkap Penanggungjawab" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-bold block mb-1">Jabatan PJ Operasional</label>
+              <label className="text-xs font-bold block mb-1">Jabatan Penanggungjawab</label>
               <input required name="operational_pj_title" onChange={handleChange} className="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Contoh: Manager" />
             </div>
             <div>
-              <label className="text-xs font-bold block mb-1">No. Kontak/HP PJ Operasional</label>
+              <label className="text-xs font-bold block mb-1">No. Kontak/HP Penanggungjawab</label>
               <input required name="operational_pj_phone" onChange={handleChange} className="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="08xxxxxxxxxx" />
             </div>
           </div>
           <div>
-            <label className="text-xs font-bold block mb-1">Email PJ Operasional</label>
+            <label className="text-xs font-bold block mb-1">Email Penanggungjawab</label>
             <input required name="operational_pj_email" type="email" onChange={handleChange} className="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="email.pj@contoh.com" />
           </div>
         </div>

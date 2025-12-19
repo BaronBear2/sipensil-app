@@ -36,7 +36,7 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    router.push('/auth/login')
+    router.push('/')
     router.refresh()
   }
 
@@ -67,6 +67,12 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-8 text-sm font-semibold text-gray-600">
           <Link href="/" className="hover:text-blue-700 transition-colors">Beranda</Link>
           <Link href="/layanan" className="hover:text-blue-700 transition-colors">Layanan Publik</Link>
+          {profile?.role === 'PENCAKER' && (
+            <>
+              <Link href="/dashboard/pencaker" className="hover:text-blue-700 transition-colors">Dashboard</Link>
+              <Link href="/dashboard/pencaker/programs" className="hover:text-blue-700 transition-colors">Pelatihan</Link>
+            </>
+          )}
         </div>
 
         {/* Loading State */}

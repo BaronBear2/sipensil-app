@@ -50,7 +50,13 @@ export default function VerificationTable({ users }: { users: any[] }) {
       formData.append('action', action)
       formData.append('reason', finalReason)
 
-      await verifyProfileAction(formData) // Panggil Server Action
+      const res = await verifyProfileAction(formData) // Panggil Server Action
+
+      if (res?.error) {
+         alert(res.error)
+         setLoading(false)
+         return
+      }
 
       setLoading(false)
       setSelectedUser(null) // Tutup modal

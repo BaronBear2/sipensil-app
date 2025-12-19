@@ -57,10 +57,35 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
         return age
     }
 
-    const handleApplyClick = () => { // Renamed from handleApply logic
+    const handleApplyClick = () => {
         if (!profile) return
 
-        // 1. Age Check
+        // 1. Check Profile Completeness
+        // V5-05 Fix: Don't block 'unverified' if they have complete data.
+        const requiredFields = ['full_name', 'nik', 'dob', 'address_ktp', 'phone', 'gender', 'pob']
+        const missing = requiredFields.filter(field => !profile[field])
+
+        if (missing.length > 0) {
+            setStatusModal({
+                isOpen: true,
+                type: 'error',
+                message: `Profil Anda belum lengkap. Mohon lengkapi: ${missing.join(', ')}.`
+            })
+            // Optional: Redirect after delay or let user click manualy
+            setTimeout(() => router.push('/dashboard/pencaker/profile?action=edit'), 2000)
+            return
+        }
+
+        // If 'rejected', block them.
+        if (profile.account_status === 'rejected') {
+            setStatusModal({ isOpen: true, type: 'error', message: `Akun Anda ditolak: ${profile.rejection_message}. Silakan perbaiki profil.` })
+            return
+        }
+
+        // Allow 'unverified' to proceed. The application status will be PENDING anyway.
+
+
+        // 2. Age Check
         const age = calculateAge(profile.dob)
         if (training.min_age && age < training.min_age) {
             setStatusModal({ isOpen: true, type: 'error', message: `Maaf, umur Anda (${age} tahun) belum mencukupi. Minimal ${training.min_age} tahun.` })
@@ -71,7 +96,7 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
             return
         }
 
-        // 2. Trigger Modal instead of Confirm
+        // 3. Trigger Modal instead of Confirm
         setShowConfirm(true)
     }
 
@@ -87,7 +112,11 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
         if (result.error) {
             setStatusModal({ isOpen: true, type: 'error', message: result.error })
         } else {
-            setStatusModal({ isOpen: true, type: 'success', message: result.success || 'Pendaftaran Berhasil' })
+            // V5.1-03: Redirect to "Pelatihan Saya"
+            setStatusModal({ isOpen: true, type: 'success', message: result.success || 'Pendaftaran Berhasil! Mengalihkan...' })
+            setTimeout(() => {
+                router.push('/dashboard/pencaker/pelatihan-saya')
+            }, 1500)
         }
     }
 
@@ -223,6 +252,27 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
                                         <span>Sisa: {Math.max(0, training.quota - training.filled)}</span>
                                     </p>
                                 </div>
+
+                                {/* V5.1-04: Registration Dates */}
+                                {(training.registration_start || training.registration_end) && (
+                                    <div className="mb-6 bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                        <h5 className="font-bold text-gray-700 text-xs mb-2 flex items-center gap-1"><Calendar size={12} /> Periode Pendaftaran</h5>
+                                        <div className="text-sm space-y-1">
+                                            {training.registration_start && (
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-500">Mulai:</span>
+                                                    <span className="font-bold text-gray-800">{new Date(training.registration_start).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
+                                                </div>
+                                            )}
+                                            {training.registration_end && (
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-500">Selesai:</span>
+                                                    <span className="font-bold text-gray-800">{new Date(training.registration_end).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
 
                                 <button
                                     onClick={handleApplyClick}

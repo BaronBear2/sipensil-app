@@ -67,13 +67,16 @@ export async function verifyProfileAction(formData: FormData) {
       .update({ status: 'DITERIMA' })
       .eq('user_id', userId)
       .eq('status', 'PENDING')
+      .eq('status', 'PENDING')
   } else {
     // REJECT
-    await supabase
+    const { error: regError } = await supabase
       .from('training_registrations')
       .update({ status: 'DITOLAK' })
       .eq('user_id', userId)
       .eq('status', 'PENDING')
+
+    if (regError) return { error: "Failed to update registrations: " + regError.message }
   }
 
   revalidatePath('/dashboard/dinas')
@@ -124,7 +127,9 @@ export async function verifyLpkReportAction(formData: FormData) {
   } else {
     // Reject Report
     // User reported: "Laporan lpk saat terima atau tolak tidak bisa" -> likely due to missing return or error.
-    await supabase.from('lpk_reports').update({ status: 'REJECTED', rejection_reason: reason }).eq('id', reportId)
+    const { error: lpkError } = await supabase.from('lpk_reports').update({ status: 'REJECTED', rejection_reason: reason }).eq('id', reportId)
+    if (lpkError) return { error: lpkError.message }
+
     // Also notify profile?
     await supabase.from('profiles').update({ rejection_message: `Laporan Anda Ditolak: ${reason}` }).eq('id', userId)
   }

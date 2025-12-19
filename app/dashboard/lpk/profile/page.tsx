@@ -35,6 +35,9 @@ export default function LpkProfilePage() {
     rejection_message: ''
   })
 
+  // State for Alert Modal
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false)
+
   // 1. Fetch Data
   useEffect(() => {
     const getData = async () => {
@@ -54,6 +57,13 @@ export default function LpkProfilePage() {
         director_name: profile.director_name || '',
         director_phone: profile.director_phone || ''
       })
+
+      // Check for first login alert
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('alert') === 'first_login') {
+        setShowWelcomeModal(true)
+      }
+
       setLoading(false)
     }
     getData()
@@ -115,6 +125,32 @@ export default function LpkProfilePage() {
     <div className="min-h-screen bg-gray-50 py-8 px-4 font-sans animate-fade-in">
       <div className="max-w-4xl mx-auto">
 
+        {/* FIRST TIME WELCOME MODAL */}
+        {showWelcomeModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg text-center p-8 animate-bounce-small relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-2 bg-blue-600"></div>
+              <div className="mb-6">
+                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600">
+                  <Building size={40} />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-800">Selamat Datang, LPK Baru!</h2>
+                <p className="text-gray-500 mt-2 leading-relaxed">
+                  Terima kasih telah bergabung di SIPENSIL. <br />
+                  Untuk memulai pelaporan, silakan <strong>Lengkapi Profil Lembaga</strong> Anda terlebih dahulu.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowWelcomeModal(false)}
+                className="bg-blue-600 text-white font-bold py-3 px-8 rounded-xl hover:bg-blue-700 transition shadow-lg w-full"
+              >
+                Siap, Lengkapi Sekarang
+              </button>
+            </div>
+          </div>
+        )}
+
+
         {/* HEADER */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 p-6 flex justify-between items-center">
           <div className="flex items-center gap-3">
@@ -127,7 +163,7 @@ export default function LpkProfilePage() {
 
           {/* Status Badge */}
           <div className={`px-4 py-1.5 rounded-full text-xs font-bold border flex items-center gap-2 ${formData.account_status === 'verified' ? 'bg-green-50 text-green-700 border-green-200' :
-              formData.account_status === 'pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 'bg-gray-100 text-gray-600'
+            formData.account_status === 'pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 'bg-gray-100 text-gray-600'
             }`}>
             <ShieldCheck size={14} /> {formData.account_status.toUpperCase()}
           </div>
