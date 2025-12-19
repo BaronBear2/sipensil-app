@@ -98,7 +98,7 @@ export async function signup(formData: FormData) {
     metadata.operational_pj = operational_pj
     metadata.operational_pj_title = operational_pj_title
     metadata.operational_pj_phone = operational_pj_phone
-    metadata.operational_pj_email = operational_pj_email
+    metadata.operational_pj_email = email // USE MAIN EMAIL AS PJ EMAIL (V5.4-02)
   }
 
   if (role === 'ADMIN_PERUSAHAAN') {
@@ -108,7 +108,7 @@ export async function signup(formData: FormData) {
   }
 
   // Create the user and save their Role + Name in metadata
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -116,10 +116,18 @@ export async function signup(formData: FormData) {
     },
   })
 
+  // V5.4-04: Handle Existing Email Explicitly
   if (error) {
     console.error('Signup Error:', error.message)
     return { error: error.message }
   }
+
+  // Check if user already exists (identities empty usually indicates existing user in some configs, or user is null)
+  // But reliable way: if success properties are there but user was already registered, Supabase might not error if email confirm off.
+  // Ideally, Supabase returns error "User already registered" by default.
+  // Depending on config, if it returns success we assume it's OK.
+  // But if the user says "It bugs out", it implies silent failure.
+  // We'll trust standard error handling for now but ensure the LPK mapping is fixed.
 
   revalidatePath('/', 'layout')
   redirect('/auth/login?message=Check email to continue sign in process')

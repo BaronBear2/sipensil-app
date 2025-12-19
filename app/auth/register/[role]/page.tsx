@@ -139,22 +139,18 @@ export default function RegisterForm({ params }: { params: Promise<{ role: strin
             <input required name="name" onChange={handleChange} className="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Contoh: LPK Maju Jaya" />
           </div>
           <div>
-            <label className="text-xs font-bold block mb-1">Nama Penanggungjawab</label>
-            <input required name="operational_pj" onChange={handleChange} className="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Nama Lengkap Penanggungjawab" />
+            <label className="text-xs font-bold block mb-1">Penanggung Jawab</label>
+            <input required name="operational_pj" onChange={handleChange} className="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Nama Lengkap Penanggung Jawab" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-bold block mb-1">Jabatan Penanggungjawab</label>
+              <label className="text-xs font-bold block mb-1">Jabatan Penanggung Jawab</label>
               <input required name="operational_pj_title" onChange={handleChange} className="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Contoh: Manager" />
             </div>
             <div>
-              <label className="text-xs font-bold block mb-1">No. Kontak/HP Penanggungjawab</label>
+              <label className="text-xs font-bold block mb-1">No. Kontak/HP Penanggung Jawab</label>
               <input required name="operational_pj_phone" onChange={handleChange} className="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="08xxxxxxxxxx" />
             </div>
-          </div>
-          <div>
-            <label className="text-xs font-bold block mb-1">Email Penanggungjawab</label>
-            <input required name="operational_pj_email" type="email" onChange={handleChange} className="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="email.pj@contoh.com" />
           </div>
         </div>
       )

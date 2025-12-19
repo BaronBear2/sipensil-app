@@ -27,6 +27,8 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
         isOpen: boolean, type: 'success' | 'error', message: string
     }>({ isOpen: false, type: 'success', message: '' })
 
+    const [redirectOnClose, setRedirectOnClose] = useState<string | null>(null)
+
     useEffect(() => {
         const getData = async () => {
             const { data: { user } } = await supabase.auth.getUser()
@@ -111,6 +113,8 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
         setApplying(false)
         if (result.error) {
             setStatusModal({ isOpen: true, type: 'error', message: result.error })
+            // V5.4-01: Redirect to Pelatihan Saya if error (likely duplicate) so user can check status
+            setRedirectOnClose('/dashboard/pencaker/pelatihan-saya')
         } else {
             // V5.1-03: Redirect to "Pelatihan Saya"
             setStatusModal({ isOpen: true, type: 'success', message: result.success || 'Pendaftaran Berhasil! Mengalihkan...' })
@@ -129,7 +133,16 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
     return (
         <div className="min-h-screen bg-gray-50 font-sans pb-20">
             <Navbar />
-            <StatusModal {...statusModal} onClose={() => setStatusModal({ ...statusModal, isOpen: false })} />
+            <StatusModal
+                {...statusModal}
+                onClose={() => {
+                    setStatusModal({ ...statusModal, isOpen: false })
+                    if (redirectOnClose) {
+                        router.push(redirectOnClose)
+                        setRedirectOnClose(null)
+                    }
+                }}
+            />
 
             {/* CONFIRMATION MODAL */}
             <Modal isOpen={showConfirm} onClose={() => setShowConfirm(false)} title="Konfirmasi Pendaftaran">

@@ -10,6 +10,7 @@ export default function Navbar() {
   const supabase = createClient()
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -79,17 +80,50 @@ export default function Navbar() {
         {loading ? (
           <div className="text-xs text-gray-400">Loading...</div>
         ) : profile ? (
-          <div className="flex items-center gap-4">
-            <div className="text-right hidden sm:block">
-              <p className="text-xs text-gray-500">Login sebagai:</p>
-              <p className="text-sm font-bold text-gray-800 uppercase">{profile.role.replace('_', ' ')}</p>
-            </div>
+          <div className="relative">
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="flex items-center gap-3 hover:bg-gray-50 p-2 rounded-lg transition-colors border border-transparent hover:border-gray-200"
+            >
+              <div className="text-right hidden sm:block">
+                <p className="text-xs text-gray-500 font-medium">Halo, {profile.full_name?.split(' ')[0] || 'User'}</p>
+                <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">{profile.role?.replace('ADMIN_', '') || 'MEMBER'}</p>
+              </div>
+              <div className="bg-blue-100 p-2 rounded-full text-blue-600">
+                <User size={20} />
+              </div>
+            </button>
 
-            <div className="flex gap-2">
-              <button onClick={handleLogout} className="bg-red-50 hover:bg-red-100 p-2 rounded-lg text-red-600 transition" title="Logout">
-                <LogOut size={18} />
-              </button>
-            </div>
+            {/* DROPDOWN MENU (Click Trigger) - V5.4-03 */}
+            {isDropdownOpen && (
+              <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden animate-fade-in z-[110]">
+                <div className="p-4 border-b bg-gray-50">
+                  <p className="font-bold text-gray-800 text-sm truncate">{profile.full_name}</p>
+                  <p className="text-xs text-gray-500 capitalize">{profile.role?.toLowerCase().replace('_', ' ')}</p>
+                </div>
+
+                <div className="p-2">
+                  <Link
+                    href={getDashboardLink(profile.role)}
+                    onClick={() => setIsDropdownOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
+                  >
+                    <LayoutDashboard size={16} /> Dashboard
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors text-left"
+                  >
+                    <LogOut size={16} /> Keluar Aplikasi
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Overlay to close when clicking outside */}
+            {isDropdownOpen && (
+              <div className="fixed inset-0 z-[100]" onClick={() => setIsDropdownOpen(false)}></div>
+            )}
           </div>
         ) : (
           <Link href="/auth/login" className="bg-blue-900 hover:bg-blue-800 text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-md transition-all flex items-center gap-2">
