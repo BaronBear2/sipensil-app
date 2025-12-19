@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { User, MapPin, Upload, Save, ArrowLeft, ShieldCheck, Lock, Edit, FileText, AlertTriangle, X } from 'lucide-react'
 import Link from 'next/link'
 import StatusModal from '@/components/ui/StatusModal'
 
-export default function ProfilePage() {
+function ProfileContent() {
    const supabase = createClient()
    const router = useRouter()
 
@@ -379,5 +379,13 @@ export default function ProfilePage() {
 
          </div>
       </div>
+   )
+}
+
+export default function ProfilePage() {
+   return (
+      <Suspense fallback={<div className="p-10 text-center text-gray-500">Memuat profil...</div>}>
+         <ProfileContent />
+      </Suspense>
    )
 }
