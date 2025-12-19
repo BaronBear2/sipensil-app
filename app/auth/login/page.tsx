@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
 import { Building, Lock, User, ArrowLeft, AlertCircle } from 'lucide-react'
+import { login } from '@/actions/auth'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -13,7 +14,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
 
   const router = useRouter()
-  const supabase = createClient()
+  // const supabase = createClient() // Unused here if using Server Action
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -22,19 +23,14 @@ export default function LoginPage() {
 
     const formData = new FormData(e.currentTarget)
 
-    // Call Server Action
-    import('@/actions/auth').then(async (mod) => {
-      const result = await mod.login(formData)
-      if (result?.error) {
-        setError('Login Gagal: ' + result.error) // Server action returns simple error message now
-        setLoading(false)
-      } else {
-        // Redirect handled largely by server action, but if it returns nothing, it might mean success and redirect happened?
-        // Actually server action uses `redirect()`, so it throws an error that Next.js catches.
-        // But if we use it in client component like this, valid redirect is caught.
-        // Wait, calling server action from client component: "redirect" works.
-      }
-    })
+    // Call Server Action directly
+    const result = await login(formData)
+
+    if (result?.error) {
+      setError('Login Gagal: ' + result.error)
+      setLoading(false)
+    }
+    // Redirect is handled by server action
   }
 
   return (
@@ -62,6 +58,7 @@ export default function LoginPage() {
               <User className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
               <input
                 required
+                name="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -77,6 +74,7 @@ export default function LoginPage() {
               <Lock className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
               <input
                 required
+                name="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

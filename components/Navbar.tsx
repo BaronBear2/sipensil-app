@@ -14,8 +14,9 @@ export default function Navbar() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      // 1. Cek User Login
-      const { data: { user } } = await supabase.auth.getUser()
+      // 1. Cek User Login (Optimized: getSession first)
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
 
       if (user) {
         // 2. AMBIL ROLE LANGSUNG DARI DB (PENTING!)
