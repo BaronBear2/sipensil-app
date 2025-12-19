@@ -71,9 +71,9 @@ export default async function PerusahaanDashboard() {
               <FileText size={24} />
             </div>
 
-            <h4 className="font-bold text-slate-800 text-lg mb-1 group-hover:text-purple-700 transition-colors">Perjanjian Pemagangan</h4>
+            <h4 className="font-bold text-slate-800 text-lg mb-1 group-hover:text-purple-700 transition-colors">Pencatatan Pemagangan</h4>
             <p className="text-sm text-slate-500 leading-relaxed">
-              Ajukan pencatatan surat perjanjian pemagangan dalam negeri secara resmi.
+              Ajukan pencatatan pemagangan dalam negeri secara resmi.
             </p>
 
             <div className="mt-4 flex items-center text-xs font-bold text-purple-600 opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0">

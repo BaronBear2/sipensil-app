@@ -99,7 +99,7 @@ export default function MagangPage() {
             end_date: formData.get('end_date'),
             participant_count: participants.length,
             participants_data: participants, // JSONB
-            document_path: mockFileUrl,
+            document_path: null, // V5.5-10: Upload removed
             status: isDraft ? 'DRAFT' : 'PENDING', // If Save Draft -> DRAFT.
             rejection_reason: null
         }
@@ -137,7 +137,7 @@ export default function MagangPage() {
                 <div className="bg-white rounded-xl shadow-sm border p-6 mb-6 flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                            <Building className="text-purple-600" /> Perjanjian Pemagangan
+                            <Building className="text-purple-600" /> Pencatatan Pemagangan
                         </h1>
                         <p className="text-gray-500 text-sm mt-1">Layanan Pencatatan Perjanjian Pemagangan Dalam Negeri</p>
                     </div>
@@ -273,15 +273,7 @@ export default function MagangPage() {
                             </button>
                         </div>
 
-                        {/* 3. DOKUMEN & SUBMIT */}
-                        <div className="pt-4 border-t">
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Upload Dokumen Perjanjian (PDF)</label>
-                            <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 bg-gray-50 text-center cursor-pointer hover:bg-purple-50 hover:border-purple-300 transition-colors group">
-                                <Upload size={32} className="mx-auto text-gray-400 group-hover:text-purple-500 mb-2 transition-colors" />
-                                <span className="text-sm font-bold text-gray-500 group-hover:text-purple-600 transition-colors">Klik untuk upload dokumen perjanjian yang telah ditandatangani</span>
-                                <input type="file" name="document" className="hidden" />
-                            </div>
-                        </div>
+
 
                         <div className="flex justify-end gap-3 pt-4">
                             <button

@@ -1,8 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
-import { Building, FileText, Download } from 'lucide-react'
-import { verifyLpkReportAction, verifyProfileAction } from '@/actions/dinas'
-import { AdminActionButtons } from '@/components/admin/AdminButtons'
-import Link from 'next/link'
+import { Building, FileText } from 'lucide-react'
+import LPKReportTable from '@/components/admin/LPKReportTable'
 import VerificationTable from '@/components/admin/VerificationTable'
 
 export default async function LpkAdminPage() {
@@ -63,45 +61,7 @@ export default async function LpkAdminPage() {
 
                 <div className="bg-white rounded-xl shadow-sm border p-6">
                     {lpkReports.length === 0 ? <p className="text-gray-400 text-center py-6">Tidak ada laporan periodik baru.</p> :
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm text-left border rounded-lg">
-                                <thead className="bg-gray-100 text-xs font-bold uppercase text-gray-700">
-                                    <tr>
-                                        <th className="px-4 py-3">LPK</th>
-                                        <th className="px-4 py-3">Periode</th>
-                                        <th className="px-4 py-3">Kontak</th>
-                                        <th className="px-4 py-3 text-center">File</th>
-                                        <th className="px-4 py-3 text-center">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {lpkReports.map((item: any) => (
-                                        <tr key={item.id} className="border-b hover:bg-gray-50">
-                                            <td className="px-4 py-3">
-                                                <div className="font-bold">{item.nama_lpk}</div>
-                                                <div className="text-xs text-gray-500">Reg: {item.no_reg}</div>
-                                            </td>
-                                            <td className="px-4 py-3">{item.semester} {item.tahun}</td>
-                                            <td className="px-4 py-3 text-xs">{item.profiles?.phone}</td>
-                                            <td className="px-4 py-3 text-center">
-                                                <Link href={`/api/generate-word/lpk-report?id=${item.id}`} target="_blank" className="text-green-600 text-xs font-bold border border-green-200 px-2 py-1 rounded hover:bg-green-50 flex items-center justify-center gap-1">
-                                                    <Download size={12} /> Word
-                                                </Link>
-                                            </td>
-                                            <td className="px-4 py-3 text-center">
-                                                <AdminActionButtons
-                                                    id={item.id}
-                                                    extraId={item.user_id}
-                                                    actionFn={verifyLpkReportAction}
-                                                    idName="reportId"
-                                                    extraIdName="userId"
-                                                />
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                        <LPKReportTable reports={lpkReports} />
                     }
                 </div>
             </div>

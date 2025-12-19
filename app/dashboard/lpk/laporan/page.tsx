@@ -23,7 +23,7 @@ export default async function LpkLaporanPage({ searchParams }: { searchParams: P
     }
 
     // --- Title based on type ---
-    const typeKey = params.type === 'penempatan' ? 'Laporan Penempatan' : 'Laporan Ketersediaan'
+    const typeKey = 'Laporan Semester'
 
     return (
         <div className="p-8 animate-fade-in">

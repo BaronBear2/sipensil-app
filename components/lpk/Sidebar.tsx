@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, FileText, History, User, LogOut, Briefcase, FileBarChart } from 'lucide-react'
+import { Home, FileText, History, User, LogOut, Briefcase, FileBarChart, AlertCircle } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -11,7 +11,11 @@ export default function LpkSidebar() {
     const router = useRouter()
     const supabase = createClient()
 
-    const isActive = (path: string) => pathname === path || pathname.startsWith(path)
+    // V5.5-07: Fix Active State Bug. Exclusive check for root dashboard.
+    const isActive = (href: string) => {
+        if (href === '/dashboard/lpk') return pathname === href
+        return pathname.startsWith(href)
+    }
 
     const handleLogout = async () => {
         await supabase.auth.signOut()
@@ -22,9 +26,10 @@ export default function LpkSidebar() {
     const menuItems = [
         { name: 'Dashboard', href: '/dashboard/lpk', icon: Home },
         { name: 'Profil Lembaga', href: '/dashboard/lpk/profile', icon: User },
-        // Splitting "Laporan" as requested, though they might point to the same form for now
-        { name: 'Laporan Ketersediaan', href: '/dashboard/lpk/laporan?type=ketersediaan', icon: FileBarChart },
-        { name: 'Laporan Penempatan', href: '/dashboard/lpk/laporan?type=penempatan', icon: Briefcase },
+        // V5.5-04 & 05: Remove Ketersediaan, Rename Penempatan to Semester
+        { name: 'Laporan Semester', href: '/dashboard/lpk/laporan', icon: Briefcase },
+        // V5.5-06: Add Rejected Menu
+        { name: 'Laporan Semester Ditolak', href: '/dashboard/lpk/laporan-ditolak', icon: AlertCircle },
         { name: 'Riwayat Laporan', href: '/dashboard/lpk/riwayat', icon: History },
     ]
 
@@ -47,11 +52,9 @@ export default function LpkSidebar() {
                     <Link
                         key={item.href}
                         href={item.href}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${isActive(item.href) && item.href !== '/dashboard/lpk' // Exact match logic fix needed below
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${isActive(item.href)
                                 ? 'bg-blue-50 text-blue-600 shadow-sm'
-                                : isActive(item.href) && item.href === '/dashboard/lpk' && pathname === '/dashboard/lpk'
-                                    ? 'bg-blue-50 text-blue-600 shadow-sm'
-                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
                             }`}
                     >
                         <item.icon size={18} />

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, FileText, User, LogOut, Briefcase } from 'lucide-react'
+import { Home, FileText, User, LogOut, Briefcase, History, AlertCircle } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -11,7 +11,11 @@ export default function PerusahaanSidebar() {
     const router = useRouter()
     const supabase = createClient()
 
-    const isActive = (path: string) => pathname === path || pathname.startsWith(path)
+    // V5.5-07 (Applied to Perusahaan too): Fix Active State Bug
+    const isActive = (href: string) => {
+        if (href === '/dashboard/perusahaan') return pathname === href
+        return pathname.startsWith(href)
+    }
 
     const handleLogout = async () => {
         await supabase.auth.signOut()
@@ -21,9 +25,13 @@ export default function PerusahaanSidebar() {
 
     const menuItems = [
         { name: 'Dashboard', href: '/dashboard/perusahaan', icon: Home },
-        { name: 'Profil Perusahaan', href: '/dashboard/perusahaan/profile', icon: User }, // Might need to create this page if missing
-        { name: 'Perjanjian Magang', href: '/dashboard/perusahaan/pemagangan', icon: FileText },
-        // Add more if needed.
+        { name: 'Profil Perusahaan', href: '/dashboard/perusahaan/profile', icon: User },
+        // V5.5-09: Rename to Pencatatan Pemagangan
+        { name: 'Pencatatan Pemagangan', href: '/dashboard/perusahaan/pemagangan', icon: FileText },
+        // V5.5-12: Add Ditolak
+        { name: 'Pencatatan yang Ditolak', href: '/dashboard/perusahaan/pemagangan/ditolak', icon: AlertCircle },
+        // V5.5-11: Add Riwayat
+        { name: 'Riwayat Pencatatan', href: '/dashboard/perusahaan/pemagangan/riwayat', icon: History },
     ]
 
     return (
@@ -45,11 +53,9 @@ export default function PerusahaanSidebar() {
                     <Link
                         key={item.href}
                         href={item.href}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${isActive(item.href) && item.href !== '/dashboard/perusahaan'
-                                ? 'bg-purple-50 text-purple-600 shadow-sm'
-                                : isActive(item.href) && item.href === '/dashboard/perusahaan' && pathname === '/dashboard/perusahaan'
-                                    ? 'bg-purple-50 text-purple-600 shadow-sm'
-                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${isActive(item.href)
+                            ? 'bg-purple-50 text-purple-600 shadow-sm'
+                            : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
                             }`}
                     >
                         <item.icon size={18} />

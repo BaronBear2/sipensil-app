@@ -74,13 +74,14 @@ export default function VerificationTable({ users }: { users: any[] }) {
                   <tr>
                      <th className="px-6 py-3">Nama & NIK</th>
                      <th className="px-6 py-3">Tanggal Daftar</th>
+                     <th className="px-6 py-3">Nama Pelatihan</th>
                      <th className="px-6 py-3 text-center">Berkas</th>
                      <th className="px-6 py-3 text-center">Aksi</th>
                   </tr>
                </thead>
                <tbody>
                   {users.length === 0 ? (
-                     <tr><td colSpan={4} className="text-center py-8 text-gray-500 italic">Tidak ada antrian verifikasi.</td></tr>
+                     <tr><td colSpan={5} className="text-center py-8 text-gray-500 italic">Tidak ada antrian verifikasi.</td></tr>
                   ) : (
                      users.map((u) => (
                         <tr key={u.id} className="bg-white border-b hover:bg-gray-50">
@@ -90,6 +91,9 @@ export default function VerificationTable({ users }: { users: any[] }) {
                            </td>
                            <td className="px-6 py-4 text-xs text-gray-500">
                               {new Date(u.created_at).toLocaleDateString('id-ID')}
+                           </td>
+                           <td className="px-6 py-4 text-xs font-bold text-blue-600">
+                              {u.training_title}
                            </td>
                            <td className="px-6 py-4 text-center">
                               <button onClick={() => handleView(u)} className="text-blue-600 hover:text-blue-800 text-xs font-bold flex items-center justify-center gap-1 mx-auto border border-blue-200 px-2 py-1 rounded">

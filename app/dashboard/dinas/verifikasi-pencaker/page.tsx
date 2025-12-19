@@ -11,7 +11,8 @@ export default async function VerifikasiPencakerPage() {
         .from('training_registrations')
         .select(`
       *,
-      profiles!inner(*)
+      profiles!inner(*),
+      blk_trainings(title)
     `)
         .eq('status', 'PENDING')
         .order('created_at', { ascending: false })
@@ -23,7 +24,8 @@ export default async function VerifikasiPencakerPage() {
             ...reg.profiles,
             id: reg.profiles.id,
             created_at: reg.created_at,
-            training_reg_id: reg.id
+            training_reg_id: reg.id,
+            training_title: reg.blk_trainings?.title || 'Generik'
         }))
     }
 
