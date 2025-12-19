@@ -51,11 +51,11 @@ export default async function DashboardPencaker({ searchParams }: { searchParams
           <p className="text-slate-500 font-medium">Selamat datang di Dashboard Pencari Kerja.</p>
         </div>
 
-        {/* 3 CORE ACTIONS GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto">
+        {/* 4 CORE ACTIONS GRID - Updated to 2x2 or 4-col */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 max-w-7xl mx-auto">
 
           {/* CARD 1: PROFIL / VERIFIKASI */}
-          <Link href="/dashboard/pencaker/profile" className={`relative group p-8 rounded-3xl border-2 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl flex flex-col items-center text-center h-80 justify-center
+          <Link href="/dashboard/pencaker/profile" className={`relative group p-6 rounded-3xl border-2 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl flex flex-col items-center text-center h-80 justify-center
               ${profile?.account_status === 'unverified'
               ? (isProfileComplete
                 ? 'bg-yellow-50 border-yellow-400 border-dashed shadow-yellow-100 ring-4 ring-yellow-50/50' // Completed but Unverified
@@ -63,53 +63,75 @@ export default async function DashboardPencaker({ searchParams }: { searchParams
               : 'bg-white border-slate-100 shadow-sm hover:border-blue-100'
             }
           `}>
-            <div className={`p-6 rounded-full mb-6 
+            <div className={`p-5 rounded-full mb-4
                 ${profile?.account_status === 'unverified' && isProfileComplete ? 'bg-yellow-100 text-yellow-600' :
                 profile?.account_status === 'unverified' ? 'bg-blue-200 text-blue-700' : 'bg-slate-100 text-slate-600'} 
                 group-hover:bg-blue-600 group-hover:text-white transition-colors`}>
-              {profile?.account_status === 'verified' ? <ShieldCheck size={40} /> : <User size={40} />}
+              {profile?.account_status === 'verified' ? <ShieldCheck size={32} /> : <User size={32} />}
             </div>
 
-            <h3 className="text-xl font-bold text-slate-800 group-hover:text-blue-600 transition-colors mb-2">
+            <h3 className="text-lg font-bold text-slate-800 group-hover:text-blue-600 transition-colors mb-2">
               {profile?.account_status === 'verified' ? 'Profil Terverifikasi' :
                 (isProfileComplete ? 'Menunggu Verifikasi' : 'Lengkapi Profil')}
             </h3>
 
-            <p className="text-sm text-slate-500 leading-relaxed px-4">
-              {profile?.account_status === 'verified' ? 'Data diri Anda sudah valid. Siap mendaftar pelatihan.' :
-                (isProfileComplete ? 'Data sudah terlengkapi. Anda sudah bisa melakukan pelayanan' : 'Langkah Pertama! Isi data diri Anda untuk verifikasi akun.')}
+            <p className="text-xs text-slate-500 leading-relaxed px-2">
+              {profile?.account_status === 'verified' ? 'Data diri valid.' :
+                (isProfileComplete ? 'Data lengkap. Menunggu admin.' : 'Lengkapi biodata untuk mulai.')}
             </p>
 
             {profile?.account_status === 'unverified' && (
-              <span className={`mt-6 px-4 py-2 text-white text-xs font-bold rounded-full animate-pulse ${isProfileComplete ? 'bg-yellow-600' : 'bg-blue-600'}`}>
-                {isProfileComplete ? 'SUDAH LENGKAP - SEDANG MENUNGGU VERIFIKASI' : 'Wajib Diisi'}
+              <span className={`mt-4 px-3 py-1 text-white text-[10px] font-bold rounded-full animate-pulse ${isProfileComplete ? 'bg-yellow-600' : 'bg-blue-600'}`}>
+                {isProfileComplete ? 'MENUNGGU VERIFIKASI' : 'Wajib Diisi'}
               </span>
             )}
           </Link>
 
-          {/* CARD 2: PROGRAM BLK */}
-          <Link href="/dashboard/pencaker/programs" className="group p-8 rounded-3xl bg-white border-2 border-slate-100 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:border-blue-100 flex flex-col items-center text-center h-80 justify-center">
-            <div className="p-6 rounded-full bg-emerald-100 text-emerald-600 mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-              <BookOpen size={40} />
+          {/* CARD 2: PELATIHAN SAYA (NEW) */}
+          <Link href="/dashboard/pencaker/pelatihan-saya" className="group p-6 rounded-3xl bg-white border-2 border-slate-100 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:border-blue-100 flex flex-col items-center text-center h-80 justify-center relative overflow-hidden">
+
+            {/* Notif Badge if active training exists */}
+            {activeTraining && (
+              <div className="absolute top-4 right-4 flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-sky-500"></span>
+              </div>
+            )}
+
+            <div className="p-5 rounded-full bg-indigo-100 text-indigo-600 mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+              <ClipboardList size={32} />
             </div>
-            <h3 className="text-xl font-bold text-slate-800 group-hover:text-emerald-600 transition-colors mb-2">
-              Program Pelatihan BLK
+            <h3 className="text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition-colors mb-2">
+              Pelatihan Saya
             </h3>
-            <p className="text-sm text-slate-500 leading-relaxed px-4">
-              Daftar pelatihan kompetensi gratis di UPTD BLK Kabupaten Bekasi.
+            <p className="text-xs text-slate-500 leading-relaxed px-2">
+              Lihat status pendaftaran, cetak tanda daftar, dan riwayat pelatihan Anda.
             </p>
           </Link>
 
-          {/* CARD 3: IM JAPAN */}
-          <Link href="/dashboard/pencaker/im-japan" className="group p-8 rounded-3xl bg-gradient-to-b from-white to-red-50 border-2 border-red-50 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:border-red-200 flex flex-col items-center text-center h-80 justify-center">
-            <div className="p-6 rounded-full bg-red-100 text-red-600 mb-6 group-hover:bg-red-600 group-hover:text-white transition-colors">
-              <span className="text-3xl">🇯🇵</span>
+          {/* CARD 3: PROGRAM BLK */}
+          <Link href="/dashboard/pencaker/programs" className="group p-6 rounded-3xl bg-white border-2 border-slate-100 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:border-emerald-100 flex flex-col items-center text-center h-80 justify-center">
+            <div className="p-5 rounded-full bg-emerald-100 text-emerald-600 mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+              <BookOpen size={32} />
             </div>
-            <h3 className="text-xl font-bold text-slate-800 group-hover:text-red-600 transition-colors mb-2">
+            <h3 className="text-lg font-bold text-slate-800 group-hover:text-emerald-600 transition-colors mb-2">
+              Katalog Pelatihan
+            </h3>
+            <p className="text-xs text-slate-500 leading-relaxed px-2">
+              Cari dan daftar pelatihan kompetensi di BLK Kabupaten Bekasi.
+            </p>
+          </Link>
+
+          {/* CARD 4: IM JAPAN */}
+          <Link href="/dashboard/pencaker/im-japan" className="group p-6 rounded-3xl bg-gradient-to-b from-white to-red-50 border-2 border-red-50 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:border-red-200 flex flex-col items-center text-center h-80 justify-center">
+            <div className="p-5 rounded-full bg-red-100 text-red-600 mb-4 group-hover:bg-red-600 group-hover:text-white transition-colors">
+              <span className="text-2xl">🇯🇵</span>
+            </div>
+            <h3 className="text-lg font-bold text-slate-800 group-hover:text-red-600 transition-colors mb-2">
               Program IM Japan
             </h3>
-            <p className="text-sm text-slate-500 leading-relaxed px-4">
-              Program pemagangan ke Jepang. Karir internasional dan gaji tinggi.
+            <p className="text-xs text-slate-500 leading-relaxed px-2">
+              Karir magang ke Jepang dengan gaji tinggi.
             </p>
           </Link>
 
