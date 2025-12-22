@@ -122,7 +122,30 @@ function ProfileContent() {
       getData()
    }, [searchParams])
 
-   // ... (handleChange logic same)
+   // 2. LOGIC FORM
+   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+      const { name, value, files } = e.target as HTMLInputElement
+      if (files && files.length > 0) {
+         // MOCK UPLOAD: In real app, upload to Supabase Storage here and get URL.
+         // For V5 requirement "Validation", we treat selecting a file as "Uploaded"
+         setFormData(prev => ({ ...prev, [name]: 'uploaded_dummy_url' }))
+      } else {
+         setFormData(prev => ({ ...prev, [name]: value }))
+      }
+
+      // Auto-copy Address jika checkbox aktif
+      if (name === 'address_ktp' && sameAddress) {
+         setFormData(prev => ({ ...prev, address_dom: value }))
+      }
+   }
+
+   const handleCheckbox = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const checked = e.target.checked
+      setSameAddress(checked)
+      if (checked) {
+         setFormData(prev => ({ ...prev, address_dom: prev.address_ktp }))
+      }
+   }
 
    // 3. LOGIC SIMPAN
    const handleSaveClick = (e: React.FormEvent) => {
