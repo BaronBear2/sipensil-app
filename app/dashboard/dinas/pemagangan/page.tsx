@@ -10,10 +10,28 @@ export default async function PemaganganAdminPage() {
     try {
         const { data } = await supabase
             .from('magang_permits')
-            .select(`*, profiles!inner(company_name, nib, phone)`)
+            .select(`
+                *,
+                profiles!inner(
+                   *,
+                   profile_perusahaan(*)
+                )
+            `)
             .eq('status', 'PENDING')
             .order('created_at', { ascending: false })
-        if (data) dataTab4 = data
+
+        if (data) {
+            dataTab4 = data.map((item: any) => {
+                const p = item.profiles
+                const comp = p?.profile_perusahaan || {}
+                // Flatten for easier access or just ensure company_name is correct
+                if (p) {
+                    p.company_name = comp.company_name || p.company_name
+                    p.nib = comp.nib || p.nib
+                }
+                return item
+            })
+        }
     } catch (e) {
         console.error(e)
     }

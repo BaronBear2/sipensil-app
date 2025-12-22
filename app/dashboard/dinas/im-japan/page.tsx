@@ -10,10 +10,28 @@ export default async function ImJapanPage() {
     try {
         const { data } = await supabase
             .from('im_japan_registrations')
-            .select(`*, profiles!inner(full_name, nik, phone)`)
+            .select(`
+                *,
+                profiles!inner(
+                   *,
+                   profile_pencaker(*)
+                )
+            `)
             .eq('status', 'PENDING')
             .order('created_at', { ascending: false })
-        if (data) dataTab2 = data
+
+        if (data) {
+            dataTab2 = data.map((item: any) => {
+                const p = item.profiles
+                const details = p?.profile_pencaker || {}
+                // Ensure NIK is populated from details if not in base 
+                if (p) {
+                    p.nik = details.nik || p.nik
+                    p.phone = details.phone || p.phone
+                }
+                return item
+            })
+        }
     } catch (e) {
         console.error(e)
     }

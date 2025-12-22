@@ -11,11 +11,17 @@ export default async function LpkAdminPage() {
     try {
         const { data } = await supabase
             .from('profiles')
-            .select('*')
+            .select('*, profile_lpk(*)')
             .eq('role', 'ADMIN_LPK')
             .eq('account_status', 'pending')
             .order('created_at', { ascending: false })
-        if (data) pendingLpkAccounts = data
+
+        if (data) {
+            pendingLpkAccounts = data.map((p: any) => ({
+                ...p,
+                ...(p.profile_lpk || {}) // Flatten structure
+            }))
+        }
     } catch (e) {
         console.error(e)
     }
@@ -25,10 +31,31 @@ export default async function LpkAdminPage() {
     try {
         const { data } = await supabase
             .from('lpk_reports')
-            .select(`*, profiles!inner(company_name, phone)`) // Assuming user_id join to profiles
+            .select(`
+                *,
+                profiles!inner(
+                   *,
+                   profile_lpk(*)
+                )
+            `)
             .eq('status', 'SUBMITTED')
             .order('created_at', { ascending: false })
-        if (data) lpkReports = data
+
+        if (data) {
+            lpkReports = data.map((rep: any) => {
+                const p = rep.profiles
+                const lpk = p?.profile_lpk || {}
+                // We need to attach company_name etc to the profile object or report object 
+                // depending on what LPKReportTable expects.
+                // Usually it expects rep.profiles.company_name
+                // Let's ensure rep.profiles has the correct name
+                if (p) {
+                    p.company_name = lpk.lpk_name || p.company_name
+                    p.phone = lpk.phone || p.phone
+                }
+                return rep
+            })
+        }
     } catch (e) {
         console.error(e)
     }

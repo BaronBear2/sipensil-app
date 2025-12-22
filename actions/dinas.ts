@@ -303,8 +303,24 @@ export async function adminUpdateUserAction(formData: FormData) {
     verification_status: 'VERIFIED'
   }
 
-  const { error } = await supabase.from('profiles').update(updates).eq('id', userId)
+  // 1. Update Base Profile
+  const { error } = await supabase.from('profiles').update({
+    full_name: formData.get('full_name'),
+    account_status: 'verified',
+    verification_status: 'VERIFIED'
+  }).eq('id', userId)
+
   if (error) return { error: error.message }
+
+  // 2. Update Details (Specific to Pencaker as this action is used in UserManagement for Pencakers)
+  // We should ideally check role, but assuming this action is bound to Pencaker management.
+  const { error: detailError } = await supabase.from('profile_pencaker').upsert({
+    user_id: userId,
+    nik: formData.get('nik') as string,
+    phone: formData.get('phone') as string
+  }, { onConflict: 'user_id' }) // UPSERT to ensure row exists
+
+  if (detailError) return { error: detailError.message }
 
   revalidatePath('/dashboard/dinas')
   return { success: true }

@@ -68,11 +68,8 @@ export default function ImJapanPage() {
 
         if (!profile) return
 
-        if (profile.account_status !== 'verified') {
-            alert("Mohon verifikasi profil akun Anda terlebih dahulu sebelum mendaftar IM Japan.")
-            router.push('/dashboard/pencaker/profile')
-            return
-        }
+        // Check removed as per request: Unverified users can apply now.
+        // if (profile.account_status !== 'verified') { ... }
 
         if (!confirm("Pastikan semua berkas yang diunggah sudah benar. Ajukan pendaftaran?")) return
 
@@ -84,7 +81,7 @@ export default function ImJapanPage() {
 
         const payload = {
             user_id: profile.id,
-            batch: 'Batch 1/2025', // Default or from a select above table
+            // batch: 'Batch 1/2025', // Batch removed as per request
             document_path: mockFileUrl,
             status: 'PENDING',
             admin_notes: null
@@ -122,9 +119,9 @@ export default function ImJapanPage() {
                     </Link>
                     <div>
                         <h1 className="text-2xl font-extrabold text-gray-800 flex items-center gap-2">
-                            Program IM Japan 🇯🇵
+                            Surat Rekomendasi IM Japan 🇯🇵
                         </h1>
-                        <p className="text-gray-500 text-sm">Upload berkas persyaratan untuk mengikuti seleksi.</p>
+                        <p className="text-gray-500 text-sm">Upload berkas persyaratan untuk mendapatkan Surat Rekomendasi Tes IM Japan.</p>
                     </div>
                 </div>
 
@@ -155,12 +152,12 @@ export default function ImJapanPage() {
                         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                             <CheckCircle className="text-green-600 w-10 h-10" />
                         </div>
-                        <h3 className="font-bold text-gray-900 text-2xl mb-2">Selamat! Pendaftaran Diterima</h3>
+                        <h3 className="font-bold text-gray-900 text-2xl mb-2">Permohonan Disetujui</h3>
                         <p className="text-gray-600 mb-8 max-w-lg mx-auto">
-                            Anda telah lolos verifikasi administrasi. Langkah selanjutnya adalah mengikuti tes fisik dan matematika.
+                            Berkas Anda telah diverifikasi. Silakan download Surat Rekomendasi di bawah ini untuk dibawa saat tes fisik/matematika.
                         </p>
                         <a href="#" className="inline-flex items-center gap-2 bg-green-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-green-700 shadow-lg shadow-green-200 transition-transform hover:-translate-y-1">
-                            <Download size={20} /> Download Surat Pengantar Tes
+                            <Download size={20} /> Download Surat Rekomendasi
                         </a>
                     </div>
                 )}
@@ -187,13 +184,12 @@ export default function ImJapanPage() {
                 {(!data || data.status === 'REJECTED') && (
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
 
-                        {/* Batch Selection */}
+                        {/* Batch Selection REMOVED */}
                         <div className="p-6 border-b bg-gray-50/50">
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Pilih Batch Seleksi</label>
-                            <select className="w-full md:w-1/3 appearance-none border border-gray-300 rounded-lg px-4 py-2 bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium">
-                                <option>Batch 1 / 2025 (Januari - Maret)</option>
-                                <option>Batch 2 / 2025 (April - Juni)</option>
-                            </select>
+                            <div className="flex items-center gap-2 text-sm text-blue-800 bg-blue-50 px-4 py-3 rounded-lg">
+                                <Info size={16} />
+                                <span className="font-bold">Silakan lengkapi berkas di bawah ini untuk mengajukan Surat Rekomendasi.</span>
+                            </div>
                         </div>
 
                         <div className="overflow-x-auto">
@@ -245,7 +241,7 @@ export default function ImJapanPage() {
                                 {submitting ? (
                                     <><span>Mengirim...</span></>
                                 ) : (
-                                    <><Upload size={18} /> Ajukan Pendaftaran</>
+                                    <><Upload size={18} /> Ajukan Permohonan</>
                                 )}
                             </button>
                         </div>

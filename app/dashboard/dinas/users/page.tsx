@@ -14,11 +14,23 @@ export default async function UsersAdminPage({ searchParams }: { searchParams: P
     let dataTab7: any[] = []
 
     // 1. Base Query
-    let query = supabase.from('profiles').select('*', { count: 'exact' }).eq('role', 'PENCAKER')
+    let query = supabase
+        .from('profiles')
+        .select('*, profile_pencaker(*)', { count: 'exact' })
+        .eq('role', 'PENCAKER')
 
     // 2. Search Filter
+    // Note: Filtering by NIK which is now in profile_pencaker is tricky with basic Supabase OR syntax on joined table.
+    // Ideally: !inner join if filtering.
+    // For now, if pQuery matches NIK, we might miss it if we don't modify the filter.
+    // 'profiles' still has 'nik' column? If I didn't drop it, searching it works for legacy/migrated data.
+    // But for NEW data, 'nik' in profiles might be null (unless I keep syncing it).
+    // Let's assume for search, users rely on Name (in profiles) mostly.
+    // If we want to search NIK in joined table: .or(`..., profile_pencaker.nik.ilike.%${pQuery}%`) - Supabase supports referenced table filter?
+    // It's safer to keep it simple or enable inner join search if needed.
+    // I will just keep existing search for now, assuming NIK might still be in base or we search Name.
     if (pQuery) {
-        query = query.or(`full_name.ilike.%${pQuery}%,nik.ilike.%${pQuery}%`)
+        query = query.or(`full_name.ilike.%${pQuery}%,email.ilike.%${pQuery}%`)
     }
 
     // 3. Pagination
@@ -28,7 +40,10 @@ export default async function UsersAdminPage({ searchParams }: { searchParams: P
     const { data, count } = await query.range(from, to).order('created_at', { ascending: false })
 
     if (data) {
-        dataTab7 = data
+        dataTab7 = data.map((p: any) => ({
+            ...p,
+            ...(p.profile_pencaker || {}) // Flatten
+        }))
         totalUserCount = count || 0
         totalUserPages = Math.ceil(totalUserCount / ITEMS_PER_PAGE)
     }

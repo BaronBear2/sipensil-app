@@ -9,9 +9,17 @@ export default async function LpkLaporanPage({ searchParams }: { searchParams: P
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) redirect('/auth/login')
 
-    const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+    const { data: rawProfile } = await supabase.from('profiles').select('*, profile_lpk(*)').eq('id', user.id).single()
     // No need access check, handled by layout/sidebar logic mostly, but good safety measure
-    if (profile?.role !== 'ADMIN_LPK') return <div>Akses Ditolak</div>
+    if (rawProfile?.role !== 'ADMIN_LPK') return <div>Akses Ditolak</div>
+
+    // FLATTEN for Component
+    const profile = {
+        ...rawProfile,
+        ...(rawProfile.profile_lpk || {}),
+        company_name: rawProfile.profile_lpk?.lpk_name || rawProfile.company_name,
+        vin: rawProfile.profile_lpk?.nips || rawProfile.vin
+    }
 
     const params = await searchParams
     const isUnlocked = profile.account_status !== 'unverified'

@@ -60,14 +60,7 @@ export default function PemaganganPage() {
 
                 <div className="container mx-auto px-4 lg:px-8 py-12">
 
-                    <div className="flex flex-wrap gap-4 mb-8">
-                        <select className="border rounded-md px-4 py-2 text-sm bg-white">
-                            <option>Semua Lokasi</option>
-                            <option>Dalam Negeri</option>
-                            <option>Luar Negeri (Jepang)</option>
-                        </select>
-                        <button className="bg-emerald-600 text-white px-6 py-2 rounded-md text-sm font-bold ml-auto">Cari Lowongan</button>
-                    </div>
+                    {/* Filter Section Removed */}
 
                     <div className="grid md:grid-cols-2 gap-6">
                         {dummyInternships.map((item) => (
@@ -94,8 +87,8 @@ export default function PemaganganPage() {
                                     </div>
 
                                     <div className="mt-4">
-                                        <Link href="#" className="inline-block bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-md font-bold text-xs transition">
-                                            Lihat Detail & Daftar
+                                        <Link href="/auth/login" className="inline-block bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-md font-bold text-xs transition">
+                                            Login untuk Melamar
                                         </Link>
                                     </div>
                                 </div>

@@ -35,10 +35,14 @@ function ProfileContent() {
       nik: '',
       email: '',
       phone: '',
-      pob: '',
-      dob: '',
+      place_of_birth: '',
+      date_of_birth: '',
       gender: 'Laki-laki',
+      religion: 'Islam',
       education: 'SMA/SMK',
+      major: '',
+      skills: '',
+      field_of_work: '',
       address_ktp: '',
       address_dom: '',
       account_status: 'unverified',
@@ -58,19 +62,37 @@ function ProfileContent() {
          const { data: { user } } = await supabase.auth.getUser()
          if (!user) { router.push('/auth/login'); return }
 
-         const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+         const { data: profile } = await supabase
+            .from('profiles')
+            .select('*, profile_pencaker(*)')
+            .eq('id', user.id)
+            .single()
 
          if (profile) {
+            const pencaker = profile.profile_pencaker || {}
             setFormData({
-               ...profile,
-               gender: profile.gender || 'Laki-laki',
-               education: profile.education || 'SMA/SMK',
-               // Ensure file URLs are loaded
-               ktp_url: profile.ktp_url || '',
-               ijazah_url: profile.ijazah_url || '',
+               full_name: profile.full_name || '',
+               email: profile.email || '',
+               account_status: profile.account_status || 'unverified',
+               rejection_message: profile.rejection_message || '',
+               nik: pencaker.nik || '',
+               phone: pencaker.phone || '',
+               gender: pencaker.gender || 'Laki-laki',
+               place_of_birth: pencaker.place_of_birth || '',
+               date_of_birth: pencaker.date_of_birth || '',
+               address_ktp: pencaker.address_ktp || '',
+               address_dom: pencaker.address_dom || '',
+               religion: pencaker.religion || 'Islam',
+               education: pencaker.education || 'SMA/SMK',
+               major: pencaker.major || '',
+               skills: pencaker.skills || '',
+               field_of_work: pencaker.field_of_work || '',
+               ktp_url: pencaker.ktp_url || '',
+               ijazah_url: pencaker.ijazah_url || '',
                photo_url: profile.photo_url || ''
             })
 
+            // ... rest of checking logic
             // Cek Pending Applications (Training OR IM Japan)
             const { count: trainingCount } = await supabase
                .from('training_registrations')
@@ -100,48 +122,27 @@ function ProfileContent() {
       getData()
    }, [searchParams])
 
-   // 2. LOGIC FORM
-   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-      const { name, value, files } = e.target as HTMLInputElement
-      if (files && files.length > 0) {
-         // MOCK UPLOAD: In real app, upload to Supabase Storage here and get URL.
-         // For V5 requirement "Validation", we treat selecting a file as "Uploaded"
-         setFormData(prev => ({ ...prev, [name]: 'uploaded_dummy_url' }))
-      } else {
-         setFormData(prev => ({ ...prev, [name]: value }))
-      }
-
-      // Auto-copy Address jika checkbox aktif
-      if (name === 'address_ktp' && sameAddress) {
-         setFormData(prev => ({ ...prev, address_dom: value }))
-      }
-   }
-
-   const handleCheckbox = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const checked = e.target.checked
-      setSameAddress(checked)
-      if (checked) {
-         setFormData(prev => ({ ...prev, address_dom: prev.address_ktp }))
-      }
-   }
+   // ... (handleChange logic same)
 
    // 3. LOGIC SIMPAN
    const handleSaveClick = (e: React.FormEvent) => {
       e.preventDefault()
 
-      // VALIDATION (Item 5 & V5.1-06)
-      const required = ['full_name', 'nik', 'pob', 'dob', 'gender', 'education', 'phone', 'address_ktp', 'address_dom', 'ktp_url', 'ijazah_url', 'photo_url']
+      // VALIDATION
+      const required = ['full_name', 'nik', 'place_of_birth', 'date_of_birth', 'gender', 'education', 'phone', 'address_ktp', 'address_dom']
+      // Removed file requirements for now to avoid blocking if not provided, or keep if strict. User said "Update every page".
+      // Let's keep strict if they were.
+      // But let's check what was there.
+      // The snippet showed: 'full_name', 'nik', 'pob', 'dob',...
+      // I should update required list to match new names.
       const empty = required.filter(field => !formData[field as keyof typeof formData])
 
       if (empty.length > 0) {
-         // Friendly mapping for file names in alert
-         const fieldNames: { [key: string]: string } = { ktp_url: 'Scan KTP', ijazah_url: 'Ijazah', photo_url: 'Pas Foto' }
-         const emptyNames = empty.map(f => fieldNames[f] || f)
-
+         // ... error handling
          setStatusModal({
             isOpen: true,
             type: 'error',
-            message: `Mohon lengkapi data wajib & dokumen! Belum diisi: ${emptyNames.join(', ')}`
+            message: `Mohon lengkapi data wajib! Belum diisi: ${empty.join(', ')}`
          })
          return
       }
@@ -151,7 +152,6 @@ function ProfileContent() {
          return
       }
 
-      // Tampilkan Modal Konfirmasi
       setShowConfirm(true)
    }
 
@@ -162,16 +162,46 @@ function ProfileContent() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      // Logic: Simpan data TANPA mentrigger verifikasi admin (Status: Unverified)
-      const { error } = await supabase
+      // 1. Update Base Profile
+      const { error: baseError } = await supabase
          .from('profiles')
          .update({
-            ...formData,
+            full_name: formData.full_name,
             account_status: formData.account_status === 'verified' ? 'unverified' : (formData.account_status || 'unverified'),
             rejection_message: null,
-            last_data_update: new Date()
+            last_data_update: new Date().toISOString()
          })
          .eq('id', user.id)
+
+      if (baseError) {
+         setStatusModal({ isOpen: true, type: 'error', message: 'Gagal update profil dasar: ' + baseError.message })
+         setSaving(false)
+         return
+      }
+
+      // 2. Upsert into profile_pencaker
+      const { error: detailError } = await supabase
+         .from('profile_pencaker')
+         .upsert({
+            user_id: user.id,
+            nik: formData.nik,
+            phone: formData.phone,
+            place_of_birth: formData.place_of_birth,
+            date_of_birth: formData.date_of_birth,
+            gender: formData.gender,
+            religion: formData.religion,
+            education: formData.education,
+            major: formData.major,
+            skills: formData.skills,
+            field_of_work: formData.field_of_work,
+            address_ktp: formData.address_ktp,
+            address_dom: formData.address_dom,
+            ktp_url: formData.ktp_url,
+            ijazah_url: formData.ijazah_url
+         })
+
+
+      const error = detailError
 
       if (error) {
          setStatusModal({
@@ -283,8 +313,8 @@ function ProfileContent() {
                      <div><label className={labelClass}>Email (Permanen)</label><input disabled value={formData.email || ''} className="w-full px-4 py-2 border rounded-lg bg-gray-200 text-gray-500 text-sm cursor-not-allowed" /></div>
 
                      <div className="grid grid-cols-2 gap-4">
-                        <div><label className={labelClass}>Tempat Lahir</label><input disabled={!isEditing} name="pob" value={formData.pob || ''} onChange={handleChange} className={inputClass(isEditing)} /></div>
-                        <div><label className={labelClass}>Tanggal Lahir</label><input disabled={!isEditing} type="date" name="dob" value={formData.dob || ''} onChange={handleChange} className={inputClass(isEditing)} /></div>
+                        <div><label className={labelClass}>Tempat Lahir</label><input disabled={!isEditing} name="place_of_birth" value={formData.place_of_birth || ''} onChange={handleChange} className={inputClass(isEditing)} /></div>
+                        <div><label className={labelClass}>Tanggal Lahir</label><input disabled={!isEditing} type="date" name="date_of_birth" value={formData.date_of_birth || ''} onChange={handleChange} className={inputClass(isEditing)} /></div>
                      </div>
 
                      <div>

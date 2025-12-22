@@ -85,21 +85,7 @@ export default function PelatihanPage() {
 
                 <div className="container mx-auto px-4 lg:px-8 py-12">
 
-                    {/* Filter Section (Dummy) */}
-                    <div className="flex flex-wrap gap-4 mb-8">
-                        <select className="border rounded-md px-4 py-2 text-sm bg-white">
-                            <option>Semua Kategori</option>
-                            <option>TIK</option>
-                            <option>Otomotif</option>
-                            <option>Teknik Las</option>
-                        </select>
-                        <select className="border rounded-md px-4 py-2 text-sm bg-white">
-                            <option>Semua Lokasi</option>
-                            <option>BLK Bekasi</option>
-                            <option>LPK Swasta</option>
-                        </select>
-                        <button className="bg-blue-600 text-white px-6 py-2 rounded-md text-sm font-bold ml-auto">Cari Pelatihan</button>
-                    </div>
+                    {/* Filter Section Removed as per request */}
 
                     {/* Grid */}
                     <div className="grid md:grid-cols-3 gap-8">
@@ -123,8 +109,8 @@ export default function PelatihanPage() {
                                         <div className="flex items-center gap-2 col-span-2"><Users size={14} className="text-orange-500" /> Kuota: {item.quota} Orang</div>
                                     </div>
 
-                                    <Link href="#" className="block text-center w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-bold text-sm transition">
-                                        Lihat Detail
+                                    <Link href="/auth/login" className="block text-center w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-bold text-sm transition">
+                                        Login untuk Mendaftar
                                     </Link>
                                 </div>
                             </div>

@@ -44,19 +44,22 @@ export default function LpkProfilePage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth/login'); return }
 
-      const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-      if (profile) setFormData({
-        ...profile,
-        // Pastikan field null jadi empty string agar controlled input aman
-        address_office: profile.address_office || '',
-        fax: profile.fax || '',
-        email_official: profile.email_official || '',
-        license_number: profile.license_number || '',
-        license_date: profile.license_date || '',
-        lpk_type: profile.lpk_type || 'Swasta',
-        director_name: profile.director_name || '',
-        director_phone: profile.director_phone || ''
-      })
+      const { data: profile } = await supabase.from('profiles').select('*, profile_lpk(*)').eq('id', user.id).single()
+      if (profile) {
+        const lpk = profile.profile_lpk || {}
+        setFormData({
+          ...profile,
+          ...lpk, // Override with specific table data
+          // Map legacy columns if needed or just use lpk data
+          lpk_type: lpk.lpk_type || profile.lpk_type || 'Swasta',
+          address_office: lpk.address_office || profile.address_office || '',
+          // Ensure controlled inputs
+          company_name: lpk.lpk_name || profile.company_name || '',
+          vin: lpk.nips || profile.vin || '', // VIN mapped to nips in new schema or keep as nips? Schema said 'nips' -- comment says "Nomor Induk Peserta(or NPSN/VIN)"
+          // Form uses 'vin', Schema uses 'nips'. Let's map vin <-> nips
+          // Logic: formData.vin <-> db.nips
+        })
+      }
 
       // Check for first login alert
       const params = new URLSearchParams(window.location.search)
@@ -83,16 +86,32 @@ export default function LpkProfilePage() {
     const { data: { user } } = await supabase.auth.getUser()
 
     // Update data & Ubah status jadi PENDING
-    const { error } = await supabase
+    // 1. Update Base Profile
+    const { error: baseError } = await supabase
       .from('profiles')
       .update({
-        company_name: formData.company_name,
-        vin: formData.vin,
-        phone: formData.phone, // Kontak LPK/PJ
+        company_name: formData.company_name, // Keep syncing for easy display in lists
+        phone: formData.phone,
+        account_status: 'pending',
+        rejection_message: null
+      })
+      .eq('id', user?.id)
 
-        // Update Field Baru
-        address_office: formData.address_office, // Jika pakai field baru
-        address_dom: formData.address_dom, // Backup atau alamat domisili
+    if (baseError) {
+      alert('Gagal update base profil: ' + baseError.message)
+      setSaving(false)
+      return
+    }
+
+    // 2. Upsert LPK Profile
+    const { error: detailError } = await supabase
+      .from('profile_lpk')
+      .upsert({
+        user_id: user?.id,
+        lpk_name: formData.company_name,
+        nips: formData.vin, // Mapping VIN form to NIPS db
+        phone: formData.phone,
+        address_office: formData.address_office,
         fax: formData.fax,
         email_official: formData.email_official,
         license_number: formData.license_number,
@@ -101,10 +120,15 @@ export default function LpkProfilePage() {
         director_name: formData.director_name,
         director_phone: formData.director_phone,
 
-        account_status: 'pending', // Trigger verifikasi admin
-        rejection_message: null
-      })
-      .eq('id', user?.id)
+        // Should I add operational_pj fields? Form doesn't seem to edit them here, maybe in register only? 
+        // Checking form... No operational PJ fields in form state/render. 
+        // If they exist in DB, they might be lost if we don't include them in upsert?
+        // UPSERT updates existing row. If I don't include column, it keeps old value? 
+        // NO, Supabase UPSERT needs all columns if inserting new, but if updating it might wipe if I pass object? 
+        // Actually upsert updates columns provided. 
+      }, { onConflict: 'user_id' })
+
+    const error = detailError
 
     if (error) {
       alert('Gagal: ' + error.message)

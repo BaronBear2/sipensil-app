@@ -17,9 +17,27 @@ export default async function DashboardPencaker({ searchParams }: { searchParams
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  // 2. Fetch Data
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
-  const { data: trainings } = await supabase.from('blk_trainings').select('*')
+  // 2. Fetch Data (Joined)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select(`
+      *,
+      profile_pencaker (*)
+    `)
+    .eq('id', user.id)
+    .maybeSingle()
+
+  // Defensive check for profile
+  if (!profile) {
+    console.error("Profile not found for user:", user.id)
+    // On first load after migration, trigger might have run for new users but not old if migration script wasn't run on DB.
+    // Assuming migration script IS run.
+  }
+
+  const pencakerData = profile?.profile_pencaker || {}
+
+  const { data: trainings, error: trainingError } = await supabase.from('blk_trainings').select('*')
+  if (trainingError) console.error("Error fetching trainings:", trainingError)
 
   // 3. Fetch Pending Registration
   const { data: pendingReg, error: regError } = await supabase
@@ -34,8 +52,15 @@ export default async function DashboardPencaker({ searchParams }: { searchParams
   const showPendingView = activeTraining && !showAll
 
   // Check Completeness
-  const requiredFields = ['nik', 'full_name', 'dob', 'address_ktp', 'phone', 'education', 'gender', 'address_dom']
-  const isProfileComplete = requiredFields.every(field => profile?.[field])
+  const requiredFields = ['nik', 'date_of_birth', 'address_ktp', 'phone', 'education', 'gender', 'address_dom']
+  // Check against the JOINED data (profile_pencaker)
+  // Note: 'full_name' is in base profile. 'nik' etc are in profile_pencaker.
+  // We need to map fields to their source.
+  const isProfileComplete = profile && profile.full_name && requiredFields.every((field: string) => pencakerData[field])
+  // Wait, dob/nik/etc are now in profile_pencaker.
+  // Let's rely on pencakerData for specifics.
+  // We need to check if 'nik' exists in pencakerData (it might be in base too if legacy columns exist, but we should prefer new table)
+
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans flex flex-col">
@@ -44,50 +69,26 @@ export default async function DashboardPencaker({ searchParams }: { searchParams
       <main className="flex-grow max-w-7xl mx-auto px-4 py-12 w-full animate-fade-in">
 
         {/* WELCOME HEADER */}
-        <div className="text-center mb-12">
-          <h1 className="text-3xl md:text-4xl font-extrabold text-slate-800 mb-2">
-            Halo, <span className="text-blue-600">{profile?.full_name?.split(' ')[0]}</span> 👋
-          </h1>
-          <p className="text-slate-500 font-medium">Selamat datang di Dashboard Pencari Kerja.</p>
+        <div className="flex flex-col md:flex-row items-center justify-between mb-12 gap-4">
+          <div className="text-center md:text-left">
+            <h1 className="text-3xl md:text-4xl font-extrabold text-slate-800 mb-2">
+              Halo, <span className="text-blue-600">{profile?.full_name?.split(' ')[0]}</span> 👋
+            </h1>
+            <p className="text-slate-500 font-medium">Selamat datang di Dashboard Pencari Kerja.</p>
+          </div>
+
+          <Link href="/dashboard/pencaker/profile" className="flex items-center gap-2 bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 px-4 py-2 rounded-full font-bold text-sm transition-all shadow-sm">
+            <User size={16} />
+            <span>Edit Profil</span>
+          </Link>
         </div>
 
-        {/* 4 CORE ACTIONS GRID - Updated to 2x2 or 4-col */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 max-w-7xl mx-auto">
+        {/* 3 CORE ACTIONS GRID - Updated to 3 cols */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto">
 
-          {/* CARD 1: PROFIL / VERIFIKASI */}
-          <Link href="/dashboard/pencaker/profile" className={`relative group p-6 rounded-3xl border-2 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl flex flex-col items-center text-center h-80 justify-center
-              ${profile?.account_status === 'unverified'
-              ? (isProfileComplete
-                ? 'bg-yellow-50 border-yellow-400 border-dashed shadow-yellow-100 ring-4 ring-yellow-50/50' // Completed but Unverified
-                : 'bg-blue-50 border-blue-400 border-dashed shadow-blue-100 ring-4 ring-blue-50/50') // Incomplete
-              : 'bg-white border-slate-100 shadow-sm hover:border-blue-100'
-            }
-          `}>
-            <div className={`p-5 rounded-full mb-4
-                ${profile?.account_status === 'unverified' && isProfileComplete ? 'bg-yellow-100 text-yellow-600' :
-                profile?.account_status === 'unverified' ? 'bg-blue-200 text-blue-700' : 'bg-slate-100 text-slate-600'} 
-                group-hover:bg-blue-600 group-hover:text-white transition-colors`}>
-              {profile?.account_status === 'verified' ? <ShieldCheck size={32} /> : <User size={32} />}
-            </div>
+          {/* CARD 1 REMOVED (Profil/Verifikasi moved to header) */}
 
-            <h3 className="text-lg font-bold text-slate-800 group-hover:text-blue-600 transition-colors mb-2">
-              {profile?.account_status === 'verified' ? 'Profil Terverifikasi' :
-                (isProfileComplete ? 'Menunggu Verifikasi' : 'Lengkapi Profil')}
-            </h3>
-
-            <p className="text-xs text-slate-500 leading-relaxed px-2">
-              {profile?.account_status === 'verified' ? 'Data diri valid.' :
-                (isProfileComplete ? 'Data lengkap. Menunggu admin.' : 'Lengkapi biodata untuk mulai.')}
-            </p>
-
-            {profile?.account_status === 'unverified' && (
-              <span className={`mt-4 px-3 py-1 text-white text-[10px] font-bold rounded-full animate-pulse ${isProfileComplete ? 'bg-yellow-600' : 'bg-blue-600'}`}>
-                {isProfileComplete ? 'MENUNGGU VERIFIKASI' : 'Wajib Diisi'}
-              </span>
-            )}
-          </Link>
-
-          {/* CARD 2: PELATIHAN SAYA (NEW) */}
+          {/* CARD 1: PELATIHAN SAYA (Available) */}
           <Link href="/dashboard/pencaker/pelatihan-saya" className="group p-6 rounded-3xl bg-white border-2 border-slate-100 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:border-blue-100 flex flex-col items-center text-center h-80 justify-center relative overflow-hidden">
 
             {/* Notif Badge if active training exists */}
@@ -109,7 +110,7 @@ export default async function DashboardPencaker({ searchParams }: { searchParams
             </p>
           </Link>
 
-          {/* CARD 3: PROGRAM BLK */}
+          {/* CARD 2: PROGRAM BLK */}
           <Link href="/dashboard/pencaker/programs" className="group p-6 rounded-3xl bg-white border-2 border-slate-100 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:border-emerald-100 flex flex-col items-center text-center h-80 justify-center">
             <div className="p-5 rounded-full bg-emerald-100 text-emerald-600 mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
               <BookOpen size={32} />
@@ -122,17 +123,24 @@ export default async function DashboardPencaker({ searchParams }: { searchParams
             </p>
           </Link>
 
-          {/* CARD 4: IM JAPAN */}
-          <Link href="/dashboard/pencaker/im-japan" className="group p-6 rounded-3xl bg-gradient-to-b from-white to-red-50 border-2 border-red-50 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:border-red-200 flex flex-col items-center text-center h-80 justify-center">
+          {/* CARD 3: Permohonan Surat Rekomendasi (Updated) */}
+          <Link href="/dashboard/pencaker/im-japan" className="group p-6 rounded-3xl bg-gradient-to-b from-white to-red-50 border-2 border-red-50 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:border-red-200 flex flex-col items-center text-center h-80 justify-center relative">
             <div className="p-5 rounded-full bg-red-100 text-red-600 mb-4 group-hover:bg-red-600 group-hover:text-white transition-colors">
               <span className="text-2xl">🇯🇵</span>
             </div>
             <h3 className="text-lg font-bold text-slate-800 group-hover:text-red-600 transition-colors mb-2">
-              Program IM Japan
+              Surat Rekomendasi IM Japan
             </h3>
             <p className="text-xs text-slate-500 leading-relaxed px-2">
-              Karir magang ke Jepang dengan gaji tinggi.
+              Ajukan surat rekomendasi tes IM Japan disini.
             </p>
+
+            {/* Sub-link for History */}
+            <object className="mt-4 w-full relative z-10">
+              <Link href="/dashboard/pencaker/im-japan/riwayat" className="block w-full bg-white border border-red-100 text-red-600 hover:bg-red-600 hover:text-white py-2 rounded-lg text-xs font-bold transition shadow-sm">
+                Lihat Riwayat Saya
+              </Link>
+            </object>
           </Link>
 
         </div>
@@ -142,12 +150,7 @@ export default async function DashboardPencaker({ searchParams }: { searchParams
       {/* DASHBOARD FOOTER (Requested in Item 3) */}
       <footer className="bg-white border-t border-slate-100 py-8 mt-12">
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-slate-400 text-sm font-medium mb-4">Dinas Ketenagakerjaan Kabupaten Bekasi</p>
-          <div className="flex justify-center gap-6 text-sm font-bold text-slate-600">
-            <Link href="/dashboard/pencaker" className="hover:text-blue-600">Dashboard</Link>
-            <Link href="/dashboard/pencaker/profile" className="hover:text-blue-600">Profil Saya</Link>
-            <Link href="/dashboard/pencaker/programs" className="hover:text-blue-600">Program BLK</Link>
-          </div>
+          <p className="text-slate-400 text-sm font-bold mb-4">Dinas Ketenagakerjaan Kabupaten Bekasi</p>
         </div>
       </footer>
 

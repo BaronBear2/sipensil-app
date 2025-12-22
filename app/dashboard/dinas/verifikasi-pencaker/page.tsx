@@ -11,7 +11,7 @@ export default async function VerifikasiPencakerPage() {
         .from('training_registrations')
         .select(`
       *,
-      profiles!inner(*),
+      profiles!inner(*, profile_pencaker(*)),
       blk_trainings(title)
     `)
         .eq('status', 'PENDING')
@@ -20,13 +20,18 @@ export default async function VerifikasiPencakerPage() {
     let users: any[] = []
     if (data) {
         // Map to Flat User Structure for VerificationTable
-        users = data.map((reg: any) => ({
-            ...reg.profiles,
-            id: reg.profiles.id,
-            created_at: reg.created_at,
-            training_reg_id: reg.id,
-            training_title: reg.blk_trainings?.title || 'Generik'
-        }))
+        users = data.map((reg: any) => {
+            const profile = reg.profiles
+            const details = profile.profile_pencaker || {}
+            return {
+                ...profile,
+                ...details, // Merge details (nik, phone, etc) to top level
+                id: profile.id, // Ensure ID is from profile
+                created_at: reg.created_at,
+                training_reg_id: reg.id,
+                training_title: reg.blk_trainings?.title || 'Generik'
+            }
+        })
     }
 
     return (

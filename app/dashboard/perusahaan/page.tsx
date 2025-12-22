@@ -19,9 +19,11 @@ export default async function PerusahaanDashboard() {
   if (!user) redirect('/auth/login')
 
   let profile = null;
+  let companyData: any = null;
   try {
-    const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+    const { data } = await supabase.from('profiles').select('*, profile_perusahaan(*)').eq('id', user.id).single()
     profile = data;
+    companyData = data?.profile_perusahaan;
   } catch (error) {
     console.error("Supabase Profile Error:", error)
   }
@@ -33,7 +35,7 @@ export default async function PerusahaanDashboard() {
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6 mb-8 relative overflow-hidden">
         <div className="relative z-10">
           <h1 className="text-2xl md:text-3xl font-bold text-slate-800 mb-2">
-            Selamat Datang, <span className="text-purple-600">{profile?.company_name || user.email}</span> 👋
+            Selamat Datang, <span className="text-purple-600">{companyData?.company_name || profile?.company_name || user.email}</span> 👋
           </h1>
           <p className="text-slate-500">
             Kelola data perusahaan dan pengajuan magang Anda di sini.

@@ -9,7 +9,8 @@ export default async function DashboardLPK() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) redirect('/auth/login')
 
-    const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+    const { data: profile } = await supabase.from('profiles').select('*, profile_lpk(*)').eq('id', user.id).single()
+    const lpkData = profile?.profile_lpk || {} // Detailed LPK data
 
     // --- REDIRECT LOGIC FOR FIRST TIME LOGIN (Item 15) ---
     if (profile?.account_status === 'unverified') {
@@ -43,7 +44,7 @@ export default async function DashboardLPK() {
                     <h1 className="text-2xl md:text-3xl font-extrabold text-gray-800">
                         Dashboard LPK
                     </h1>
-                    <p className="text-gray-500">Selamat datang, <span className="font-bold text-gray-700">{profile.company_name}</span></p>
+                    <p className="text-gray-500">Selamat datang, <span className="font-bold text-gray-700">{lpkData?.lpk_name || profile.company_name || profile.full_name}</span></p>
                 </div>
 
                 <div className={`px-4 py-2 rounded-xl text-sm font-bold border flex items-center gap-2 w-fit ${getStatusColor(profile.account_status)}`}>

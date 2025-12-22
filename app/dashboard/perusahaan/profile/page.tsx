@@ -37,20 +37,24 @@ export default function PerusahaanProfilePage() {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) { router.push('/auth/login'); return }
 
-            const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-            if (profile) setFormData({
-                ...profile,
-                // Ensure strings
-                company_name: profile.company_name || '',
-                nib: profile.nib || '',
-                sector: profile.sector || '',
-                address_office: profile.address_office || '',
-                phone: profile.phone || '',
-                email_official: profile.email_official || '',
-                director_name: profile.director_name || '',
-                pic_name: profile.pic_name || '',
-                pic_phone: profile.pic_phone || ''
-            })
+            const { data: profile } = await supabase.from('profiles').select('*, profile_perusahaan(*)').eq('id', user.id).single()
+            if (profile) {
+                const comp = profile.profile_perusahaan || {}
+                setFormData({
+                    ...profile,
+                    ...comp,
+                    // Map legacy or explicit
+                    company_name: comp.company_name || profile.company_name || '',
+                    nib: comp.nib || profile.nib || '',
+                    sector: comp.sector || profile.sector || '',
+                    address_office: comp.address_office || profile.address_office || '',
+                    phone: comp.phone || profile.phone || '',
+                    email_official: comp.email_official || profile.email_official || '',
+                    director_name: comp.director_name || profile.director_name || '',
+                    pic_name: comp.pic_name || profile.pic_name || '',
+                    pic_phone: comp.pic_phone || profile.pic_phone || ''
+                })
+            }
             setLoading(false)
         }
         getData()
@@ -70,25 +74,40 @@ export default function PerusahaanProfilePage() {
         const { data: { user } } = await supabase.auth.getUser()
 
         // Update data & Ubah status jadi PENDING
-        const { error } = await supabase
+        // 1. Update Base Profile
+        const { error: baseError } = await supabase
             .from('profiles')
             .update({
-                company_name: formData.company_name,
-                nib: formData.nib,
-                sector: formData.sector,
-
-                address_office: formData.address_office,
+                company_name: formData.company_name, // Keep for base
                 phone: formData.phone,
-                email_official: formData.email_official,
-
-                director_name: formData.director_name,
-                pic_name: formData.pic_name,
-                pic_phone: formData.pic_phone,
-
-                account_status: 'pending', // Trigger Admin Verification
+                account_status: 'pending',
                 rejection_message: null
             })
             .eq('id', user?.id)
+
+        if (baseError) {
+            alert('Gagal update base profil: ' + baseError.message)
+            setSaving(false)
+            return
+        }
+
+        // 2. Upsert Perusahaan Profile
+        const { error: detailError } = await supabase
+            .from('profile_perusahaan')
+            .upsert({
+                user_id: user?.id,
+                company_name: formData.company_name,
+                nib: formData.nib,
+                sector: formData.sector,
+                address_office: formData.address_office,
+                phone: formData.phone,
+                email_official: formData.email_official,
+                director_name: formData.director_name,
+                pic_name: formData.pic_name,
+                pic_phone: formData.pic_phone
+            }, { onConflict: 'user_id' })
+
+        const error = detailError
 
         if (error) {
             alert('Gagal: ' + error.message)
