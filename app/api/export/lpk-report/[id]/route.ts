@@ -143,10 +143,10 @@ function createKaryawanTable(data: any) {
         rows: [
             new TableRow({
                 children: [
-                    new TableCell({ children: [new Paragraph({ text: "Kategori", bold: true })], shading: { fill: "EEEEEE" } }),
-                    new TableCell({ children: [new Paragraph({ text: "Laki-laki", bold: true })], shading: { fill: "EEEEEE" } }),
-                    new TableCell({ children: [new Paragraph({ text: "Perempuan", bold: true })], shading: { fill: "EEEEEE" } }),
-                    new TableCell({ children: [new Paragraph({ text: "Total", bold: true })], shading: { fill: "EEEEEE" } }),
+                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Kategori", bold: true })] })], shading: { fill: "EEEEEE" } }),
+                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Laki-laki", bold: true })] })], shading: { fill: "EEEEEE" } }),
+                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Perempuan", bold: true })] })], shading: { fill: "EEEEEE" } }),
+                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Total", bold: true })] })], shading: { fill: "EEEEEE" } }),
                 ]
             }),
             ...['pelatih_tetap', 'pelatih_tidak_tetap', 'instruktur_tetap', 'instruktur_tidak_tetap', 'asesor', 'berwenang'].map(key => {
@@ -157,7 +157,7 @@ function createKaryawanTable(data: any) {
                         new TableCell({ children: [new Paragraph({ text: key.replace(/_/g, ' ').toUpperCase() })] }),
                         new TableCell({ children: [new Paragraph({ text: l.toString() })] }),
                         new TableCell({ children: [new Paragraph({ text: p.toString() })] }),
-                        new TableCell({ children: [new Paragraph({ text: (l + p).toString(), bold: true })] }),
+                        new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: (l + p).toString(), bold: true })] })] }),
                     ]
                 })
             })

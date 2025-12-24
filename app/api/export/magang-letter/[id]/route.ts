@@ -90,12 +90,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
                 new Paragraph({
                     children: [new TextRun({ text: "KEPALA DINAS", bold: true })],
                     alignment: AlignmentType.RIGHT,
-                    spacing: { right: 400 } // indent
+                    indent: { right: 400 } // indent
                 }),
                 new Paragraph({
                     children: [new TextRun({ text: "(Tanda Tangan Elektronik)", italics: true })],
                     alignment: AlignmentType.RIGHT,
-                    spacing: { before: 800, right: 300 }
+                    spacing: { before: 800 },
+                    indent: { right: 300 }
                 }),
             ]
         }]
