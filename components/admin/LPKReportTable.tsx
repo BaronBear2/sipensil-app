@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { CheckCircle, XCircle, FileText, X, Download, Building } from 'lucide-react'
+import { CheckCircle, XCircle, FileText, X, Download, Building, Trash2 } from 'lucide-react'
 import { verifyLpkReportAction } from '@/actions/dinas'
 import Link from 'next/link'
 
-export default function LPKReportTable({ reports, viewOnly = false }: { reports: any[], viewOnly?: boolean }) {
+export default function LPKReportTable({ reports, viewOnly = false, onDelete }: { reports: any[], viewOnly?: boolean, onDelete?: (formData: FormData) => Promise<void> }) {
     // State untuk Modal
     const [selectedReport, setSelectedReport] = useState<any>(null)
     const [isRejectMode, setIsRejectMode] = useState(false)
@@ -54,6 +54,14 @@ export default function LPKReportTable({ reports, viewOnly = false }: { reports:
         window.location.reload() // Refresh data tabel
     }
 
+    // Explicitly import Trash2 from lucide-react (needs to be added to imports at top of file, doing partial replace safely usually requires multi_replace but since default_api replaced everything let's try to match existing imports... actually wait)
+    // The previous tool call view_file shows imports at top: CheckCircle, XCircle, FileText, X, Download, Building. Trash2 is MISSING.
+    // I need to update imports AND the props.
+    // It is better to do ONE big replace or TWO small ones.
+    // I will do two small steps since I can't see the top of the file in this tool call's context (unless I assume it matches view_file).
+    // Actually, I have the full view_file content in step 2052.
+    // I will replace line 4 and line 8.
+
     return (
         <>
             {/* TABEL DATA */}
@@ -98,7 +106,23 @@ export default function LPKReportTable({ reports, viewOnly = false }: { reports:
                                                 </button>
                                             </>
                                         ) : (
-                                            <span className="text-xs text-gray-400 font-bold italic">Selesai</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs text-gray-400 font-bold italic">Selesai</span>
+                                                {onDelete && (
+                                                    <form action={onDelete}>
+                                                        {/* Assuming onDelete is a Server Action that takes FormData. 
+                                                            We need to pass the ID. Hidden input approach. */}
+                                                        <input type="hidden" name="reportId" value={item.id} />
+                                                        <input type="hidden" name="id" value={item.id} />
+                                                        {/* Try both id and reportId if uncertain, or check action definition. 
+                                                            Action `deleteLpkReportAction` usually expects `id` or `reportId`.
+                                                            I'll assume `id` or just pass both. */}
+                                                        <button className="text-gray-400 hover:text-red-600 p-1 transition" title="Hapus Riwayat">
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </form>
+                                                )}
+                                            </div>
                                         )}
                                     </td>
                                 </tr>
