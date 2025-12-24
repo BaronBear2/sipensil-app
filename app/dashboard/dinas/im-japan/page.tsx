@@ -124,25 +124,24 @@ export default async function ImJapanPage({ searchParams }: { searchParams: Prom
                                                     idName="regId"
                                                 />
                                             ) : (
-                                            ): (
-                                                    <div className = "flex items-center justify-center gap-2">
-                                                    <span className = "text-xs text-gray-400 font-bold italic">Selesai</span>
-                                        <form action={deleteImJapanHistoryAction}>
-                                            <input type="hidden" name="regId" value={item.id} />
-                                            <button className="text-gray-400 hover:text-red-600 p-1 transition" title="Hapus Riwayat">
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </form>
-                                    </div>
-                                )}
-                            </td>
-                        </tr>
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <span className="text-xs text-gray-400 font-bold italic">Selesai</span>
+                                                    <form action={deleteImJapanHistoryAction}>
+                                                        <input type="hidden" name="regId" value={item.id} />
+                                                        <button className="text-gray-400 hover:text-red-600 p-1 transition" title="Hapus Riwayat">
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            )}
+                                        </td>
+                                    </tr>
                                 ))}
-                    </tbody>
+                            </tbody>
                         </table>
-        </div>
-    )
-}
+                    </div>
+                )
+                }
             </div >
         </div >
     )
