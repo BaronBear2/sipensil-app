@@ -108,6 +108,9 @@ export async function signup(formData: FormData) {
   }
 
   // Create the user and save their Role + Name in metadata
+  // Create the user and save their Role + Name in metadata
+  console.log(`[Signup] Starting signup for ${email} with role ${role}`)
+  console.time('SupabaseSignUp')
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -115,6 +118,7 @@ export async function signup(formData: FormData) {
       data: metadata,
     },
   })
+  console.timeEnd('SupabaseSignUp')
 
   // V5.4-04: Handle Existing Email Explicitly
   if (error) {

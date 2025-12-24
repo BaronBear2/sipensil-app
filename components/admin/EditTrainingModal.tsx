@@ -18,7 +18,9 @@ export default function EditTrainingModal({ training, onClose }: { training: any
         max_age: training.max_age,
         certification: training.certification,
         requirements: training.requirements?.join('\n') || '',
-        image_url: training.image_url || ''
+        image_url: training.image_url || '',
+        registration_start: training.registration_start,
+        registration_end: training.registration_end
     })
 
     const handleChange = (e: any) => {
@@ -100,6 +102,17 @@ export default function EditTrainingModal({ training, onClose }: { training: any
                         <div>
                             <label className="text-xs font-bold block mb-1">Sertifikasi</label>
                             <input name="certification" value={formData.certification} onChange={handleChange} className="w-full border p-2 rounded text-sm" />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs font-bold block mb-1">Tgl Mulai Pendaftaran</label>
+                            <input type="date" name="registration_start" value={formData.registration_start || ''} onChange={handleChange} className="w-full border p-2 rounded text-sm" />
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold block mb-1">Tgl Akhir Pendaftaran</label>
+                            <input type="date" name="registration_end" value={formData.registration_end || ''} onChange={handleChange} className="w-full border p-2 rounded text-sm" />
                         </div>
                     </div>
 

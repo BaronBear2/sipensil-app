@@ -69,13 +69,7 @@ export default function Navbar() {
 
         <div className="hidden md:flex items-center gap-8 text-sm font-semibold text-gray-600">
           <Link href="/" className="hover:text-blue-700 transition-colors">Beranda</Link>
-          <Link href="/layanan" className="hover:text-blue-700 transition-colors">Layanan Publik</Link>
-          {profile?.role === 'PENCAKER' && (
-            <>
-              <Link href="/dashboard/pencaker" className="hover:text-blue-700 transition-colors">Dashboard</Link>
-              <Link href="/dashboard/pencaker/programs" className="hover:text-blue-700 transition-colors">Pelatihan</Link>
-            </>
-          )}
+          {/* <Link href="/layanan" className="hover:text-blue-700 transition-colors">Layanan Publik</Link> */}
         </div>
 
         {/* Loading State */}
@@ -83,19 +77,23 @@ export default function Navbar() {
           <div className="text-xs text-gray-400">Loading...</div>
         ) : profile || sessionUser ? ( // Show if profile exists OR just session user exists (fallback)
           <div className="flex items-center gap-4">
-            <div className="hidden sm:block text-right">
-              <p className="text-xs text-gray-500 font-medium">Halo, {profile?.full_name?.split(' ')[0] || 'User'}</p>
-              <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">{profile?.role?.replace('ADMIN_', '') || 'MEMBER'}</p>
-            </div>
 
-            {/* Direct Logout Button */}
+            {/* Dynamic Dashboard Button */}
+            <Link
+              href={getDashboardLink(profile?.role)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md transition-all flex items-center gap-2"
+            >
+              <LayoutDashboard size={16} />
+              <span>Kembali ke Dashboard {profile?.role?.replace('ADMIN_', '') || ''}</span>
+            </Link>
+
+            {/* Logout Icon Button (Small) */}
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-lg text-sm font-bold transition-colors"
+              className="flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 p-2 rounded-lg transition-colors border border-red-100"
               title="Keluar Aplikasi"
             >
               <LogOut size={18} />
-              <span className="hidden md:inline">Keluar</span>
             </button>
           </div>
         ) : (

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Plus, Trash2, Save, FileText, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react'
 import { submitLpkReport } from '@/actions/organization'
 
@@ -11,8 +12,8 @@ export default function LpkReportForm({ profile, initialData }: { profile: any, 
     // Default State matching 9 Sections
     const defaultState = {
         semester: 'Ganjil', tahun: new Date().getFullYear().toString(),
-        namaLpk: profile.company_name || '',
-        noReg: profile.vin || '', // Read only usually
+        namaLpk: profile.lpk_name || profile.company_name || '',
+        noReg: profile.nips || profile.vin || '', // Read only usually
 
         // 1. Status Akreditasi
         data_akreditasi: { no_sk: '', ruang_lingkup: '' },
@@ -46,7 +47,7 @@ export default function LpkReportForm({ profile, initialData }: { profile: any, 
         data_kendala: [{ masalah: '', solusi: '', ket: '' }]
     }
 
-    const [reportData, setReportData] = useState(defaultState)
+    const [reportData, setReportData] = useState<any>(defaultState)
 
     // EFFECT: Jika ada initialData (Draft/Revisi), masukkan ke state
     useEffect(() => {
@@ -96,7 +97,7 @@ export default function LpkReportForm({ profile, initialData }: { profile: any, 
                 ...reportData.data_karyawan,
                 [category]: {
                     ...reportData.data_karyawan[category],
-                    [field]: category === 'ket' ? val : (parseInt(val) || 0)
+                    [field]: val
                 }
             }
         })
@@ -130,17 +131,18 @@ export default function LpkReportForm({ profile, initialData }: { profile: any, 
         setIsConfirmOpen(true)
     }
 
+    const router = useRouter()
+
     const executeSubmit = async () => {
         setLoading(true)
-        setIsConfirmOpen(false) // Close modal immediately or keep open? Better close to show loading toast or simple alert later.
+        setIsConfirmOpen(false)
 
-        // Clean up empty rows if necessary? No, just send as is.
         const res = await submitLpkReport(reportData)
         if (res.error) {
             alert(res.error)
         } else {
             alert(res.success)
-            window.location.reload()
+            router.push('/dashboard/lpk/laporan/riwayat')
         }
         setLoading(false)
     }

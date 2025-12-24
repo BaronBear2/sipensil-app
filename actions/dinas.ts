@@ -41,6 +41,9 @@ export async function verifyProfileAction(formData: FormData) {
   const action = formData.get('action') as string
   const reason = formData.get('reason') as string
 
+
+
+
   const newStatus = action === 'approve' ? 'verified' : 'rejected'
   // NOTE: Logic update status pelatihan
   // Jika approve profile -> approve pelatihan? 
@@ -53,32 +56,28 @@ export async function verifyProfileAction(formData: FormData) {
     .from('profiles')
     .update({
       account_status: newStatus,
-      rejection_message: action === 'reject' ? reason : null,
-      admin_notes: action === 'reject' ? reason : null
+      rejection_message: action === 'reject' ? reason : null
     })
     .eq('id', userId)
 
   if (error) return { error: error.message }
 
-  // 2. Update Status Pelatihan yang PENDING
-  if (action === 'approve') {
-    await supabase
-      .from('training_registrations')
-      .update({ status: 'DITERIMA' })
-      .eq('user_id', userId)
-      .eq('status', 'PENDING')
-      .eq('status', 'PENDING')
-  } else {
-    // REJECT
+  // 2. Update Status Pelatihan Specific Row (Reliable)
+  const regId = formData.get('regId') as string
+  if (regId) {
+    const statusUpdate = action === 'approve' ? 'DITERIMA' : 'DITOLAK'
     const { error: regError } = await supabase
       .from('training_registrations')
-      .update({ status: 'DITOLAK' })
-      .eq('user_id', userId)
-      .eq('status', 'PENDING')
+      .update({ status: statusUpdate })
+      .eq('id', regId)
 
-    if (regError) return { error: "Failed to update registrations: " + regError.message }
+    if (regError) return { error: "Failed to update registration: " + regError.message }
+  } else {
+    // Fallback if no regId provided (backward compatibility or error)
+    console.error("No regId provided for training update")
   }
 
+  revalidatePath('/dashboard/dinas/verifikasi-pencaker')
   revalidatePath('/dashboard/dinas')
   return { success: true }
 }
@@ -94,6 +93,12 @@ export async function verifyImJapanAction(formData: FormData) {
   const reason = formData.get('reason') as string
 
   // Update im_japan_registrations
+  // NOTE: im_japan_registrations uses 'admin_notes' based on previous context, but let's double check schema.
+  // The user complained about 'profiles' table admin_notes. 
+  // im_japan_registrations table MIGHT have admin_notes.
+  // Checking previous file view `im-japan/page.tsx` line 138: data.admin_notes.
+  // So IM Japan IS admin_notes. Profiles IS rejection_message.
+
   if (action === 'approve') {
     await supabase.from('im_japan_registrations').update({ status: 'VERIFIED', admin_notes: null }).eq('id', regId)
   } else {
@@ -324,4 +329,237 @@ export async function adminUpdateUserAction(formData: FormData) {
 
   revalidatePath('/dashboard/dinas')
   return { success: true }
+}
+
+// --- 8. CLEANUP (DELETE HISTORY) ---
+export async function deleteRegistrationHistoryAction(formData: FormData) {
+  const supabase = await createClient()
+  const regId = formData.get('regId') as string
+
+  await supabase.from('training_registrations').delete().eq('id', regId) // Hard delete for cleanup
+  revalidatePath('/dashboard/dinas')
+}
+
+export async function deleteImJapanHistoryAction(formData: FormData) {
+  const supabase = await createClient()
+  const regId = formData.get('regId') as string
+
+  await supabase.from('im_japan_registrations').delete().eq('id', regId)
+  revalidatePath('/dashboard/dinas')
+}
+
+// --- 9. IM JAPAN REQUIREMENTS CRUD ---
+export async function createImJapanRequirementAction(formData: FormData) {
+  const supabase = await createClient()
+  const title = formData.get('title') as string
+  const description = formData.get('description') as string
+  const is_required = formData.get('is_required') === 'on'
+  const is_active = formData.get('is_active') === 'on'
+
+  await supabase.from('im_japan_requirements').insert({ title, description, is_required, is_active })
+  revalidatePath('/dashboard/dinas/im-japan/requirements')
+}
+
+export async function updateImJapanRequirementAction(formData: FormData) {
+  const supabase = await createClient()
+  const id = formData.get('id') as string
+  const title = formData.get('title') as string
+  const description = formData.get('description') as string
+  const is_required = formData.get('is_required') === 'on'
+  const is_active = formData.get('is_active') === 'on'
+
+  await supabase.from('im_japan_requirements').update({ title, description, is_required, is_active }).eq('id', id)
+  revalidatePath('/dashboard/dinas/im-japan/requirements')
+}
+
+export async function deleteImJapanRequirementAction(formData: FormData) {
+  const supabase = await createClient()
+  const id = formData.get('id') as string
+  await supabase.from('im_japan_requirements').delete().eq('id', id)
+  revalidatePath('/dashboard/dinas/im-japan/requirements')
+}
+
+// --- 10. LPK ACTIONS ---
+export async function deleteLpkReportAction(formData: FormData) {
+  const supabase = await createClient()
+  const id = formData.get('id') as string
+  await supabase.from('lpk_reports').delete().eq('id', id)
+  revalidatePath('/dashboard/dinas')
+}
+
+// Data LPK CRUD
+export async function createLpkAction(formData: FormData) {
+  const supabase = await createClient()
+  const email = formData.get('email') as string
+  const password = formData.get('password') as string
+  const name = formData.get('name') as string // LPK Name
+  const phone = formData.get('phone') as string
+  const address = formData.get('address') as string
+
+  // 1. Create Auth User
+  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { role: 'lpk', full_name: name }
+  })
+
+  if (authError) return { error: authError.message }
+  const userId = authData.user.id
+
+  // 2. Create Profile (Trigger might handle this, but let's be safe/explicit if trigger only sets basic info)
+  // Trigger `handle_new_user` usually creates profile. We update it.
+  const { error: profileError } = await supabase.from('profiles').update({
+    full_name: name,
+    role: 'lpk',
+    account_status: 'verified'
+  }).eq('id', userId)
+
+  if (profileError) return { error: profileError.message }
+
+  // 3. Update profile_lpk
+  const { error: lpkError } = await supabase.from('profile_lpk').upsert({
+    user_id: userId,
+    lpk_name: name,
+    phone_number: phone,
+    address: address
+  })
+
+  if (lpkError) return { error: lpkError.message }
+
+  revalidatePath('/dashboard/dinas/lpk/data')
+  return { success: true }
+}
+
+export async function updateLpkAction(formData: FormData) {
+  const supabase = await createClient()
+  const userId = formData.get('userId') as string
+  const name = formData.get('name') as string
+  const phone = formData.get('phone') as string
+  const address = formData.get('address') as string
+
+  await supabase.from('profiles').update({ full_name: name }).eq('id', userId)
+  await supabase.from('profile_lpk').update({ lpk_name: name, phone_number: phone, address }).eq('user_id', userId)
+
+  revalidatePath('/dashboard/dinas/lpk/data')
+  return { success: true }
+}
+
+export async function deleteLpkAction(formData: FormData) {
+  const supabase = await createClient()
+  const userId = formData.get('userId') as string
+
+  // Delete auth user (cascades to profiles usually, if configured)
+  const { error } = await supabase.auth.admin.deleteUser(userId)
+  if (error) return { error: error.message }
+
+  revalidatePath('/dashboard/dinas/lpk/data')
+  return { success: true }
+}
+
+// --- 11. PERUSAHAAN ACTIONS ---
+export async function deleteMagangPermitAction(formData: FormData) {
+  const supabase = await createClient()
+  const id = formData.get('id') as string
+  await supabase.from('magang_permits').delete().eq('id', id)
+  revalidatePath('/dashboard/dinas')
+}
+
+// Data Perusahaan CRUD
+export async function createPerusahaanAction(formData: FormData) {
+  const supabase = await createClient()
+  const email = formData.get('email') as string
+  const password = formData.get('password') as string
+  const name = formData.get('name') as string // Company Name
+  const phone = formData.get('phone') as string
+  const address = formData.get('address') as string
+
+  // 1. Create Auth User
+  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { role: 'perusahaan', full_name: name }
+  })
+
+  if (authError) return { error: authError.message }
+  const userId = authData.user.id
+
+  // 2. Create Profile
+  const { error: profileError } = await supabase.from('profiles').update({
+    full_name: name,
+    role: 'perusahaan',
+    account_status: 'verified'
+  }).eq('id', userId)
+
+  if (profileError) return { error: profileError.message }
+
+  // 3. Update profile_perusahaan
+  const { error: compError } = await supabase.from('profile_perusahaan').upsert({
+    user_id: userId,
+    company_name: name,
+    phone: phone,
+    address: address
+  })
+
+  if (compError) return { error: compError.message }
+
+  revalidatePath('/dashboard/dinas/perusahaan/data')
+  return { success: true }
+}
+
+export async function updatePerusahaanAction(formData: FormData) {
+  const supabase = await createClient()
+  const userId = formData.get('userId') as string
+  const name = formData.get('name') as string
+  const phone = formData.get('phone') as string
+  const address = formData.get('address') as string
+
+  await supabase.from('profiles').update({ full_name: name }).eq('id', userId)
+  await supabase.from('profile_perusahaan').update({ company_name: name, phone, address }).eq('user_id', userId)
+
+  revalidatePath('/dashboard/dinas/perusahaan/data')
+  return { success: true }
+}
+
+export async function deletePerusahaanAction(formData: FormData) {
+  const supabase = await createClient()
+  const userId = formData.get('userId') as string
+
+  const { error } = await supabase.auth.admin.deleteUser(userId)
+  if (error) return { error: error.message }
+
+  revalidatePath('/dashboard/dinas/perusahaan/data')
+  return { success: true }
+}
+
+// --- 12. MAINTENANCE / CRON SIMULATION ---
+export async function autoUpdateTrainingStatusAction() {
+  const supabase = await createClient()
+  const today = new Date().toISOString()
+
+  // 1. Close Registration
+  // Update status 'OPEN' -> 'CLOSED' if registration_end < today
+  await supabase
+    .from('blk_trainings')
+    .update({ status: 'CLOSED' })
+    .eq('status', 'OPEN')
+    .lt('registration_end', today)
+
+  // 2. Complete Training
+  // Update registrants status 'DITERIMA' -> 'SELESAI' if training_end_date < today
+  // Find trainings that ended
+  const { data: endedTrainings } = await supabase
+    .from('blk_trainings')
+    .select('id')
+    .lt('training_end_date', today)
+
+  if (endedTrainings && endedTrainings.length > 0) {
+    const ids = endedTrainings.map(t => t.id)
+    await supabase
+      .from('training_registrations')
+      .update({ status: 'SELESAI' })
+      .eq('status', 'DITERIMA')
+      .in('training_id', ids)
+  }
 }

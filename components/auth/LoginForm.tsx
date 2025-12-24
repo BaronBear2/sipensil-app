@@ -3,13 +3,14 @@
 import { useState, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
-import { Lock, User, AlertCircle } from 'lucide-react'
+import { Lock, User, AlertCircle, Eye, EyeOff } from 'lucide-react'
 
 export default function LoginForm({ onRegisterClick, onSuccess }: { onRegisterClick: () => void, onSuccess: () => void }) {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
 
     const router = useRouter()
     const supabase = createClient()
@@ -92,12 +93,19 @@ export default function LoginForm({ onRegisterClick, onSuccess }: { onRegisterCl
                         <Lock className="absolute left-3 top-2.5 text-gray-400 w-4 h-4" />
                         <input
                             required
-                            type="password"
+                            type={showPassword ? 'text' : 'password'}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                            className="w-full pl-9 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                             placeholder="••••••••"
                         />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                        >
+                            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
                     </div>
                 </div>
 

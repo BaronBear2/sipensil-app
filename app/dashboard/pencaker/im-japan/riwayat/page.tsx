@@ -37,8 +37,8 @@ export default function ImJapanHistoryPage() {
     const pending = registrations.filter(r => r.status === 'PENDING')
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans pb-20">
-            <Navbar />
+        <div className="min-h-screen bg-gray-50 font-sans animate-fade-in pb-20">
+            {/* Navbar removed */}
             <div className="max-w-5xl mx-auto px-4 py-8 animate-fade-in">
 
                 <div className="mb-8">
@@ -46,9 +46,34 @@ export default function ImJapanHistoryPage() {
                         <ArrowLeft size={20} /> Kembali ke Dashboard
                     </Link>
                     <h1 className="text-3xl font-extrabold text-slate-800">
-                        Riwayat Surat Rekomendasi IM Japan
+                        Riwayat Permohonan IM Japan
                     </h1>
+                    <p className="text-slate-500 mt-1">Status pengajuan Surat Rekomendasi Tes IM Japan.</p>
                 </div>
+
+                {/* Section Pending (NEW V4) */}
+                {pending.length > 0 && (
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-8">
+                        <div className="p-6 border-b bg-blue-50/50 flex items-center gap-3">
+                            <RefreshCcw className="text-blue-600 animate-spin-slow" />
+                            <h2 className="text-lg font-bold text-slate-800">Menunggu Verifikasi</h2>
+                        </div>
+                        <div className="divide-y">
+                            {pending.map(item => (
+                                <div key={item.id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <div>
+                                        <div className="font-bold text-slate-800 mb-1">Permohonan Surat Rekomendasi</div>
+                                        <div className="text-xs text-slate-500">Diajukan: {new Date(item.created_at).toLocaleDateString('id-ID')}</div>
+                                    </div>
+                                    {/* Action to Edit */}
+                                    <Link href="/dashboard/pencaker/im-japan" className="flex items-center gap-2 bg-white border border-blue-200 text-blue-600 hover:bg-blue-50 px-5 py-2.5 rounded-lg text-sm font-bold transition">
+                                        Edit Berkas
+                                    </Link>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* Section Accepted */}
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-8">
@@ -65,7 +90,7 @@ export default function ImJapanHistoryPage() {
                                 <div key={item.id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                                     <div>
                                         <div className="font-bold text-slate-800 mb-1">Surat Rekomendasi Tes IM Japan</div>
-                                        <div className="text-xs text-slate-500">Diajukan: {new Date(item.created_at).toLocaleDateString('id-ID')}</div>
+                                        <div className="text-xs text-slate-500">Disetujui: {new Date(item.updated_at).toLocaleDateString('id-ID')}</div>
                                     </div>
                                     <button className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow-green-100 shadow-lg transition">
                                         <Download size={16} /> Download Surat
@@ -91,7 +116,7 @@ export default function ImJapanHistoryPage() {
                                 <div key={item.id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-red-50/10">
                                     <div>
                                         <div className="font-bold text-slate-800 mb-1">Surat Rekomendasi Tes IM Japan</div>
-                                        <div className="text-xs text-slate-500">Diajukan: {new Date(item.created_at).toLocaleDateString('id-ID')}</div>
+                                        <div className="text-xs text-slate-500">Ditolak: {new Date(item.updated_at).toLocaleDateString('id-ID')}</div>
                                     </div>
                                     <div className="flex gap-3">
                                         <button
@@ -104,7 +129,7 @@ export default function ImJapanHistoryPage() {
                                             href="/dashboard/pencaker/im-japan"
                                             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow-blue-100 shadow-md"
                                         >
-                                            <RefreshCcw size={16} /> Daftar Ulang
+                                            <RefreshCcw size={16} /> Revisi / Ajukan Ulang
                                         </Link>
                                     </div>
                                 </div>

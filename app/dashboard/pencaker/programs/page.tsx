@@ -1,6 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
-import Navbar from '@/components/Navbar'
+
 import TrainingCard from '@/components/TrainingCard'
 import { BookOpen, ClipboardList, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
@@ -16,8 +16,7 @@ export default async function BLKProgramsPage() {
     const { data: trainings } = await supabase.from('blk_trainings').select('*').eq('status', 'OPEN') // Only show OPEN trainings
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans pb-32">
-            <Navbar />
+        <div className="bg-slate-50 font-sans pb-32">
 
             <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
                 <div className="mb-6">

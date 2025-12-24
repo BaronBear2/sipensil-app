@@ -5,7 +5,7 @@ import { CheckCircle, XCircle, FileText, X, Download, Building } from 'lucide-re
 import { verifyLpkReportAction } from '@/actions/dinas'
 import Link from 'next/link'
 
-export default function LPKReportTable({ reports }: { reports: any[] }) {
+export default function LPKReportTable({ reports, viewOnly = false }: { reports: any[], viewOnly?: boolean }) {
     // State untuk Modal
     const [selectedReport, setSelectedReport] = useState<any>(null)
     const [isRejectMode, setIsRejectMode] = useState(false)
@@ -83,17 +83,23 @@ export default function LPKReportTable({ reports }: { reports: any[] }) {
                                     </td>
                                     <td className="px-6 py-4 text-center">
                                         {/* Use the same Link logic as before */}
-                                        <Link href={`/api/generate-word/lpk-report?id=${item.id}`} target="_blank" className="text-green-600 text-xs font-bold border border-green-200 px-3 py-1.5 rounded hover:bg-green-50 flex items-center justify-center gap-1 w-24 mx-auto">
+                                        <a href={`/api/export/lpk-report/${item.id}`} className="text-green-600 text-xs font-bold border border-green-200 px-3 py-1.5 rounded hover:bg-green-50 flex items-center justify-center gap-1 w-24 mx-auto">
                                             <Download size={12} /> Word
-                                        </Link>
+                                        </a>
                                     </td>
                                     <td className="px-6 py-4 flex justify-center gap-2">
-                                        <button onClick={() => openConfirmAccept(item)} className="bg-green-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-green-700 flex items-center gap-1">
-                                            <CheckCircle size={14} /> Terima
-                                        </button>
-                                        <button onClick={() => openRejectForm(item)} className="bg-red-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-red-700 flex items-center gap-1">
-                                            <XCircle size={14} /> Tolak
-                                        </button>
+                                        {!viewOnly ? (
+                                            <>
+                                                <button onClick={() => openConfirmAccept(item)} className="bg-green-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-green-700 flex items-center gap-1">
+                                                    <CheckCircle size={14} /> Terima
+                                                </button>
+                                                <button onClick={() => openRejectForm(item)} className="bg-red-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-red-700 flex items-center gap-1">
+                                                    <XCircle size={14} /> Tolak
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <span className="text-xs text-gray-400 font-bold italic">Selesai</span>
+                                        )}
                                     </td>
                                 </tr>
                             ))

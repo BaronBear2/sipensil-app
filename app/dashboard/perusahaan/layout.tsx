@@ -1,6 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
-import PerusahaanSidebar from '@/components/perusahaan/Sidebar'
+import PerusahaanSidebar from '@/components/perusahaan/PerusahaanSidebar'
 
 export default async function PerusahaanLayout({ children }: { children: React.ReactNode }) {
     const supabase = await createClient()
@@ -11,13 +11,9 @@ export default async function PerusahaanLayout({ children }: { children: React.R
 
     // 2. Role Check
     const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-    // Admin Perusahaan = ADMIN_PERUSAHAAN. Normal Perusahaan = PERUSAHAAN (if any). Assuming 'PERUSAHAAN' based on Register logic.
-    // Register role was 'perusahaan'. 
-    // Let's check logic: Register -> 'perusahaan'. 
-    // Code should separate 'ADMIN_PERUSAHAAN' (maybe super admin of company?) or just 'perusahaan'.
-    // Let's allow 'ADMIN_PERUSAHAAN' OR 'PERUSAHAAN' OR 'perusahaan'.
-
     const role = profile?.role?.toUpperCase()
+
+    // Allow ADMIN_PERUSAHAAN or PERUSAHAAN
     if (role !== 'PERUSAHAAN' && role !== 'ADMIN_PERUSAHAAN') {
         return (
             <div className="flex h-screen items-center justify-center bg-gray-50">

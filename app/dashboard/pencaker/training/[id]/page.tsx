@@ -38,8 +38,13 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
             const { data: t } = await supabase.from('blk_trainings').select('*').eq('id', trainingId).single()
             setTraining(t)
 
-            // Fetch Profile (for Age Check)
-            const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+            // Fetch Profile (for Age Check & Validation)
+            // V5.5 Fix: Fetch profile_pencaker to check NIK, DOB etc.
+            const { data: p } = await supabase
+                .from('profiles')
+                .select('*, profile_pencaker(*)')
+                .eq('id', user.id)
+                .single()
             setProfile(p)
 
             setLoading(false)
@@ -62,10 +67,19 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
     const handleApplyClick = () => {
         if (!profile) return
 
-        // 1. Check Profile Completeness
-        // V5-05 Fix: Don't block 'unverified' if they have complete data.
-        const requiredFields = ['full_name', 'nik', 'dob', 'address_ktp', 'phone', 'gender', 'pob']
-        const missing = requiredFields.filter(field => !profile[field])
+        // 1. Check Profile Completeness (From profile_pencaker)
+        const pencakerData = profile.profile_pencaker || {}
+
+        // List mandatory fields
+        const requiredFields = ['full_name', 'nik', 'date_of_birth', 'address_ktp', 'phone', 'gender', 'place_of_birth']
+
+        // Merge base profile full_name if needed, but profile_pencaker usually has it too or we use profile.full_name
+        const checkData = {
+            ...pencakerData,
+            full_name: profile.full_name || pencakerData.full_name // Ensure we check full_name
+        }
+
+        const missing = requiredFields.filter(field => !checkData[field])
 
         if (missing.length > 0) {
             setStatusModal({
@@ -88,7 +102,9 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
 
 
         // 2. Age Check
-        const age = calculateAge(profile.dob)
+        const dob = profile.profile_pencaker?.date_of_birth || profile.dob // V3 Fix: Use correct field
+        const age = calculateAge(dob)
+
         if (training.min_age && age < training.min_age) {
             setStatusModal({ isOpen: true, type: 'error', message: `Maaf, umur Anda (${age} tahun) belum mencukupi. Minimal ${training.min_age} tahun.` })
             return
@@ -127,7 +143,8 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
     if (loading) return <div className="p-10 text-center">Memuat...</div>
     if (!training) return <div className="p-10 text-center">Pelatihan tidak ditemukan</div>
 
-    const userAge = profile?.dob ? calculateAge(profile.dob) : 0
+    const dob = profile?.profile_pencaker?.date_of_birth || profile?.dob
+    const userAge = dob ? calculateAge(dob) : 0
     const isAgeEligible = (!training.min_age || userAge >= training.min_age) && (!training.max_age || userAge <= training.max_age)
 
     return (

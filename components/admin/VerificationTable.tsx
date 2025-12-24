@@ -1,10 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { CheckCircle, XCircle, Eye, FileText, X } from 'lucide-react'
-import { verifyProfileAction } from '@/actions/dinas'
+import { useRouter } from 'next/navigation'
+import { CheckCircle, XCircle, Eye, FileText, X, Trash2 } from 'lucide-react'
+import { verifyProfileAction, deleteRegistrationHistoryAction } from '@/actions/dinas'
 
-export default function VerificationTable({ users }: { users: any[] }) {
+export default function VerificationTable({ users, viewOnly = false }: { users: any[], viewOnly?: boolean }) {
+   const router = useRouter()
    // State untuk Modal
    const [selectedUser, setSelectedUser] = useState<any>(null)
    const [isRejectMode, setIsRejectMode] = useState(false)
@@ -47,6 +49,7 @@ export default function VerificationTable({ users }: { users: any[] }) {
 
       const formData = new FormData()
       formData.append('userId', selectedUser.id)
+      formData.append('regId', selectedUser.training_reg_id) // Pass Registration ID
       formData.append('action', action)
       formData.append('reason', finalReason)
 
@@ -62,7 +65,7 @@ export default function VerificationTable({ users }: { users: any[] }) {
       setSelectedUser(null) // Tutup modal
       setIsConfirmMode(false)
       setIsRejectMode(false)
-      window.location.reload() // Refresh data tabel
+      router.refresh() // Refresh data tabel Next.js style
    }
 
    return (
@@ -101,12 +104,27 @@ export default function VerificationTable({ users }: { users: any[] }) {
                               </button>
                            </td>
                            <td className="px-6 py-4 flex justify-center gap-2">
-                              <button onClick={() => openConfirmAccept(u)} className="bg-green-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-green-700 flex items-center gap-1">
-                                 <CheckCircle size={14} /> Terima
-                              </button>
-                              <button onClick={() => openRejectForm(u)} className="bg-red-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-red-700 flex items-center gap-1">
-                                 <XCircle size={14} /> Tolak
-                              </button>
+                              {!viewOnly ? (
+                                 <>
+                                    <button onClick={() => openConfirmAccept(u)} className="bg-green-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-green-700 flex items-center gap-1">
+                                       <CheckCircle size={14} /> Terima
+                                    </button>
+                                    <button onClick={() => openRejectForm(u)} className="bg-red-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-red-700 flex items-center gap-1">
+                                       <XCircle size={14} /> Tolak
+                                    </button>
+                                 </>
+                              ) : (
+                                 <div className="flex items-center gap-2">
+                                    <span className="text-xs text-gray-400 font-bold italic">Selesai</span>
+                                    {/* DELETE HISTORY BUTTON */}
+                                    <form action={deleteRegistrationHistoryAction}>
+                                       <input type="hidden" name="regId" value={u.training_reg_id} />
+                                       <button className="text-gray-400 hover:text-red-600 p-1 transition" title="Hapus Riwayat">
+                                          <Trash2 size={16} />
+                                       </button>
+                                    </form>
+                                 </div>
+                              )}
                            </td>
                         </tr>
                      ))
@@ -145,12 +163,24 @@ export default function VerificationTable({ users }: { users: any[] }) {
                            <div className="mt-4 border-t pt-4">
                               <h4 className="font-bold text-sm mb-2 flex items-center gap-2"><FileText size={16} /> Berkas Upload</h4>
                               <div className="grid grid-cols-3 gap-2">
-                                 {/* Simulasi File Preview */}
-                                 <div className="bg-gray-100 h-24 rounded flex items-center justify-center text-xs text-gray-500 border cursor-pointer hover:bg-gray-200">KTP.jpg</div>
-                                 <div className="bg-gray-100 h-24 rounded flex items-center justify-center text-xs text-gray-500 border cursor-pointer hover:bg-gray-200">Ijazah.pdf</div>
-                                 <div className="bg-gray-100 h-24 rounded flex items-center justify-center text-xs text-gray-500 border cursor-pointer hover:bg-gray-200">Foto.jpg</div>
+                                 {[
+                                    { label: 'KTP', url: selectedUser.ktp_url },
+                                    { label: 'Ijazah', url: selectedUser.ijazah_url },
+                                    { label: 'Foto', url: selectedUser.photo_url },
+                                 ].map((doc, i) => (
+                                    <a
+                                       key={i}
+                                       href={doc.url || '#'}
+                                       target="_blank"
+                                       className={`bg-gray-100 h-24 rounded flex flex-col items-center justify-center text-xs text-gray-500 border hover:bg-gray-200 transition ${!doc.url && 'opacity-50 cursor-not-allowed pointer-events-none'}`}
+                                    >
+                                       <FileText size={24} className="mb-1 text-blue-500" />
+                                       <span className="font-bold">{doc.label}</span>
+                                       {doc.url ? <span className="text-[10px] text-green-600">Ada File</span> : <span className="text-[10px] text-red-500">Kosong</span>}
+                                    </a>
+                                 ))}
                               </div>
-                              <p className="text-[10px] text-blue-600 mt-1 italic">*Klik untuk memperbesar (Fitur Storage menyusul)</p>
+                              <p className="text-[10px] text-blue-600 mt-1 italic">*Klik kotak untuk melihat/download file asli.</p>
                            </div>
                            <div className="flex justify-end gap-2 mt-6">
                               <button onClick={() => openRejectForm(selectedUser)} className="bg-red-100 text-red-700 px-4 py-2 rounded-lg font-bold text-sm">Tolak</button>

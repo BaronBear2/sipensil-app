@@ -24,22 +24,42 @@ export async function applyTraining(formData: FormData) {
   const isVerified = profile?.account_status === 'verified'
 
   // 4. CEK ATURAN "1-ON-1" (Tidak boleh daftar jika ada pelatihan belum selesai)
+  // Status Aktif = PENDING, DITERIMA, APPROVED, VERIFIED
+  // Status Non-Aktif = SELESAI, DITOLAK, REJECTED, DIBATALKAN
   const { data: activeTraining } = await supabase
     .from('training_registrations')
     .select('status')
     .eq('user_id', user.id)
-    .not('status', 'in', '("SELESAI","DITOLAK","DIBATALKAN")')
+    .not('status', 'in', '("SELESAI","DITOLAK","REJECTED","DIBATALKAN")')
     .maybeSingle()
 
   if (activeTraining) {
-    return { error: 'Anda sedang terdaftar di pelatihan lain. Selesaikan dulu.' }
+    return { error: 'Anda sedang terdaftar di pelatihan aktif. Selesaikan atau batalkan dulu.' }
   }
 
-  // 5. AUTO-ACCEPT vs MANUAL VERIFICATION LOGIC
-  // Cek Kuota
-  const { data: training } = await supabase.from('blk_trainings').select('quota, filled').eq('id', trainingId).single()
+  // 5. VALIDASI SLOT & TANGGAL
+  const { data: training } = await supabase
+    .from('blk_trainings')
+    .select('quota, filled, registration_end')
+    .eq('id', trainingId)
+    .single()
 
-  if (training && training.filled >= training.quota) {
+  if (!training) return { error: 'Pelatihan tidak ditemukan.' }
+
+  // Cek Tanggal Pendaftaran
+  if (training.registration_end) {
+    const today = new Date()
+    const endDate = new Date(training.registration_end)
+    // Set end date to end of day
+    endDate.setHours(23, 59, 59, 999)
+
+    if (today > endDate) {
+      return { error: 'Masa pendaftaran pelatihan ini sudah berakhir.' }
+    }
+  }
+
+  // Cek Kuota
+  if (training.filled >= training.quota) {
     return { error: 'Mohon maaf, kuota pelatihan ini sudah penuh.' }
   }
 

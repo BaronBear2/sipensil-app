@@ -2,7 +2,7 @@
 
 import { useState, ChangeEvent, FormEvent } from 'react'
 import { createClient } from '@/utils/supabase/client'
-import { User, School, Factory, ArrowLeft, Lock } from 'lucide-react'
+import { User, School, Factory, ArrowLeft, Lock, Eye, EyeOff } from 'lucide-react'
 
 // --- SUB-COMPONENTS ---
 function RoleSelection({ onSelect }: { onSelect: (role: string) => void }) {
@@ -41,6 +41,8 @@ function RoleSelection({ onSelect }: { onSelect: (role: string) => void }) {
 function RegisterFormImpl({ role, onBack, onSuccess }: { role: string, onBack: () => void, onSuccess: () => void }) {
     const supabase = createClient()
     const [loading, setLoading] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     const [formData, setFormData] = useState({
         name: '',
         nik: '',
@@ -61,12 +63,31 @@ function RegisterFormImpl({ role, onBack, onSuccess }: { role: string, onBack: (
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault()
+        console.log("Submitting registration...") // Debug log
         setLoading(true)
+
+        // VALIDASI PASSWORD COMPLEXITY
+        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{6,}$/
+        if (!passwordRegex.test(formData.password)) {
+            alert("Password minimal 6 karakter, mengandung huruf, angka, dan simbol (@$!%*#?&).")
+            setLoading(false)
+            return
+        }
 
         if (formData.password !== formData.confirmPassword) {
             alert("Password tidak sama!")
             setLoading(false)
             return
+        }
+
+        // VALIDASI NIK (KHUSUS PENCAKER)
+        if (role === 'pencaker') {
+            const nikRegex = /^3216\d{12}$/
+            if (!nikRegex.test(formData.nik)) {
+                alert("NIK harus 16 digit dan diawali dengan '3216' (KTP Kabupaten Bekasi).")
+                setLoading(false)
+                return
+            }
         }
 
         const dbRole = role === 'lpk' ? 'ADMIN_LPK' : role === 'perusahaan' ? 'ADMIN_PERUSAHAAN' : 'PENCAKER'
@@ -83,7 +104,7 @@ function RegisterFormImpl({ role, onBack, onSuccess }: { role: string, onBack: (
             metadata.operational_pj = formData.operational_pj
             metadata.operational_pj_title = formData.operational_pj_title
             metadata.operational_pj_phone = formData.operational_pj_phone
-            metadata.operational_pj_email = formData.operational_pj_email
+            metadata.operational_pj_email = formData.email
         } else if (role === 'perusahaan') {
             metadata.nib = formData.nib
             metadata.company_name = formData.name
@@ -120,9 +141,9 @@ function RegisterFormImpl({ role, onBack, onSuccess }: { role: string, onBack: (
                 {role === 'lpk' && (
                     <>
                         <div><label className="text-xs font-bold block mb-1">Nama LPK</label><input required name="name" onChange={handleChange} className="w-full border rounded p-2 text-sm" /></div>
-                        <div><label className="text-xs font-bold block mb-1">Nama PJ Operasional</label><input required name="operational_pj" onChange={handleChange} className="w-full border rounded p-2 text-sm" /></div>
-                        <div><label className="text-xs font-bold block mb-1">HP PJ</label><input required name="operational_pj_phone" onChange={handleChange} className="w-full border rounded p-2 text-sm" /></div>
-                        <div><label className="text-xs font-bold block mb-1">Email PJ</label><input required name="operational_pj_email" type="email" onChange={handleChange} className="w-full border rounded p-2 text-sm" /></div>
+                        <div><label className="text-xs font-bold block mb-1">Nama Penanggung Jawab Operasional</label><input required name="operational_pj" onChange={handleChange} className="w-full border rounded p-2 text-sm" /></div>
+                        <div><label className="text-xs font-bold block mb-1">Jabatan Penanggung Jawab</label><input required name="operational_pj_title" onChange={handleChange} className="w-full border rounded p-2 text-sm" /></div>
+                        <div><label className="text-xs font-bold block mb-1">No HP Penanggung Jawab</label><input required name="operational_pj_phone" onChange={handleChange} className="w-full border rounded p-2 text-sm" /></div>
                     </>
                 )}
                 {role === 'perusahaan' && (
@@ -135,10 +156,26 @@ function RegisterFormImpl({ role, onBack, onSuccess }: { role: string, onBack: (
 
                 <div className="border-t pt-3 mt-3">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div><label className="text-xs font-bold block mb-1">Email</label><input required name="email" type="email" onChange={handleChange} className="w-full border rounded p-2 text-sm" /></div>
-                        <div><label className="text-xs font-bold block mb-1">Password</label><input required name="password" type="password" onChange={handleChange} className="w-full border rounded p-2 text-sm" /></div>
+                        <div><label className="text-xs font-bold block mb-1">{role === 'lpk' ? 'Email Penanggung Jawab' : 'Email'}</label><input required name="email" type="email" onChange={handleChange} className="w-full border rounded p-2 text-sm" /></div>
+                        <div>
+                            <label className="text-xs font-bold block mb-1">Password</label>
+                            <div className="relative">
+                                <input required name="password" type={showPassword ? 'text' : 'password'} onChange={handleChange} className="w-full border rounded p-2 pr-10 text-sm" />
+                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600">
+                                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    <div className="mt-3"><label className="text-xs font-bold block mb-1">Confirm Password</label><input required name="confirmPassword" type="password" onChange={handleChange} className="w-full border rounded p-2 text-sm" /></div>
+                    <div className="mt-3">
+                        <label className="text-xs font-bold block mb-1">Confirm Password</label>
+                        <div className="relative">
+                            <input required name="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} onChange={handleChange} className="w-full border rounded p-2 pr-10 text-sm" />
+                            <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600">
+                                {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <button type="submit" disabled={loading} className="w-full bg-blue-600 text-white font-bold py-2.5 rounded-lg mt-2 hover:bg-blue-700 transition disabled:bg-blue-300">

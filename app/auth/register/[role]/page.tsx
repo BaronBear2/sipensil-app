@@ -3,7 +3,7 @@
 import { useState, use } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Lock } from 'lucide-react'
+import { ArrowLeft, Lock, Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 
 export default function RegisterForm({ params }: { params: Promise<{ role: string }> }) {
@@ -13,6 +13,8 @@ export default function RegisterForm({ params }: { params: Promise<{ role: strin
   const router = useRouter()
   // const supabase = createClient() // Not needed for Server Action auth
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   // State yang disederhanakan untuk Register
   const [formData, setFormData] = useState({
@@ -50,9 +52,13 @@ export default function RegisterForm({ params }: { params: Promise<{ role: strin
     // 2. Client-Side Validation (Strict V5.1)
     if (role === 'pencaker') {
       const nik = formData.nik
-      const nikRegex = /^3216\d{12}$/
-      if (!nikRegex.test(nik)) {
-        alert("NIK Tidak Valid! Harus 16 digit dan berawalan '3216' (Khusus Warga Kabupaten Bekasi).")
+      if (nik.length !== 16) {
+        alert("NIK Harus 16 digit!")
+        setLoading(false)
+        return
+      }
+      if (!nik.startsWith('3216')) {
+        alert("Maaf, pendaftaran khusus warga Kabupaten Bekasi (NIK berawalan 3216).")
         setLoading(false)
         return
       }
@@ -195,11 +201,21 @@ export default function RegisterForm({ params }: { params: Promise<{ role: strin
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-bold block mb-1">Password</label>
-                  <input required name="password" type="password" onChange={handleChange} className="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="******" />
+                  <div className="relative">
+                    <input required name="password" type={showPassword ? "text" : "password"} onChange={handleChange} className="w-full border rounded p-2 pr-10 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="******" />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600">
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="text-xs font-bold block mb-1">Ulangi Password</label>
-                  <input required name="confirmPassword" type="password" onChange={handleChange} className="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="******" />
+                  <div className="relative">
+                    <input required name="confirmPassword" type={showConfirmPassword ? "text" : "password"} onChange={handleChange} className="w-full border rounded p-2 pr-10 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="******" />
+                    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600">
+                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

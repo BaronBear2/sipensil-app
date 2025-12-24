@@ -1,6 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
-import LpkSidebar from '@/components/lpk/Sidebar'
+import LpkSidebar from '@/components/lpk/LpkSidebar'
 import { headers } from 'next/headers'
 
 export default async function LpkLayout({ children }: { children: React.ReactNode }) {

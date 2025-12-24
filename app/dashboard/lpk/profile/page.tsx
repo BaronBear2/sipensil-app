@@ -61,9 +61,11 @@ export default function LpkProfilePage() {
         })
       }
 
-      // Check for first login alert
+      // Check for alerts
       const params = new URLSearchParams(window.location.search)
-      if (params.get('alert') === 'first_login') {
+      const alertType = params.get('alert')
+
+      if (alertType === 'first_login' || alertType === 'complete_profile') {
         setShowWelcomeModal(true)
       }
 
@@ -90,8 +92,8 @@ export default function LpkProfilePage() {
     const { error: baseError } = await supabase
       .from('profiles')
       .update({
-        company_name: formData.company_name, // Keep syncing for easy display in lists
-        phone: formData.phone,
+        // company_name and phone are not in 'profiles' table anymore.
+        // They are stored in 'profile_lpk' table.
         account_status: 'pending',
         rejection_message: null
       })
@@ -142,7 +144,7 @@ export default function LpkProfilePage() {
   if (loading) return <div className="p-10 text-center text-gray-400">Memuat profil...</div>
 
   // Logic Styling
-  const inputClass = "w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-200 transition-all text-sm bg-white"
+  const inputClass = "w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-emerald-200 transition-all text-sm bg-white"
   const labelClass = "block text-xs font-bold text-gray-600 mb-1"
 
   return (
@@ -153,20 +155,28 @@ export default function LpkProfilePage() {
         {showWelcomeModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg text-center p-8 animate-bounce-small relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-2 bg-blue-600"></div>
+              <div className="absolute top-0 left-0 w-full h-2 bg-emerald-600"></div>
               <div className="mb-6">
-                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600">
-                  <Building size={40} />
+                <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 text-emerald-600">
+                  {new URLSearchParams(window.location.search).get('alert') === 'complete_profile' ? <AlertTriangle size={40} className="text-orange-500" /> : <Building size={40} />}
                 </div>
-                <h2 className="text-2xl font-bold text-gray-800">Selamat Datang, LPK Baru!</h2>
+                <h2 className="text-2xl font-bold text-gray-800">
+                  {new URLSearchParams(window.location.search).get('alert') === 'complete_profile' ? 'Data Belum Lengkap' : 'Selamat Datang, LPK Baru!'}
+                </h2>
                 <p className="text-gray-500 mt-2 leading-relaxed">
-                  Terima kasih telah bergabung di SIPENSIL. <br />
-                  Untuk memulai pelaporan, silakan <strong>Lengkapi Profil Lembaga</strong> Anda terlebih dahulu.
+                  {new URLSearchParams(window.location.search).get('alert') === 'complete_profile'
+                    ? 'Anda harus melengkapi profil lembaga (Alamat & Legalitas) sebelum dapat membuat laporan baru.'
+                    : (
+                      <>
+                        Terima kasih telah bergabung di SIPENSIL. <br />
+                        Untuk memulai pelaporan, silakan <strong>Lengkapi Profil Lembaga</strong> Anda terlebih dahulu.
+                      </>
+                    )}
                 </p>
               </div>
               <button
                 onClick={() => setShowWelcomeModal(false)}
-                className="bg-blue-600 text-white font-bold py-3 px-8 rounded-xl hover:bg-blue-700 transition shadow-lg w-full"
+                className="bg-emerald-600 text-white font-bold py-3 px-8 rounded-xl hover:bg-emerald-700 transition shadow-lg w-full"
               >
                 Siap, Lengkapi Sekarang
               </button>
@@ -257,7 +267,7 @@ export default function LpkProfilePage() {
           {/* FOOTER */}
           <div className="mt-10 pt-6 border-t flex justify-end gap-3">
             <Link href="/dashboard/lpk" className="px-6 py-2 border rounded-lg font-bold text-gray-600 hover:bg-gray-50 text-sm flex items-center justify-center">Batal</Link>
-            <button type="submit" disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 flex items-center gap-2 text-sm disabled:bg-gray-400">
+            <button type="submit" disabled={saving} className="px-6 py-2 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-700 flex items-center gap-2 text-sm disabled:bg-gray-400">
               <Save size={18} /> {saving ? 'Menyimpan...' : 'Simpan & Ajukan Verifikasi'}
             </button>
           </div>
