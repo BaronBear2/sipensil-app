@@ -279,7 +279,7 @@ export default function LpkReportForm({ profile, initialData }: { profile: any, 
                             </tr>
                         </thead>
                         <tbody>
-                            {reportData.data_pengembangan_program.map((item, idx) => (
+                            {reportData.data_pengembangan_program.map((item: any, idx: number) => (
                                 <tr key={idx} className="border-b last:border-0">
                                     <td className="p-1"><input value={item.nama} onChange={(e) => handleArrayChange(idx, 'nama', e.target.value, 'data_pengembangan_program')} className={inputStyle} /></td>
                                     <td className="p-1"><input value={item.inisiator} onChange={(e) => handleArrayChange(idx, 'inisiator', e.target.value, 'data_pengembangan_program')} className={inputStyle} /></td>
@@ -311,7 +311,7 @@ export default function LpkReportForm({ profile, initialData }: { profile: any, 
                             </tr>
                         </thead>
                         <tbody>
-                            {reportData.data_penyelenggaraan.map((item, idx) => (
+                            {reportData.data_penyelenggaraan.map((item: any, idx: number) => (
                                 <tr key={idx} className="border-b last:border-0">
                                     <td className="p-1"><input value={item.nama} onChange={(e) => handleArrayChange(idx, 'nama', e.target.value, 'data_penyelenggaraan')} className={inputStyle} /></td>
                                     <td className="p-1"><input value={item.jadwal} onChange={(e) => handleArrayChange(idx, 'jadwal', e.target.value, 'data_penyelenggaraan')} className={inputStyle} /></td>
@@ -363,7 +363,7 @@ export default function LpkReportForm({ profile, initialData }: { profile: any, 
                             </tr>
                         </thead>
                         <tbody>
-                            {reportData.data_uji_kompetensi.map((item, idx) => (
+                            {reportData.data_uji_kompetensi.map((item: any, idx: number) => (
                                 <tr key={idx} className="border-b last:border-0">
                                     <td className="p-1"><input value={item.lsp} onChange={(e) => handleArrayChange(idx, 'lsp', e.target.value, 'data_uji_kompetensi')} className={inputStyle} /></td>
                                     <td className="p-1"><input value={item.skema} onChange={(e) => handleArrayChange(idx, 'skema', e.target.value, 'data_uji_kompetensi')} className={inputStyle} /></td>
@@ -396,7 +396,7 @@ export default function LpkReportForm({ profile, initialData }: { profile: any, 
                             </tr>
                         </thead>
                         <tbody>
-                            {reportData.data_pengembangan_kelembagaan.map((item, idx) => (
+                            {reportData.data_pengembangan_kelembagaan.map((item: any, idx: number) => (
                                 <tr key={idx} className="border-b last:border-0">
                                     <td className="p-1"><input value={item.nama} onChange={(e) => handleArrayChange(idx, 'nama', e.target.value, 'data_pengembangan_kelembagaan')} className={inputStyle} /></td>
                                     <td className="p-1"><input value={item.jadwal} onChange={(e) => handleArrayChange(idx, 'jadwal', e.target.value, 'data_pengembangan_kelembagaan')} className={inputStyle} /></td>
@@ -426,7 +426,7 @@ export default function LpkReportForm({ profile, initialData }: { profile: any, 
                             </tr>
                         </thead>
                         <tbody>
-                            {reportData.data_mitra.map((item, idx) => (
+                            {reportData.data_mitra.map((item: any, idx: number) => (
                                 <tr key={idx} className="border-b last:border-0">
                                     <td className="p-1"><input value={item.nama} onChange={(e) => handleArrayChange(idx, 'nama', e.target.value, 'data_mitra')} className={inputStyle} /></td>
                                     <td className="p-1"><input value={item.alamat} onChange={(e) => handleArrayChange(idx, 'alamat', e.target.value, 'data_mitra')} className={inputStyle} /></td>
@@ -454,7 +454,7 @@ export default function LpkReportForm({ profile, initialData }: { profile: any, 
                             </tr>
                         </thead>
                         <tbody>
-                            {reportData.data_kendala.map((item, idx) => (
+                            {reportData.data_kendala.map((item: any, idx: number) => (
                                 <tr key={idx} className="border-b last:border-0">
                                     <td className="p-1"><input value={item.masalah} onChange={(e) => handleArrayChange(idx, 'masalah', e.target.value, 'data_kendala')} className={inputStyle} /></td>
                                     <td className="p-1"><input value={item.solusi} onChange={(e) => handleArrayChange(idx, 'solusi', e.target.value, 'data_kendala')} className={inputStyle} /></td>
