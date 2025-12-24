@@ -13,7 +13,9 @@ export default function TrainingListV2({ trainings }: { trainings: any[] }) {
 
         setLoadingMap(prev => ({ ...prev, [id]: true }))
         try {
-            await deleteTrainingAction(id)
+            const formData = new FormData()
+            formData.append('id', id)
+            await deleteTrainingAction(formData)
             // Optional: Show toast
             alert('Pelatihan dihapus.')
         } catch (e) {
