@@ -103,7 +103,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const buffer = await Packer.toBuffer(doc);
 
-    return new NextResponse(buffer, {
+    return new NextResponse(buffer as any, {
         headers: {
             'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             'Content-Disposition': `attachment; filename="Surat_Pencatatan_${record.nama_pencaker}.docx"`,
