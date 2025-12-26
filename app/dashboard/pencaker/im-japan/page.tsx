@@ -14,8 +14,22 @@ export default function ImJapanPage() {
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
     const [data, setData] = useState<any>(null) // Existing registration
+    const [isEditing, setIsEditing] = useState(false)
+    const [profile, setProfile] = useState<any>(null)
+    const [requirements, setRequirements] = useState<any[]>([])
     // State for re-application mode
     const [isReapplying, setIsReapplying] = useState(false)
+
+    // Modal State
+    const [statusModal, setStatusModal] = useState<{
+        isOpen: boolean
+        type: 'success' | 'error'
+        message: string
+    }>({
+        isOpen: false,
+        type: 'success',
+        message: ''
+    })
 
     // Fetch Data
     useEffect(() => {
