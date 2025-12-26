@@ -101,6 +101,30 @@ export default async function DashboardPencaker({ searchParams }: { searchParams
         {/* MAIN CONTENT CARD GRID - Shifted up to overlap Hero */}
         <div className="max-w-7xl mx-auto px-6 -mt-16 relative z-20 pb-12">
 
+          {/* ALERT REJECTION */}
+          {profile?.account_status === 'rejected' && (
+            <div className="mb-8 p-6 bg-white border-l-4 border-red-500 rounded-r-2xl shadow-lg flex flex-col md:flex-row items-start md:items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <div className="p-3 bg-red-100 text-red-600 rounded-full shrink-0">
+                <AlertCircle size={24} />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-red-700 text-lg">Verifikasi Akun Ditolak</h3>
+                <p className="text-slate-600 mt-1 leading-relaxed">
+                  Mohon maaf, verifikasi data Anda ditolak dengan alasan:
+                </p>
+                <div className="bg-red-50 p-3 rounded-lg mt-2 border border-red-100 text-red-800 font-medium text-sm">
+                  "{profile.rejection_message || 'Data tidak sesuai atau kurang lengkap.'}"
+                </div>
+                <p className="text-slate-500 text-xs mt-2">
+                  Silakan perbaiki data di menu Profil Saya untuk mengajukan ulang.
+                </p>
+              </div>
+              <Link href="/dashboard/pencaker/profile?action=edit" className="whitespace-nowrap flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-red-700 transition shadow-md hover:shadow-lg">
+                Perbaiki Data <ArrowRight size={16} />
+              </Link>
+            </div>
+          )}
+
           {/* ALERT PROFILE INCOMPLETE */}
           {!isProfileComplete && (
             <div className="mb-8 p-6 bg-white border border-red-100 rounded-2xl shadow-lg flex flex-col md:flex-row items-start md:items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -190,7 +214,7 @@ export default async function DashboardPencaker({ searchParams }: { searchParams
 
       </div>
 
-      {/* DASHBOARD FOOTER (Requested in Item 3) */}
+      {/* DASHBOARD FOOTER */}
       <footer className="bg-white border-t border-slate-100 py-8">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">

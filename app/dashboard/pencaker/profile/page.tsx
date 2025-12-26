@@ -213,14 +213,15 @@ function ProfileContent() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      // 1. Update Base Profile (Sync Photo & Name)
+      // 1. Update Base Profile (Nama & Foto)
       const { error: baseError } = await supabase
          .from('profiles')
          .update({
             full_name: formData.full_name,
-            // Sync photo_url to base profile as well so it shows in navbar/avatar
             photo_url: formData.photo_url,
-            account_status: formData.account_status === 'verified' ? 'unverified' : (formData.account_status || 'unverified'),
+            // Status update dihandle oleh server action resubmit jika perlu, atau default unverified
+            // Kita set unverified client side juga biar responsif, tapi resubmitAction akan memastikan training_reg juga kereset
+            account_status: 'unverified',
             rejection_message: null,
             last_data_update: new Date().toISOString()
          })
@@ -251,7 +252,6 @@ function ProfileContent() {
             photo_url: formData.photo_url
          })
 
-
       const error = detailError
 
       if (error) {
@@ -261,10 +261,15 @@ function ProfileContent() {
             message: 'Gagal menyimpan data detail: ' + error.message
          })
       } else {
+         // 3. CALL RESUBMIT ACTION (Untuk Reset Status Pelatihan jika Ditolak)
+         // Import dynamic to avoid build issues if mixed env
+         const { resubmitApplicationAction } = await import('@/actions/pencaker')
+         await resubmitApplicationAction()
+
          setStatusModal({
             isOpen: true,
             type: 'success',
-            message: 'Data Berhasil Disimpan!'
+            message: 'Data Berhasil Disimpan & Diajukan Ulang!'
          })
 
          setTimeout(() => {

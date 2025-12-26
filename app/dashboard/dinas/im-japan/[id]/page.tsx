@@ -1,11 +1,11 @@
-import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/server'
 import { ArrowLeft, User, MessageCircle, Phone, MapPin, FileText, Calendar, Download, Briefcase } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import ImJapanActionPanel from '@/components/admin/ImJapanActionPanel'
 
 export default async function ImJapanDetailPage({ params }: { params: Promise<{ id: string }> }) {
-    const supabase = await createClient()
+    const supabase = await createAdminClient()
     const { id } = await params
 
     // Fetch Data
