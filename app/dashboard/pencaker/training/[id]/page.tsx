@@ -3,7 +3,7 @@
 import { useEffect, useState, use } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Calendar, FileText, CheckCircle, Award, Users, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Calendar, FileText, CheckCircle, Award, Users, AlertTriangle, Clock } from 'lucide-react'
 import Link from 'next/link'
 // import Navbar from '@/components/Navbar'
 import StatusModal from '@/components/ui/StatusModal'
@@ -301,6 +301,27 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
                                                 <div className="flex justify-between">
                                                     <span className="text-gray-500">Selesai:</span>
                                                     <span className="font-bold text-gray-800">{new Date(training.registration_end).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* NEW: Training Execution Dates */}
+                                {(training.training_start_date || training.training_end_date) && (
+                                    <div className="mb-6 bg-teal-50 p-3 rounded-lg border border-teal-100">
+                                        <h5 className="font-bold text-gray-700 text-xs mb-2 flex items-center gap-1"><Clock size={12} /> Pelaksanaan Pelatihan</h5>
+                                        <div className="text-sm space-y-1">
+                                            {training.training_start_date && (
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-500">Mulai:</span>
+                                                    <span className="font-bold text-gray-800">{new Date(training.training_start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
+                                                </div>
+                                            )}
+                                            {training.training_end_date && (
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-500">Selesai:</span>
+                                                    <span className="font-bold text-gray-800">{new Date(training.training_end_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                                                 </div>
                                             )}
                                         </div>

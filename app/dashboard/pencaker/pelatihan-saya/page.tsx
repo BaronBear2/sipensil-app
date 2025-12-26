@@ -175,18 +175,19 @@ export default function MyTrainingsPage() {
                             {formatDate(reg.created_at)}
                         </div>
                     </div>
+                    {/* Reordered: Start Date first */}
+                    <div className="flex items-center gap-2">
+                        <Calendar size={14} className="text-teal-500" />
+                        <div>
+                            <span className="text-[10px] text-gray-400 block">Mulai Pelatihan</span>
+                            {formatDate(reg.blk_trainings?.training_start_date)}
+                        </div>
+                    </div>
                     <div className="flex items-center gap-2">
                         <Clock size={14} className="text-orange-500" />
                         <div>
                             <span className="text-[10px] text-gray-400 block">Selesai Pelatihan</span>
                             {reg.blk_trainings?.training_end_date ? formatDate(reg.blk_trainings.training_end_date) : '-'}
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2 col-span-2">
-                        <Calendar size={14} className="text-teal-500" />
-                        <div>
-                            <span className="text-[10px] text-gray-400 block">Mulai Pelatihan</span>
-                            {formatDate(reg.blk_trainings?.training_start_date)}
                         </div>
                     </div>
                 </div>
