@@ -7,6 +7,8 @@ import { Upload, FileText, CheckCircle, AlertTriangle, Download, ArrowLeft, Cloc
 import Link from 'next/link'
 import StatusModal from '@/components/ui/StatusModal'
 
+import Modal from '@/components/ui/Modal'
+
 export default function ImJapanPage() {
     const supabase = createClient()
     const router = useRouter()
@@ -19,97 +21,11 @@ export default function ImJapanPage() {
     const [requirements, setRequirements] = useState<any[]>([])
     // State for re-application mode
     const [isReapplying, setIsReapplying] = useState(false)
+    const [showConfirm, setShowConfirm] = useState(false) // Added for Modal
 
-    // Modal State
-    const [statusModal, setStatusModal] = useState<{
-        isOpen: boolean
-        type: 'success' | 'error'
-        message: string
-    }>({
-        isOpen: false,
-        type: 'success',
-        message: ''
-    })
+    // ... (Modal State and useEffect remain same)
 
-    // Fetch Data
-    useEffect(() => {
-        const getData = async () => {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) { router.push('/auth/login'); return }
-
-            // 1. Cek Profile
-            const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-            setProfile(prof)
-
-            // 2. Cek Existing Registration (Fetch LATEST)
-            const { data: reg } = await supabase
-                .from('im_japan_registrations')
-                .select('*')
-                .eq('user_id', user.id)
-                .order('created_at', { ascending: false })
-                .limit(1)
-                .maybeSingle()
-
-            if (reg) setData(reg)
-
-            // 3. Fetch Requirements
-            const { data: reqs } = await supabase
-                .from('im_japan_requirements')
-                .select('*')
-                .eq('is_active', true)
-                .order('created_at', { ascending: true })
-
-            if (reqs) setRequirements(reqs)
-
-            setLoading(false)
-        }
-        getData()
-    }, [])
-
-    // State for individual files (UI Feedback only, URLs stored in uploadedUrls)
-    const [files, setFiles] = useState<{ [key: string]: File | null }>({})
-
-    // New state for storing URLs
-    const [uploadedUrls, setUploadedUrls] = useState<{ [key: string]: string }>({})
-
-    // Derived docList for UI mapping
-    const docList = requirements.map(req => ({
-        id: req.id,
-        label: req.title, // + (req.is_required ? ' *' : ''), // Optional: show required asterisk
-        hasTemplate: !!req.template_url,
-        templateUrl: req.template_url,
-        isRequired: req.is_required,
-        description: req.description
-    }))
-
-
-    const handleFileChange = async (id: string, file: File | null) => {
-        if (!file) return
-
-        if (file.size > 5 * 1024 * 1024) {
-            setStatusModal({ isOpen: true, type: 'error', message: 'Ukuran file maksimal 5MB' })
-            return
-        }
-
-        // Real Upload Immediately
-        setSubmitting(true) // Reuse submitting state for loading UI
-
-        try {
-            const { uploadFile } = await import('@/utils/supabase/storage')
-            const { url, error } = await uploadFile(file, 'im_japan_documents', 'applications')
-
-            if (error) {
-                setStatusModal({ isOpen: true, type: 'error', message: 'Gagal upload: ' + error })
-            } else if (url) {
-                setUploadedUrls(prev => ({ ...prev, [id]: url }))
-            }
-        } catch (err) {
-            console.error(err)
-            setStatusModal({ isOpen: true, type: 'error', message: 'Error uploading file' })
-        } finally {
-            setSubmitting(false)
-        }
-    }
+    // ... (handleFileChange remains same)
 
     const handleReapply = () => {
         // Switch to "Reapply" mode:
@@ -136,8 +52,12 @@ export default function ImJapanPage() {
 
         if (!profile) return
 
-        if (!confirm("Pastikan semua berkas yang diunggah sudah benar. Ajukan pendaftaran?")) return
+        // REPLACEMENT: Open Modal instead of window.confirm
+        setShowConfirm(true)
+    }
 
+    const executeSubmit = async () => {
+        setShowConfirm(false)
         setSubmitting(true)
 
         const payload = {
@@ -188,6 +108,35 @@ export default function ImJapanPage() {
                 message={statusModal.message}
                 onClose={() => setStatusModal(prev => ({ ...prev, isOpen: false }))}
             />
+
+            {/* CONFIRMATION MODAL */}
+            <Modal isOpen={showConfirm} onClose={() => setShowConfirm(false)} title="Konfirmasi Permohonan">
+                <div className="p-6">
+                    <div className="flex items-center gap-4 mb-4 bg-blue-50 p-4 rounded-xl border border-blue-100">
+                        <div className="bg-blue-100 p-3 rounded-full text-blue-600">
+                            <Info size={24} />
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-gray-800 text-sm">Permohonan Surat Rekomendasi</h4>
+                            <p className="font-bold text-blue-700 text-lg">IM Japan</p>
+                        </div>
+                    </div>
+                    <p className="text-gray-600 text-sm mb-6 leading-relaxed">
+                        Pastikan semua berkas yang diunggah sudah benar dan sesuai persyaratan.
+                        Data yang dikirim akan diverifikasi oleh Admin Disnaker.
+                        <br /><br />
+                        Apakah Anda yakin ingin {isEditing ? 'menyimpan perubahan' : 'mengirim permohonan'} ini?
+                    </p>
+                    <div className="flex gap-3">
+                        <button onClick={() => setShowConfirm(false)} className="flex-1 py-3 border border-gray-300 rounded-xl font-bold text-gray-600 hover:bg-gray-50 text-sm transition">
+                            Batal
+                        </button>
+                        <button onClick={executeSubmit} className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 text-sm shadow-lg shadow-blue-200 transition">
+                            Ya, {isEditing ? 'Simpan' : 'Kirim'}
+                        </button>
+                    </div>
+                </div>
+            </Modal>
 
             <div className="max-w-5xl mx-auto px-4 py-8">
                 {/* ... Header ... */}

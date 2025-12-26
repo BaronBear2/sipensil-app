@@ -62,7 +62,7 @@ export default function ImJapanHistoryPage() {
                             {pending.map(item => (
                                 <div key={item.id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                                     <div>
-                                        <div className="font-bold text-slate-800 mb-1">Permohonan Surat Rekomendasi</div>
+                                        <div className="font-bold text-slate-800 mb-1">Permohonan Surat Rekomendasi Tes IM Japan</div>
                                         <div className="text-xs text-slate-500">Diajukan: {new Date(item.created_at).toLocaleDateString('id-ID')}</div>
                                     </div>
                                     {/* Action to Edit */}
@@ -129,7 +129,7 @@ export default function ImJapanHistoryPage() {
                                             href="/dashboard/pencaker/im-japan"
                                             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow-blue-100 shadow-md"
                                         >
-                                            <RefreshCcw size={16} /> Revisi / Ajukan Ulang
+                                            <RefreshCcw size={16} /> Ajukan Ulang
                                         </Link>
                                     </div>
                                 </div>
