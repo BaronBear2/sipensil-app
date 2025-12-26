@@ -40,16 +40,21 @@ export default function MyTrainingsPage() {
 
                 for (const reg of data) {
                     const status = reg.status
+                    const trainingEnd = reg.blk_trainings?.training_end_date ? new Date(reg.blk_trainings.training_end_date) : null
+                    const isFinishedDate = trainingEnd && trainingEnd < now
 
                     if (status === 'DITOLAK' || status === 'REJECTED') {
                         rejected.push(reg)
                     } else if (status === 'SELESAI') {
-                        // Already marked finished by system
+                        // Explicitly finished
                         history.push(reg)
                     } else if (status === 'DITERIMA' || status === 'APPROVED' || status === 'VERIFIED') {
-                        // Double check if training ended but cron hasn't run yet?
-                        // Optional: rely on status. If status is DITERIMA, it is active.
-                        active.push(reg)
+                        // Check if training period has passed
+                        if (isFinishedDate) {
+                            history.push(reg)
+                        } else {
+                            active.push(reg)
+                        }
                     } else {
                         // Pending
                         active.push(reg)
@@ -105,6 +110,7 @@ export default function MyTrainingsPage() {
                             <p><strong>Penyelenggara:</strong> ${reg.blk_trainings.provider}</p>
                             <p><strong>Lokasi:</strong> ${reg.blk_trainings.location || 'UPTD BLK Kabupaten Bekasi'}</p>
                             <p><strong>Pelaksanaan:</strong> ${formatDate(reg.blk_trainings.training_start_date)} s/d ${formatDate(reg.blk_trainings.training_end_date)}</p>
+                            <p><strong>Pendaftaran:</strong> ${formatDate(reg.blk_trainings.registration_start)} s/d ${formatDate(reg.blk_trainings.registration_end)}</p>
                         </div>
 
                         <div style="margin-top: 40px; text-align: center;">
@@ -133,9 +139,10 @@ export default function MyTrainingsPage() {
                             <MapPin size={14} /> {reg.blk_trainings?.provider}
                         </p>
                     </div>
+                    {/* Status Badges */}
                     {isHistory ? (
                         <div className="px-3 py-1 rounded-full text-xs font-bold border bg-gray-100 text-gray-600 border-gray-200 flex items-center gap-1">
-                            <CheckCircle size={12} /> Selesai
+                            <CheckCircle size={12} /> Selesai / Pernah Diikuti
                         </div>
                     ) : isRejected ? (
                         <div className="px-3 py-1 rounded-full text-xs font-bold border bg-red-100 text-red-700 border-red-200 flex items-center gap-1">
@@ -152,6 +159,15 @@ export default function MyTrainingsPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 text-sm text-gray-500 mb-6 border-y py-3 bg-gray-50/50 px-4 -mx-6">
+                    {/* New Field: Registration Period */}
+                    <div className="flex items-center gap-2 col-span-2">
+                        <FileText size={14} className="text-purple-500" />
+                        <div>
+                            <span className="text-[10px] text-gray-400 block">Masa Pendaftaran</span>
+                            {reg.blk_trainings?.registration_start ? formatDate(reg.blk_trainings.registration_start) : '-'} s/d {reg.blk_trainings?.registration_end ? formatDate(reg.blk_trainings.registration_end) : '-'}
+                        </div>
+                    </div>
+
                     <div className="flex items-center gap-2">
                         <Calendar size={14} className="text-blue-500" />
                         <div>
@@ -185,8 +201,9 @@ export default function MyTrainingsPage() {
                     </div>
                 )}
 
+                {/* Actions */}
                 <div className="flex justify-end flex-wrap gap-2 pt-2">
-                    {/* Only show DETAIL for non-rejected items */}
+                    {/* Only show DETAIL if NOT Rejected (or if user wants to see detail of rejected? Logic says keep it simple) */}
                     {!isRejected && (
                         <Link href={`/dashboard/pencaker/training/${reg.blk_trainings?.id}`} className="px-3 py-2 border rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-50 flex items-center gap-2">
                             <ExternalLink size={14} /> Detail
@@ -200,8 +217,8 @@ export default function MyTrainingsPage() {
                         </button>
                     )}
 
-                    {/* Accepted Buttons */}
-                    {!isRejected && !isHistory && (reg.status === 'DITERIMA' || reg.status === 'APPROVED' || reg.status === 'VERIFIED') && (
+                    {/* Accepted Buttons (Active or History) - If History, maybe they still want proofs? Usually yes. */}
+                    {!isRejected && (reg.status === 'DITERIMA' || reg.status === 'APPROVED' || reg.status === 'VERIFIED') && (
                         <>
                             <button onClick={() => handlePrint(reg, 'registration')} className="px-3 py-2 border border-blue-200 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 flex items-center gap-2 shadow-sm">
                                 <FileText size={14} /> Tanda Daftar
@@ -231,6 +248,7 @@ export default function MyTrainingsPage() {
 
                 {activeRegistrations.length === 0 && historyRegistrations.length === 0 && rejectedRegistrations.length === 0 ? (
                     <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-gray-300">
+                        {/* Empty State */}
                         <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
                             <FileText size={40} />
                         </div>
@@ -259,22 +277,7 @@ export default function MyTrainingsPage() {
                             )}
                         </section>
 
-                        {/* SECTION 2: HISTORY */}
-                        {(historyRegistrations.length > 0) && (
-                            <section>
-                                <div className="flex items-center gap-2 mb-4">
-                                    <span className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
-                                        <History size={16} />
-                                    </span>
-                                    <h2 className="text-lg font-bold text-gray-800">Riwayat Pelatihan</h2>
-                                </div>
-                                <div className="space-y-4">
-                                    {historyRegistrations.map(reg => <TrainingCard key={reg.id} reg={reg} isHistory={true} />)}
-                                </div>
-                            </section>
-                        )}
-
-                        {/* SECTION 3: REJECTED */}
+                        {/* SECTION 2: REJECTED (Reordered) */}
                         {(rejectedRegistrations.length > 0) && (
                             <section>
                                 <div className="flex items-center gap-2 mb-4">
@@ -285,6 +288,21 @@ export default function MyTrainingsPage() {
                                 </div>
                                 <div className="space-y-4">
                                     {rejectedRegistrations.map(reg => <TrainingCard key={reg.id} reg={reg} isRejected={true} />)}
+                                </div>
+                            </section>
+                        )}
+
+                        {/* SECTION 3: HISTORY (Reordered) */}
+                        {(historyRegistrations.length > 0) && (
+                            <section>
+                                <div className="flex items-center gap-2 mb-4">
+                                    <span className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
+                                        <History size={16} />
+                                    </span>
+                                    <h2 className="text-lg font-bold text-gray-800">Pelatihan Yang Pernah Diikuti</h2>
+                                </div>
+                                <div className="space-y-4">
+                                    {historyRegistrations.map(reg => <TrainingCard key={reg.id} reg={reg} isHistory={true} />)}
                                 </div>
                             </section>
                         )}
