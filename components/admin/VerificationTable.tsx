@@ -32,7 +32,7 @@ export default function VerificationTable({ users, viewOnly = false }: { users: 
       const formData = new FormData()
       formData.append('regId', selectedUser.training_reg_id)
 
-      const res = await deleteRegistrationHistoryAction(formData)
+      const res = await deleteRegistrationHistoryAction(formData) as any
 
       if (res?.error) {
          alert(res.error)
@@ -44,6 +44,31 @@ export default function VerificationTable({ users, viewOnly = false }: { users: 
       setSelectedUser(null)
       setIsDeleteMode(false)
       router.refresh()
+   }
+
+   // Eksekusi Verifikasi (Approve/Reject)
+   const executeVerify = async (action: 'approve' | 'reject') => {
+      if (!selectedUser && !rejectReason && action === 'reject') return
+      setLoading(true)
+
+      const formData = new FormData()
+      // Note: verifyProfileAction expects 'regId' but VerificationTable uses 'training_reg_id' from the user object
+      formData.append('regId', selectedUser.training_reg_id)
+      formData.append('action', action)
+      formData.append('reason', rejectReason)
+
+      try {
+         await verifyProfileAction(formData)
+         setLoading(false)
+         setSelectedUser(null)
+         setIsConfirmMode(false)
+         setIsRejectMode(false)
+         setRejectReason('')
+         router.refresh()
+      } catch (e: any) {
+         alert(e.message || "Gagal memproses verifikasi")
+         setLoading(false)
+      }
    }
 
    // Helper Hitung Umur
