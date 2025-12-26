@@ -28,7 +28,8 @@ export default async function VerificationDetailPage({ params }: { params: Promi
     }
 
     const profile = reg.profiles
-    const details = profile.profile_pencaker || {}
+    const pencakerRaw = profile.profile_pencaker
+    const details = Array.isArray(pencakerRaw) ? pencakerRaw[0] : (pencakerRaw || {})
     const training = reg.blk_trainings
 
     // Flatten User Object for Client Component
@@ -92,7 +93,7 @@ export default async function VerificationDetailPage({ params }: { params: Promi
                             </div>
                             <div>
                                 <label className="text-xs text-gray-400 uppercase font-bold">Jenis Kelamin</label>
-                                <p className="font-semibold text-gray-800">{details.gender === 'L' ? 'Laki-laki' : 'Perempuan'}</p>
+                                <p className="font-semibold text-gray-800">{details.gender === 'L' ? 'Laki-laki' : details.gender === 'P' ? 'Perempuan' : (details.gender || '-')}</p>
                             </div>
                             <div>
                                 <label className="text-xs text-gray-400 uppercase font-bold">No HP / WA</label>
@@ -103,7 +104,7 @@ export default async function VerificationDetailPage({ params }: { params: Promi
                             <div>
                                 <label className="text-xs text-gray-400 uppercase font-bold">Tempat, Tanggal Lahir</label>
                                 <p className="font-semibold text-gray-800 flex items-center gap-2">
-                                    <Calendar size={14} /> {details.place_of_birth}, {dob}
+                                    <Calendar size={14} /> {details.place_of_birth || '-'}, {dob}
                                 </p>
                             </div>
                             <div>
@@ -112,13 +113,13 @@ export default async function VerificationDetailPage({ params }: { params: Promi
                             </div>
                             <div>
                                 <label className="text-xs text-gray-400 uppercase font-bold">Pendidikan Terakhir</label>
-                                <p className="font-semibold text-gray-800">{details.last_education || '-'}</p>
+                                <p className="font-semibold text-gray-800">{details.education || '-'}</p>
                             </div>
                             <div className="md:col-span-2">
                                 <label className="text-xs text-gray-400 uppercase font-bold">Alamat Domisili</label>
                                 <p className="font-semibold text-gray-800 flex items-start gap-2">
                                     <MapPin size={14} className="mt-1 flex-shrink-0" />
-                                    {details.address || '-'}
+                                    {details.address_dom || '-'}
                                 </p>
                             </div>
                         </div>
