@@ -5,7 +5,7 @@ import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Upload, FileText, CheckCircle, AlertTriangle, Download, ArrowLeft, Clock, Info } from 'lucide-react'
 import Link from 'next/link'
-import Navbar from '@/components/Navbar'
+import StatusModal from '@/components/ui/StatusModal'
 
 export default function ImJapanPage() {
     const supabase = createClient()
@@ -17,6 +17,17 @@ export default function ImJapanPage() {
     const [isEditing, setIsEditing] = useState(false)
     const [profile, setProfile] = useState<any>(null)
     const [requirements, setRequirements] = useState<any[]>([])
+
+    // Modal State
+    const [statusModal, setStatusModal] = useState<{
+        isOpen: boolean
+        type: 'success' | 'error'
+        message: string
+    }>({
+        isOpen: false,
+        type: 'success',
+        message: ''
+    })
 
     // Fetch Data
     useEffect(() => {
@@ -46,8 +57,11 @@ export default function ImJapanPage() {
         getData()
     }, [])
 
-    // State for individual files
+    // State for individual files (UI Feedback only, URLs stored in uploadedUrls)
     const [files, setFiles] = useState<{ [key: string]: File | null }>({})
+
+    // New state for storing URLs
+    const [uploadedUrls, setUploadedUrls] = useState<{ [key: string]: string }>({})
 
     // Derived docList for UI mapping
     const docList = requirements.map(req => ({
@@ -64,12 +78,11 @@ export default function ImJapanPage() {
         if (!file) return
 
         if (file.size > 5 * 1024 * 1024) {
-            alert('Ukuran file maksimal 5MB')
+            setStatusModal({ isOpen: true, type: 'error', message: 'Ukuran file maksimal 5MB' })
             return
         }
 
         // Real Upload Immediately
-        // Note: For better UX, we could upload generic pending state, but let's do direct.
         setSubmitting(true) // Reuse submitting state for loading UI
 
         try {
@@ -77,27 +90,17 @@ export default function ImJapanPage() {
             const { url, error } = await uploadFile(file, 'im_japan_documents', 'applications')
 
             if (error) {
-                alert('Gagal upload: ' + error)
+                setStatusModal({ isOpen: true, type: 'error', message: 'Gagal upload: ' + error })
             } else if (url) {
-                // Determine keys for legacy vs new
-                // Save directly to state? Or just local map?
-                // We save to local map 'files' AS URL string now?
-                // Current files state is File | null. We need valid Map for URLs.
-                // Let's create a separate state for uploadedURLs.
                 setUploadedUrls(prev => ({ ...prev, [id]: url }))
-                // We still keep 'files' for UI feedback "File selected" logic if needed, 
-                // but actually if we have URL, we show "Uploaded".
             }
         } catch (err) {
             console.error(err)
-            alert('Error uploading file')
+            setStatusModal({ isOpen: true, type: 'error', message: 'Error uploading file' })
         } finally {
             setSubmitting(false)
         }
     }
-
-    // New state for storing URLs
-    const [uploadedUrls, setUploadedUrls] = useState<{ [key: string]: string }>({})
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -111,7 +114,7 @@ export default function ImJapanPage() {
         })
 
         if (missing.length > 0) {
-            alert(`Mohon lengkapi dokumen: ${missing.map(d => d.label).join(', ')}`)
+            setStatusModal({ isOpen: true, type: 'error', message: `Mohon lengkapi dokumen: ${missing.map(d => d.label).join(', ')}` })
             return
         }
 
@@ -147,9 +150,10 @@ export default function ImJapanPage() {
         }
 
         if (error) {
-            alert("Gagal mengirim: " + error.message)
+            setStatusModal({ isOpen: true, type: 'error', message: "Gagal mengirim: " + error.message })
         } else {
-            window.location.reload()
+            setStatusModal({ isOpen: true, type: 'success', message: 'Permohonan berhasil dikirim!' })
+            setTimeout(() => window.location.reload(), 1500)
         }
         setSubmitting(false)
     }
@@ -159,6 +163,12 @@ export default function ImJapanPage() {
     return (
         <div className="min-h-screen bg-gray-50 font-sans animate-fade-in pb-20">
             {/* Navbar removed */}
+            <StatusModal
+                isOpen={statusModal.isOpen}
+                type={statusModal.type}
+                message={statusModal.message}
+                onClose={() => setStatusModal(prev => ({ ...prev, isOpen: false }))}
+            />
 
             <div className="max-w-5xl mx-auto px-4 py-8">
 

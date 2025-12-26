@@ -5,7 +5,7 @@ import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Calendar, FileText, CheckCircle, Award, Users, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
-import Navbar from '@/components/Navbar'
+// import Navbar from '@/components/Navbar'
 import StatusModal from '@/components/ui/StatusModal'
 import Modal from '@/components/ui/Modal' // Added
 import { applyTraining } from '@/actions/training'
@@ -149,7 +149,7 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
 
     return (
         <div className="min-h-screen bg-gray-50 font-sans pb-20">
-            <Navbar />
+            {/* Navbar removed as it's provided by layout */}
             <StatusModal
                 {...statusModal}
                 onClose={() => {

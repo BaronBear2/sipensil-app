@@ -30,15 +30,18 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
     let RoleIcon = User
 
     if (role === 'PENCAKER') {
-        roleData = profile.profile_pencaker || {}
+        const pencakerRaw = profile.profile_pencaker
+        roleData = Array.isArray(pencakerRaw) ? pencakerRaw[0] : (pencakerRaw || {})
         roleName = 'Pencaker'
         RoleIcon = User
     } else if (role === 'PERUSAHAAN') {
-        roleData = profile.profile_perusahaan || {}
+        const perusahaanRaw = profile.profile_perusahaan
+        roleData = Array.isArray(perusahaanRaw) ? perusahaanRaw[0] : (perusahaanRaw || {})
         roleName = 'Perusahaan'
         RoleIcon = Briefcase
     } else if (role === 'ADMIN_LPK' || role === 'LPK') {
-        roleData = profile.profile_lpk || {}
+        const lpkRaw = profile.profile_lpk
+        roleData = Array.isArray(lpkRaw) ? lpkRaw[0] : (lpkRaw || {})
         roleName = 'LPK'
         RoleIcon = Building
     }

@@ -1,10 +1,4 @@
-'use client'
-
-import { useState, use } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft, Lock, Eye, EyeOff } from 'lucide-react'
-import { createClient } from '@/utils/supabase/client'
+import StatusModal from '@/components/ui/StatusModal'
 
 export default function RegisterForm({ params }: { params: Promise<{ role: string }> }) {
   const resolvedParams = use(params)
@@ -15,6 +9,18 @@ export default function RegisterForm({ params }: { params: Promise<{ role: strin
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+  // Modal State
+  const [statusModal, setStatusModal] = useState<{
+    isOpen: boolean
+    type: 'success' | 'error'
+    message: string
+    onClose?: () => void
+  }>({
+    isOpen: false,
+    type: 'success',
+    message: ''
+  })
 
   // State yang disederhanakan untuk Register
   const [formData, setFormData] = useState({
@@ -44,7 +50,7 @@ export default function RegisterForm({ params }: { params: Promise<{ role: strin
 
     // 1. Validasi Password
     if (formData.password !== formData.confirmPassword) {
-      alert("Password dan Konfirmasi Password tidak sama!")
+      setStatusModal({ isOpen: true, type: 'error', message: "Password dan Konfirmasi Password tidak sama!" })
       setLoading(false)
       return
     }
@@ -53,12 +59,12 @@ export default function RegisterForm({ params }: { params: Promise<{ role: strin
     if (role === 'pencaker') {
       const nik = formData.nik
       if (nik.length !== 16) {
-        alert("NIK Harus 16 digit!")
+        setStatusModal({ isOpen: true, type: 'error', message: "NIK Harus 16 digit!" })
         setLoading(false)
         return
       }
       if (!nik.startsWith('3216')) {
-        alert("Maaf, pendaftaran khusus warga Kabupaten Bekasi (NIK berawalan 3216).")
+        setStatusModal({ isOpen: true, type: 'error', message: "Maaf, pendaftaran khusus warga Kabupaten Bekasi (NIK berawalan 3216)." })
         setLoading(false)
         return
       }
@@ -67,18 +73,18 @@ export default function RegisterForm({ params }: { params: Promise<{ role: strin
     // Strict Password Validation
     const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&-_])[A-Za-z\d@$!%*#?&-_]{6,}$/
     if (!passwordRegex.test(formData.password)) {
-      alert("Password Tidak Valid! Harus minimal 6 karakter, mengandung Huruf, Angka, dan Simbol (@$!%*#?&-_).")
+      setStatusModal({ isOpen: true, type: 'error', message: "Password Tidak Valid! Harus minimal 6 karakter, mengandung Huruf, Angka, dan Simbol (@$!%*#?&-_)." })
       setLoading(false)
       return
     }
 
     if (role === 'lpk' && formData.operational_pj_phone.length < 10) {
-      alert("Nomor HP Penanggungjawab minimal 10 digit!")
+      setStatusModal({ isOpen: true, type: 'error', message: "Nomor HP Penanggungjawab minimal 10 digit!" })
       setLoading(false)
       return
     }
     if (role === 'perusahaan' && formData.phone.length < 10) {
-      alert("Nomor Telepon HRD minimal 10 digit!")
+      setStatusModal({ isOpen: true, type: 'error', message: "Nomor Telepon HRD minimal 10 digit!" })
       setLoading(false)
       return
     }
@@ -110,11 +116,17 @@ export default function RegisterForm({ params }: { params: Promise<{ role: strin
     import('@/actions/auth').then(async (mod) => {
       const result = await mod.signup(fd)
       if (result?.error) {
-        alert("Gagal Registrasi: " + result.error)
+        setStatusModal({ isOpen: true, type: 'error', message: "Gagal Registrasi: " + result.error })
         setLoading(false)
       } else {
-        alert('Registrasi Berhasil! Silakan cek email Anda untuk verifikasi.')
-        router.push('/auth/login')
+        setStatusModal({
+          isOpen: true,
+          type: 'success',
+          message: 'Registrasi Berhasil! Silakan cek email Anda untuk verifikasi.',
+          onClose: () => router.push('/auth/login')
+        })
+        // Auto redirect fallback
+        setTimeout(() => router.push('/auth/login'), 2000)
       }
     })
   }
@@ -173,6 +185,16 @@ export default function RegisterForm({ params }: { params: Promise<{ role: strin
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 flex justify-center font-sans">
+      <StatusModal
+        isOpen={statusModal.isOpen}
+        type={statusModal.type}
+        message={statusModal.message}
+        onClose={() => {
+          setStatusModal(prev => ({ ...prev, isOpen: false }))
+          if (statusModal.onClose) statusModal.onClose()
+        }}
+      />
+
       <div className="max-w-3xl w-full bg-white rounded-2xl shadow-xl p-8">
         <Link href="/auth/register" className="text-gray-500 mb-6 flex items-center gap-2 font-bold hover:text-blue-600 transition-colors">
           <ArrowLeft size={16} /> Kembali
