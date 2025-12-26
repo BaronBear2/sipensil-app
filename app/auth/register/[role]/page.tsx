@@ -1,3 +1,10 @@
+'use client'
+
+import { useState, use } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { ArrowLeft, Lock, Eye, EyeOff } from 'lucide-react'
+import { createClient } from '@/utils/supabase/client'
 import StatusModal from '@/components/ui/StatusModal'
 
 export default function RegisterForm({ params }: { params: Promise<{ role: string }> }) {
