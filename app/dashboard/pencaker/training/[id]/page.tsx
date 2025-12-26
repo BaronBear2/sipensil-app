@@ -94,7 +94,8 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
 
         // If 'rejected', block them.
         if (profile.account_status === 'rejected') {
-            setStatusModal({ isOpen: true, type: 'error', message: `Akun Anda ditolak: ${profile.rejection_message}. Silakan perbaiki profil.` })
+            const reason = profile.rejection_message || 'Mohon cek detail penolakan di halaman Profil Saya'
+            setStatusModal({ isOpen: true, type: 'error', message: `Akun Anda ditolak: "${reason}". Silakan perbaiki profil.` })
             return
         }
 

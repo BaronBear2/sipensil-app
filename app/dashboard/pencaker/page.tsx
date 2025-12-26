@@ -36,6 +36,13 @@ export default async function DashboardPencaker({ searchParams }: { searchParams
 
   const pencakerData = profile?.profile_pencaker || {}
 
+  // User Request: Redirect rejected users directly to profile for revision
+  if (profile?.account_status === 'rejected') {
+    // Check if we are already showing a view? No, this is main dashboard.
+    // Redirect to profile with edit param
+    redirect('/dashboard/pencaker/profile?action=edit')
+  }
+
   const { data: trainings, error: trainingError } = await supabase.from('blk_trainings').select('*')
   if (trainingError) console.error("Error fetching trainings:", trainingError)
 
