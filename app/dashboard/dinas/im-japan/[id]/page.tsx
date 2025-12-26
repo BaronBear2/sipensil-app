@@ -24,13 +24,16 @@ export default async function ImJapanDetailPage({ params }: { params: Promise<{ 
     if (!reg) return notFound()
 
     const p = reg.profiles
-    const details = p.profile_pencaker || {}
+    const pencakerRaw = p.profile_pencaker
+    const details = Array.isArray(pencakerRaw) ? pencakerRaw[0] : (pencakerRaw || {})
 
     // Normalize Data
     const fullName = p.full_name
     const nik = details.nik || p.nik || '-'
     const phone = details.phone || p.phone || '-'
-    const address = details.address || '-'
+    // Fix: address -> address_dom
+    const address = details.address_dom || '-'
+    const education = details.education || '-'
 
     // Calculate Age
     const dobRaw = details.date_of_birth || p.dob
@@ -118,6 +121,10 @@ export default async function ImJapanDetailPage({ params }: { params: Promise<{ 
                                 <div>
                                     <label className="text-xs text-gray-400 uppercase font-bold">Usia</label>
                                     <p className="font-semibold text-gray-800">{age} Tahun</p>
+                                </div>
+                                <div>
+                                    <label className="text-xs text-gray-400 uppercase font-bold">Pendidikan Terakhir</label>
+                                    <p className="font-semibold text-gray-800">{education}</p>
                                 </div>
                                 <div className="md:col-span-2">
                                     <label className="text-xs text-gray-400 uppercase font-bold">Alamat Domisili</label>

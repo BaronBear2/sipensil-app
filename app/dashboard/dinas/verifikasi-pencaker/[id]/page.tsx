@@ -1,10 +1,10 @@
-import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/server'
 import { ArrowLeft, User, MapPin, Calendar, Phone, Briefcase, FileText, CheckCircle, XCircle } from 'lucide-react'
 import Link from 'next/link'
 import VerificationActionPanelV2 from '@/components/admin/VerificationActionPanelV2'
 
 export default async function VerificationDetailPage({ params }: { params: Promise<{ id: string }> }) {
-    const supabase = await createClient()
+    const supabase = await createAdminClient()
     const { id } = await params // This is 'training_reg_id' based on previous step link
 
     // Fetch Registration + Profile
