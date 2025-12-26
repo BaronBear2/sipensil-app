@@ -39,22 +39,19 @@ export default function MyTrainingsPage() {
                 const rejected = []
 
                 for (const reg of data) {
-                    const trainingEnd = reg.blk_trainings?.training_end_date ? new Date(reg.blk_trainings.training_end_date) : null
                     const status = reg.status
 
                     if (status === 'DITOLAK' || status === 'REJECTED') {
                         rejected.push(reg)
+                    } else if (status === 'SELESAI') {
+                        // Already marked finished by system
+                        history.push(reg)
                     } else if (status === 'DITERIMA' || status === 'APPROVED' || status === 'VERIFIED') {
-                        // If accepted, check if training is finished
-                        if (trainingEnd && trainingEnd < now) {
-                            history.push(reg)
-                        } else {
-                            active.push(reg)
-                        }
+                        // Double check if training ended but cron hasn't run yet?
+                        // Optional: rely on status. If status is DITERIMA, it is active.
+                        active.push(reg)
                     } else {
                         // Pending
-                        // Logic: If pending and training started? Typically stays pending or admin rejects. 
-                        // For now, keep as active (Pending is active process)
                         active.push(reg)
                     }
                 }
@@ -103,7 +100,7 @@ export default function MyTrainingsPage() {
                             <p><strong>Program:</strong> ${reg.blk_trainings.title}</p>
                             <p><strong>Penyelenggara:</strong> ${reg.blk_trainings.provider}</p>
                             <p><strong>Lokasi:</strong> ${reg.blk_trainings.location || 'UPTD BLK Kabupaten Bekasi'}</p>
-                            <p><strong>Pelaksanaan:</strong> ${formatDate(reg.blk_trainings.registration_start)} s/d ${formatDate(reg.blk_trainings.training_end_date)}</p>
+                            <p><strong>Pelaksanaan:</strong> ${formatDate(reg.blk_trainings.training_start_date)} s/d ${formatDate(reg.blk_trainings.training_end_date)}</p>
                         </div>
 
                         <div style="margin-top: 40px; text-align: center;">
@@ -142,8 +139,8 @@ export default function MyTrainingsPage() {
                         </div>
                     ) : (
                         <div className={`px-3 py-1 rounded-full text-xs font-bold border ${reg.status === 'DITERIMA' || reg.status === 'APPROVED' || reg.status === 'VERIFIED'
-                                ? 'bg-green-100 text-green-700 border-green-200'
-                                : 'bg-yellow-100 text-yellow-700 border-yellow-200'
+                            ? 'bg-green-100 text-green-700 border-green-200'
+                            : 'bg-yellow-100 text-yellow-700 border-yellow-200'
                             }`}>
                             {reg.status === 'PENDING' ? 'Menunggu Verifikasi' : reg.status}
                         </div>
@@ -161,17 +158,15 @@ export default function MyTrainingsPage() {
                     <div className="flex items-center gap-2">
                         <Clock size={14} className="text-orange-500" />
                         <div>
-                            <span className="text-[10px] text-gray-400 block">Durasi / Selesai</span>
-                            {reg.blk_trainings?.duration ? `${reg.blk_trainings.duration} ` : ''}
-                            {reg.blk_trainings?.training_end_date ? `(Selesai: ${formatDate(reg.blk_trainings.training_end_date)})` : '-'}
+                            <span className="text-[10px] text-gray-400 block">Selesai Pelatihan</span>
+                            {reg.blk_trainings?.training_end_date ? formatDate(reg.blk_trainings.training_end_date) : '-'}
                         </div>
                     </div>
                     <div className="flex items-center gap-2 col-span-2">
                         <Calendar size={14} className="text-teal-500" />
                         <div>
                             <span className="text-[10px] text-gray-400 block">Mulai Pelatihan</span>
-                            {formatDate(reg.blk_trainings?.registration_start)}
-                            {/* Note: backend might not have training_start_date distinct from reg, relying on logic */}
+                            {formatDate(reg.blk_trainings?.training_start_date)}
                         </div>
                     </div>
                 </div>

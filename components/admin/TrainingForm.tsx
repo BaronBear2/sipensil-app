@@ -28,6 +28,8 @@ export default function TrainingForm({ initialData, actionFn, isEdit = false }: 
         requirements: initialData?.requirements?.join('\n') || '',
         registration_start: initialData?.registration_start || '',
         registration_end: initialData?.registration_end || '',
+        training_start_date: initialData?.training_start_date || '',
+        training_end_date: initialData?.training_end_date || '',
         image_url: initialData?.image_url || ''
     })
 
@@ -140,6 +142,14 @@ export default function TrainingForm({ initialData, actionFn, isEdit = false }: 
                             <div>
                                 <label className="block text-xs font-bold text-gray-600 mb-1">Akhir Pendaftaran</label>
                                 <input type="date" name="registration_end" value={formData.registration_end} onChange={handleChange} className="w-full border p-2 rounded text-sm" />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-600 mb-1">Mulai Pelatihan</label>
+                                <input type="date" name="training_start_date" value={formData.training_start_date} onChange={handleChange} className="w-full border p-2 rounded text-sm" required />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-600 mb-1">Selesai Pelatihan</label>
+                                <input type="date" name="training_end_date" value={formData.training_end_date} onChange={handleChange} className="w-full border p-2 rounded text-sm" required />
                             </div>
                         </div>
                     </div>

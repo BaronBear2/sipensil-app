@@ -4,56 +4,33 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle, XCircle, Eye, FileText, X, Trash2 } from 'lucide-react'
 import { verifyProfileAction, deleteRegistrationHistoryAction } from '@/actions/dinas'
+import Link from 'next/link'
 
 export default function VerificationTable({ users, viewOnly = false }: { users: any[], viewOnly?: boolean }) {
    const router = useRouter()
-   // State untuk Modal
+   // State untuk Modal Confirm/Reject (masih dipakai untuk aksi cepat)
    const [selectedUser, setSelectedUser] = useState<any>(null)
    const [isRejectMode, setIsRejectMode] = useState(false)
    const [isConfirmMode, setIsConfirmMode] = useState(false)
-   const [rejectReason, setRejectReason] = useState('')
-   const [loading, setLoading] = useState(false)
+   const [isDeleteMode, setIsDeleteMode] = useState(false)
 
-   // Buka Modal Lihat Data
-   const handleView = (user: any) => {
+   // Buka Modal Hapus (Untuk Riwayat)
+   const openDeleteConfirm = (user: any) => {
       setSelectedUser(user)
-      setIsRejectMode(false)
+      setIsDeleteMode(true)
       setIsConfirmMode(false)
-   }
-
-   // Buka Modal Konfirmasi Terima
-   const openConfirmAccept = (user: any) => {
-      setSelectedUser(user)
-      setIsConfirmMode(true)
       setIsRejectMode(false)
    }
 
-   // Buka Modal Tolak
-   const openRejectForm = (user: any) => {
-      setSelectedUser(user)
-      setIsRejectMode(true)
-      setIsConfirmMode(false)
-      setRejectReason('')
-   }
-
-   // Eksekusi Verifikasi
-   const executeVerify = async (action: 'approve' | 'reject') => {
+   // Eksekusi Hapus Riwayat
+   const executeDelete = async () => {
       if (!selectedUser) return
       setLoading(true)
 
-      // Append pesan otomatis jika ditolak
-      let finalReason = rejectReason
-      if (action === 'reject') {
-         finalReason += "\n\nSilakan klik tombol daftar lagi jika data sudah direvisi."
-      }
-
       const formData = new FormData()
-      formData.append('userId', selectedUser.id)
-      formData.append('regId', selectedUser.training_reg_id) // Pass Registration ID
-      formData.append('action', action)
-      formData.append('reason', finalReason)
+      formData.append('regId', selectedUser.training_reg_id)
 
-      const res = await verifyProfileAction(formData) // Panggil Server Action
+      const res = await deleteRegistrationHistoryAction(formData)
 
       if (res?.error) {
          alert(res.error)
@@ -62,10 +39,22 @@ export default function VerificationTable({ users, viewOnly = false }: { users: 
       }
 
       setLoading(false)
-      setSelectedUser(null) // Tutup modal
-      setIsConfirmMode(false)
-      setIsRejectMode(false)
-      router.refresh() // Refresh data tabel Next.js style
+      setSelectedUser(null)
+      setIsDeleteMode(false)
+      router.refresh()
+   }
+
+   // Helper Hitung Umur
+   const calculateAge = (dobString: string) => {
+      if (!dobString) return '-'
+      const today = new Date()
+      const birthDate = new Date(dobString)
+      let age = today.getFullYear() - birthDate.getFullYear()
+      const m = today.getMonth() - birthDate.getMonth()
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+         age--
+      }
+      return age
    }
 
    return (
@@ -77,14 +66,18 @@ export default function VerificationTable({ users, viewOnly = false }: { users: 
                   <tr>
                      <th className="px-6 py-3">Nama & NIK</th>
                      <th className="px-6 py-3">Tanggal Daftar</th>
+                     <th className="px-6 py-3">Batas Daftar</th>
                      <th className="px-6 py-3">Nama Pelatihan</th>
-                     <th className="px-6 py-3 text-center">Berkas</th>
+                     <th className="px-6 py-3">Mulai</th>
+                     <th className="px-6 py-3">Selesai</th>
+                     <th className="px-6 py-3 text-center">Status</th>
                      <th className="px-6 py-3 text-center">Aksi</th>
+                     {viewOnly && <th className="px-6 py-3 text-center">Hapus</th>}
                   </tr>
                </thead>
                <tbody>
                   {users.length === 0 ? (
-                     <tr><td colSpan={5} className="text-center py-8 text-gray-500 italic">Tidak ada antrian verifikasi.</td></tr>
+                     <tr><td colSpan={viewOnly ? 9 : 8} className="text-center py-8 text-gray-500 italic">Tidak ada report history.</td></tr>
                   ) : (
                      users.map((u) => (
                         <tr key={u.id} className="bg-white border-b hover:bg-gray-50">
@@ -92,40 +85,69 @@ export default function VerificationTable({ users, viewOnly = false }: { users: 
                               <div className="font-bold text-gray-900">{u.full_name}</div>
                               <div className="text-xs text-gray-500">NIK: {u.nik}</div>
                            </td>
-                           <td className="px-6 py-4 text-xs text-gray-500">
+                           <td className="px-6 py-4 text-xs text-gray-500 font-medium">
                               {new Date(u.created_at).toLocaleDateString('id-ID')}
+                           </td>
+                           <td className="px-6 py-4 text-xs">
+                              {u.registration_end ? (
+                                 <span className="text-red-500 font-bold bg-red-50 px-2 py-1 rounded">
+                                    {new Date(u.registration_end).toLocaleDateString('id-ID')}
+                                 </span>
+                              ) : (
+                                 <span className="text-gray-400">-</span>
+                              )}
                            </td>
                            <td className="px-6 py-4 text-xs font-bold text-blue-600">
                               {u.training_title}
                            </td>
-                           <td className="px-6 py-4 text-center">
-                              <button onClick={() => handleView(u)} className="text-blue-600 hover:text-blue-800 text-xs font-bold flex items-center justify-center gap-1 mx-auto border border-blue-200 px-2 py-1 rounded">
-                                 <Eye size={12} /> Lihat Data
-                              </button>
+                           <td className="px-6 py-4 text-xs">
+                              {u.training_start_date ? new Date(u.training_start_date).toLocaleDateString('id-ID') : '-'}
                            </td>
-                           <td className="px-6 py-4 flex justify-center gap-2">
-                              {!viewOnly ? (
-                                 <>
-                                    <button onClick={() => openConfirmAccept(u)} className="bg-green-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-green-700 flex items-center gap-1">
-                                       <CheckCircle size={14} /> Terima
-                                    </button>
-                                    <button onClick={() => openRejectForm(u)} className="bg-red-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-red-700 flex items-center gap-1">
-                                       <XCircle size={14} /> Tolak
-                                    </button>
-                                 </>
-                              ) : (
-                                 <div className="flex items-center gap-2">
-                                    <span className="text-xs text-gray-400 font-bold italic">Selesai</span>
-                                    {/* DELETE HISTORY BUTTON */}
-                                    <form action={deleteRegistrationHistoryAction}>
-                                       <input type="hidden" name="regId" value={u.training_reg_id} />
-                                       <button className="text-gray-400 hover:text-red-600 p-1 transition" title="Hapus Riwayat">
-                                          <Trash2 size={16} />
-                                       </button>
-                                    </form>
-                                 </div>
+                           <td className="px-6 py-4 text-xs">
+                              {u.training_end_date ? new Date(u.training_end_date).toLocaleDateString('id-ID') : '-'}
+                           </td>
+                           <td className="px-6 py-4 text-center">
+                              {/* STATUS BADGE */}
+                              {u.status === 'PENDING' && (
+                                 <span className="px-2 py-1 bg-orange-100 text-orange-700 text-[10px] font-bold uppercase rounded border border-orange-200 whitespace-nowrap">
+                                    Menunggu
+                                 </span>
+                              )}
+                              {u.status === 'DITERIMA' && (
+                                 <span className="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold uppercase rounded border border-green-200 whitespace-nowrap">
+                                    Sedang Pelatihan
+                                 </span>
+                              )}
+                              {u.status === 'SELESAI' && (
+                                 <span className="px-2 py-1 bg-gray-100 text-gray-600 text-[10px] font-bold uppercase rounded border border-gray-200 whitespace-nowrap">
+                                    Selesai
+                                 </span>
+                              )}
+                              {u.status === 'DITOLAK' && (
+                                 <span className="px-2 py-1 bg-red-100 text-red-600 text-[10px] font-bold uppercase rounded border border-red-200 whitespace-nowrap">
+                                    Ditolak
+                                 </span>
                               )}
                            </td>
+                           <td className="px-6 py-4 text-center">
+                              <Link
+                                 href={`/dashboard/dinas/verifikasi-pencaker/${u.training_reg_id}`}
+                                 className="bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-blue-700 flex items-center justify-center gap-1 mx-auto shadow-sm transition w-fit"
+                              >
+                                 <FileText size={12} /> {viewOnly ? 'Detail' : 'Verifikasi'}
+                              </Link>
+                           </td>
+                           {viewOnly && (
+                              <td className="px-6 py-4 text-center">
+                                 <button
+                                    onClick={() => openDeleteConfirm(u)}
+                                    className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition mx-auto"
+                                    title="Hapus Riwayat"
+                                 >
+                                    <Trash2 size={16} />
+                                 </button>
+                              </td>
+                           )}
                         </tr>
                      ))
                   )}
@@ -133,62 +155,21 @@ export default function VerificationTable({ users, viewOnly = false }: { users: 
             </table>
          </div>
 
-         {/* --- MODAL AREA --- */}
-         {selectedUser && selectedUser.id && (
+         {/* --- MODAL AREA (Only for Quick Actions now) --- */}
+         {selectedUser && (
             <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
                <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in-up">
 
                   {/* Header Modal */}
                   <div className="bg-gray-100 px-6 py-4 flex justify-between items-center border-b">
                      <h3 className="font-bold text-gray-800">
-                        {isConfirmMode ? 'Konfirmasi Verifikasi' : isRejectMode ? 'Tolak Verifikasi' : 'Detail Pencaker'}
+                        {isConfirmMode ? 'Konfirmasi Verifikasi' : isDeleteMode ? 'Hapus Riwayat' : 'Tolak Verifikasi'}
                      </h3>
                      <button onClick={() => setSelectedUser(null)} className="text-gray-500 hover:text-gray-700"><X size={20} /></button>
                   </div>
 
                   {/* Isi Modal */}
                   <div className="p-6">
-
-                     {/* 1. MODE LIHAT DATA */}
-                     {!isConfirmMode && !isRejectMode && (
-                        <div className="space-y-4">
-                           <div className="grid grid-cols-2 gap-4 text-sm">
-                              <div><span className="text-gray-500 block text-xs">Nama Lengkap</span> <span className="font-bold">{selectedUser.full_name}</span></div>
-                              <div><span className="text-gray-500 block text-xs">NIK</span> <span className="font-bold">{selectedUser.nik}</span></div>
-                              <div><span className="text-gray-500 block text-xs">Tempat Lahir</span> <span>{selectedUser.pob}</span></div>
-                              <div><span className="text-gray-500 block text-xs">Tanggal Lahir</span> <span>{selectedUser.dob}</span></div>
-                              <div><span className="text-gray-500 block text-xs">Pendidikan</span> <span>{selectedUser.education}</span></div>
-                              <div><span className="text-gray-500 block text-xs">No HP</span> <span>{selectedUser.phone}</span></div>
-                           </div>
-                           <div className="mt-4 border-t pt-4">
-                              <h4 className="font-bold text-sm mb-2 flex items-center gap-2"><FileText size={16} /> Berkas Upload</h4>
-                              <div className="grid grid-cols-3 gap-2">
-                                 {[
-                                    { label: 'KTP', url: selectedUser.ktp_url },
-                                    { label: 'Ijazah', url: selectedUser.ijazah_url },
-                                    { label: 'Foto', url: selectedUser.photo_url },
-                                 ].map((doc, i) => (
-                                    <a
-                                       key={i}
-                                       href={doc.url || '#'}
-                                       target="_blank"
-                                       className={`bg-gray-100 h-24 rounded flex flex-col items-center justify-center text-xs text-gray-500 border hover:bg-gray-200 transition ${!doc.url && 'opacity-50 cursor-not-allowed pointer-events-none'}`}
-                                    >
-                                       <FileText size={24} className="mb-1 text-blue-500" />
-                                       <span className="font-bold">{doc.label}</span>
-                                       {doc.url ? <span className="text-[10px] text-green-600">Ada File</span> : <span className="text-[10px] text-red-500">Kosong</span>}
-                                    </a>
-                                 ))}
-                              </div>
-                              <p className="text-[10px] text-blue-600 mt-1 italic">*Klik kotak untuk melihat/download file asli.</p>
-                           </div>
-                           <div className="flex justify-end gap-2 mt-6">
-                              <button onClick={() => openRejectForm(selectedUser)} className="bg-red-100 text-red-700 px-4 py-2 rounded-lg font-bold text-sm">Tolak</button>
-                              <button onClick={() => openConfirmAccept(selectedUser)} className="bg-green-600 text-white px-4 py-2 rounded-lg font-bold text-sm">Terima Data</button>
-                           </div>
-                        </div>
-                     )}
-
                      {/* 2. MODE KONFIRMASI TERIMA */}
                      {isConfirmMode && (
                         <div className="text-center">
@@ -226,6 +207,25 @@ export default function VerificationTable({ users, viewOnly = false }: { users: 
                               <button onClick={() => setIsRejectMode(false)} className="px-4 py-2 border rounded-lg text-gray-600 font-bold text-sm hover:bg-gray-50">Batal</button>
                               <button onClick={() => executeVerify('reject')} disabled={loading || !rejectReason} className="px-6 py-2 bg-red-600 text-white rounded-lg font-bold text-sm hover:bg-red-700 disabled:bg-gray-300">
                                  {loading ? 'Mengirim...' : 'Kirim Penolakan'}
+                              </button>
+                           </div>
+                        </div>
+                     )}
+
+                     {/* 4. MODE HAPUS RIWAYAT */}
+                     {isDeleteMode && (
+                        <div className="text-center">
+                           <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                              <Trash2 className="text-red-600 w-8 h-8" />
+                           </div>
+                           <h4 className="text-lg font-bold text-gray-800 mb-2">Hapus Riwayat?</h4>
+                           <p className="text-sm text-gray-600 mb-6">
+                              Data riwayat pendaftaran ini akan dihapus permanen. Tindakan ini tidak dapat dibatalkan.
+                           </p>
+                           <div className="flex justify-center gap-3">
+                              <button onClick={() => setIsDeleteMode(false)} className="px-4 py-2 border rounded-lg text-gray-600 font-bold text-sm hover:bg-gray-50">Batal</button>
+                              <button onClick={executeDelete} disabled={loading} className="px-6 py-2 bg-red-600 text-white rounded-lg font-bold text-sm hover:bg-red-700">
+                                 {loading ? 'Menghapus...' : 'Ya, Hapus'}
                               </button>
                            </div>
                         </div>

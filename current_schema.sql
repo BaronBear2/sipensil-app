@@ -23,6 +23,7 @@ CREATE TABLE public.blk_trainings (
   registration_start date,
   registration_end date,
   training_end_date date,
+  training_start_date date,
   CONSTRAINT blk_trainings_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.im_japan_registrations (
@@ -46,6 +47,7 @@ CREATE TABLE public.im_japan_requirements (
   is_active boolean DEFAULT true,
   order_index integer DEFAULT 0,
   created_at timestamp with time zone DEFAULT now(),
+  template_url text,
   CONSTRAINT im_japan_requirements_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.lpk_reports (
@@ -95,8 +97,10 @@ CREATE TABLE public.magang_agreements (
   duration text,
   post_activity text,
   rejection_reason text,
+  batch_id uuid,
   CONSTRAINT magang_agreements_pkey PRIMARY KEY (id),
-  CONSTRAINT magang_agreements_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+  CONSTRAINT magang_agreements_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT magang_agreements_batch_id_fkey FOREIGN KEY (batch_id) REFERENCES public.pencatatan_batches(id)
 );
 CREATE TABLE public.magang_permits (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -132,6 +136,17 @@ CREATE TABLE public.notifications (
   created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
   CONSTRAINT notifications_pkey PRIMARY KEY (id),
   CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.pencatatan_batches (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  title text NOT NULL,
+  status text DEFAULT 'SUBMITTED'::text,
+  submission_date timestamp with time zone DEFAULT now(),
+  created_at timestamp with time zone DEFAULT now(),
+  rejection_reason text,
+  CONSTRAINT pencatatan_batches_pkey PRIMARY KEY (id),
+  CONSTRAINT pencatatan_batches_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
 CREATE TABLE public.profile_lpk (
   user_id uuid NOT NULL,

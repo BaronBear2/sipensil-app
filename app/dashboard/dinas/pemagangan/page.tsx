@@ -1,7 +1,8 @@
+import Link from 'next/link'
 import { createClient } from '@/utils/supabase/server'
-import { Building, Trash2 } from 'lucide-react'
-import { verifyMagangPermitAction, deleteMagangPermitAction } from '@/actions/dinas'
-import { AdminActionButtons } from '@/components/admin/AdminButtons'
+import { FileText, Building, CheckCircle, XCircle } from 'lucide-react'
+import PencatatanTable from '@/components/admin/PencatatanTable'
+import { deletePencatatanBatchAction } from '@/actions/dinas'
 
 export default async function PemaganganAdminPage({ searchParams }: { searchParams: Promise<{ status: string }> }) {
     const supabase = await createClient()
@@ -12,135 +13,119 @@ export default async function PemaganganAdminPage({ searchParams }: { searchPara
 
     // DB Mapping
     // UI: PENDING, APPROVED, REJECTED
-    // DB: PENDING, APPROVED, REJECTED
-    let dbStatus = status
+    // DB: SUBMITTED, APPROVED, REJECTED
+    let dbStatus = status === 'PENDING' ? 'SUBMITTED' : status
 
-    let dataTab4: any[] = []
+    // Fetch Data (Now fetching Batches from pencatatan_batches)
+    let permits: any[] = []
     try {
         const { data } = await supabase
-            .from('magang_permits')
+            .from('pencatatan_batches')
             .select(`
                 *,
                 profiles!inner(
                    *,
                    profile_perusahaan(*)
-                )
+                ),
+                magang_agreements(count)
             `)
             .eq('status', dbStatus)
             .order('created_at', { ascending: false })
 
         if (data) {
-            dataTab4 = data.map((item: any) => {
+            permits = data.map((item: any) => {
                 const p = item.profiles
                 const comp = p?.profile_perusahaan || {}
                 // Flatten for easier access or just ensure company_name is correct
                 if (p) {
                     p.company_name = comp.company_name || p.company_name
                     p.nib = comp.nib || p.nib
+                    p.phone = comp.phone || p.phone
                 }
-                return item
+
+                // Map Batch to "Permit-like" structure for Table
+                return {
+                    ...item,
+                    start_date: new Date(item.created_at).toLocaleDateString('id-ID'), // Use Submission Date as "Start"
+                    end_date: '-', // No End Date in Batch
+                    participant_count: item.magang_agreements?.[0]?.count || 0,
+                    document_path: `/api/export/batch-excel/${item.id}`, // Link to Excel Generation
+                    is_batch: true // Flag to tell Table it's a batch
+                }
             })
         }
     } catch (e) {
-        console.error(e)
+        console.error("FETCH ERROR:", e)
     }
 
     // Dynamic UI
     let title = "Verifikasi Pencatatan Peserta Magang"
-    let desc = "Daftar permohonan pencatatan peserta magang dalam negeri."
-    let color = "text-purple-800"
-    let iconColor = "text-purple-500"
-    let bgColor = "bg-purple-100"
-    let borderColor = "border-purple-100"
+    // let desc = "Daftar permohonan pencatatan peserta magang dalam negeri."
 
     if (status === 'APPROVED') {
         title = "Pencatatan Diterima"
-        desc = "Daftar permohonan yang telah disetujui."
-        color = "text-green-800"
-        iconColor = "text-green-600"
-        bgColor = "bg-green-100"
-        borderColor = "border-green-100"
     } else if (status === 'REJECTED') {
         title = "Pencatatan Ditolak"
-        desc = "Daftar permohonan yang ditolak."
-        color = "text-red-800"
-        iconColor = "text-red-600"
-        bgColor = "bg-red-100"
-        borderColor = "border-red-100"
     }
 
     return (
-        <div className="space-y-6">
-            <div className={`p-6 rounded-xl shadow-sm border flex items-center gap-4 bg-white ${borderColor}`}>
-                <div className={`p-3 rounded-full ${bgColor} ${iconColor}`}>
-                    <Building size={24} />
+        <div className="font-sans min-h-screen bg-gray-50/50 pb-20">
+            {/* HERO SECTION - RED THEME */}
+            <div className="bg-gradient-to-r from-red-600 to-rose-700 text-white pt-8 pb-20 px-6 md:px-12 relative overflow-hidden rounded-b-3xl shadow-lg mb-8">
+                <div className="absolute top-0 right-0 p-4 opacity-10 transform translate-x-1/4 -translate-y-1/4">
+                    <Building size={300} />
                 </div>
-                <div>
-                    <h1 className={`text-2xl font-bold ${color}`}>
-                        {title}
-                    </h1>
-                    <p className="text-gray-500 text-sm">
-                        {desc}
-                    </p>
+
+                <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div>
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm border border-white/20">
+                                <FileText size={24} className="text-white" />
+                            </div>
+                            <span className="font-bold tracking-wider text-red-100 uppercase text-sm">Modul Pemagangan</span>
+                        </div>
+                        <h1 className="text-3xl md:text-4xl font-extrabold mb-2 tracking-tight text-white">
+                            {title}
+                        </h1>
+                        <p className="text-red-100 font-medium text-lg max-w-xl">
+                            Kelola pencatatan peserta magang dalam negeri dari perusahaan.
+                        </p>
+                    </div>
+
+                    {/* Quick Stats */}
+                    <div className="flex gap-4">
+                        <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-xl text-center">
+                            <h3 className="text-2xl font-bold text-white">{permits.length}</h3>
+                            <p className="text-xs text-red-100 uppercase font-bold tracking-wider">Total Data</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border p-6">
-                {dataTab4.length === 0 ? (
-                    <div className="text-center py-12 text-gray-400">
-                        <p>Tidak ada data {status.toLowerCase()}.</p>
+            {/* CONTENT SECTION - Floating Up */}
+            <div className="max-w-7xl mx-auto px-6 -mt-16 relative z-20 space-y-6">
+
+                {/* Tab Navigation Card */}
+                <div className="bg-white p-2 rounded-2xl border border-gray-100 shadow-xl flex flex-col md:flex-row gap-4 items-center justify-between mb-8">
+                    <div className="flex p-1 bg-gray-50 rounded-xl w-full md:w-auto overflow-x-auto">
+                        <Link href="/dashboard/dinas/pemagangan?status=pending" className={`flex items-center gap-2 px-6 py-3 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${status === 'PENDING' ? 'bg-white text-red-600 shadow-md ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>
+                            <FileText size={18} /> Menunggu Verifikasi
+                        </Link>
+                        <Link href="/dashboard/dinas/pemagangan?status=approved" className={`flex items-center gap-2 px-6 py-3 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${status === 'APPROVED' ? 'bg-white text-red-600 shadow-md ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>
+                            <CheckCircle size={18} /> Diterima
+                        </Link>
+                        <Link href="/dashboard/dinas/pemagangan?status=rejected" className={`flex items-center gap-2 px-6 py-3 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${status === 'REJECTED' ? 'bg-white text-red-600 shadow-md ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>
+                            <XCircle size={18} /> Ditolak / Revisi
+                        </Link>
                     </div>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left border rounded-lg">
-                            <thead className="bg-gray-100 text-xs font-bold uppercase text-gray-700">
-                                <tr>
-                                    <th className="px-4 py-3">Perusahaan</th>
-                                    <th className="px-4 py-3">Jadwal</th>
-                                    <th className="px-4 py-3">Peserta</th>
-                                    <th className="px-4 py-3 text-center">Dokumen</th>
-                                    <th className="px-4 py-3 text-center">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {dataTab4.map((item: any) => (
-                                    <tr key={item.id} className="border-b hover:bg-gray-50">
-                                        <td className="px-4 py-3">
-                                            <div className="font-bold">{item.profiles?.company_name}</div>
-                                            <div className="text-xs text-gray-500">NIB: {item.profiles?.nib}</div>
-                                        </td>
-                                        <td className="px-4 py-3 text-xs">
-                                            {item.start_date} s/d {item.end_date}
-                                        </td>
-                                        <td className="px-4 py-3 text-center">{item.participant_count}</td>
-                                        <td className="px-4 py-3 text-center">
-                                            {item.document_path ? <a href={item.document_path} target="_blank" className="text-blue-600 underline text-xs">Cek Surat</a> : '-'}
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            {status === 'PENDING' ? (
-                                                <AdminActionButtons
-                                                    id={item.id}
-                                                    actionFn={verifyMagangPermitAction}
-                                                    idName="permitId"
-                                                />
-                                            ) : (
-                                                <div className="flex items-center justify-center gap-2">
-                                                    <span className="text-xs text-gray-400 font-bold italic">Selesai</span>
-                                                    <form action={deleteMagangPermitAction}>
-                                                        <input type="hidden" name="id" value={item.id} />
-                                                        <button className="text-gray-400 hover:text-red-600 p-1 transition" title="Hapus Riwayat">
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    </form>
-                                                </div>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                </div>
+
+                {/* Table Card */}
+                <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+                    <div className="">
+                        <PencatatanTable permits={permits} viewOnly={status !== 'PENDING'} onDelete={deletePencatatanBatchAction} />
                     </div>
-                )}
+                </div>
             </div>
         </div>
     )

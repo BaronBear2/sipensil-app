@@ -3,13 +3,14 @@ import { updateTrainingAction } from '@/actions/dinas'
 import TrainingForm from '@/components/admin/TrainingForm'
 import { notFound } from 'next/navigation'
 
-export default async function EditTrainingPage({ params }: { params: { id: string } }) {
+export default async function EditTrainingPage({ params }: { params: Promise<{ id: string }> }) {
     const supabase = await createClient()
+    const { id } = await params
 
     const { data: training } = await supabase
         .from('blk_trainings')
         .select('*')
-        .eq('id', params.id)
+        .eq('id', id)
         .single()
 
     if (!training) return notFound()

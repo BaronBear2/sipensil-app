@@ -16,6 +16,7 @@ export default function ImJapanPage() {
     const [data, setData] = useState<any>(null) // Existing registration
     const [isEditing, setIsEditing] = useState(false)
     const [profile, setProfile] = useState<any>(null)
+    const [requirements, setRequirements] = useState<any[]>([])
 
     // Fetch Data
     useEffect(() => {
@@ -31,6 +32,15 @@ export default function ImJapanPage() {
             const { data: reg } = await supabase.from('im_japan_registrations').select('*').eq('user_id', user.id).maybeSingle()
             if (reg) setData(reg)
 
+            // 3. Fetch Requirements
+            const { data: reqs } = await supabase
+                .from('im_japan_requirements')
+                .select('*')
+                .eq('is_active', true)
+                .order('created_at', { ascending: true }) // Or any other sorting
+
+            if (reqs) setRequirements(reqs)
+
             setLoading(false)
         }
         getData()
@@ -39,16 +49,16 @@ export default function ImJapanPage() {
     // State for individual files
     const [files, setFiles] = useState<{ [key: string]: File | null }>({})
 
-    const docList = [
-        { id: 'ktp', label: 'KTP (Kartu Tanda Penduduk)', hasTemplate: false },
-        { id: 'ijazah', label: 'Ijazah Terakhir', hasTemplate: false },
-        { id: 'akta', label: 'Akta Kelahiran', hasTemplate: false },
-        { id: 'kk', label: 'Kartu Keluarga (KK)', hasTemplate: false },
-        { id: 'rek_lpk', label: 'Surat Rekomendasi LPK', hasTemplate: true },
-        { id: 'rek_kem', label: 'Surat Rekomendasi Kementrian', hasTemplate: true },
-        { id: 'ket_rw', label: 'Surat Keterangan RT/RW', hasTemplate: true },
-        { id: 'izin_ortu', label: 'Surat Izin Orang Tua', hasTemplate: true },
-    ]
+    // Derived docList for UI mapping
+    const docList = requirements.map(req => ({
+        id: req.id,
+        label: req.title, // + (req.is_required ? ' *' : ''), // Optional: show required asterisk
+        hasTemplate: !!req.template_url,
+        templateUrl: req.template_url,
+        isRequired: req.is_required,
+        description: req.description
+    }))
+
 
     const handleFileChange = async (id: string, file: File | null) => {
         if (!file) return
@@ -262,10 +272,15 @@ export default function ImJapanPage() {
                                             <td className="px-6 py-4 text-center font-bold text-gray-400">{idx + 1}</td>
                                             <td className="px-6 py-4 font-medium text-gray-800">{doc.label}</td>
                                             <td className="px-6 py-4 text-center">
-                                                {doc.hasTemplate ? (
-                                                    <button type="button" className="text-blue-600 hover:text-blue-800 text-xs font-bold border border-blue-200 bg-blue-50 px-3 py-1.5 rounded-lg flex items-center justify-center gap-1 mx-auto hover:bg-blue-100 transition">
+                                                {doc.hasTemplate && doc.templateUrl ? (
+                                                    <a
+                                                        href={doc.templateUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-blue-600 hover:text-blue-800 text-xs font-bold border border-blue-200 bg-blue-50 px-3 py-1.5 rounded-lg flex items-center justify-center gap-1 mx-auto hover:bg-blue-100 transition"
+                                                    >
                                                         <Download size={14} /> Download
-                                                    </button>
+                                                    </a>
                                                 ) : (
                                                     <span className="text-gray-300">-</span>
                                                 )}

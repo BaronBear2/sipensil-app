@@ -13,7 +13,7 @@ export default async function BLKProgramsPage() {
     if (!user) redirect('/auth/login')
 
     const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-    const { data: trainings } = await supabase.from('blk_trainings').select('*').eq('status', 'OPEN') // Only show OPEN trainings
+    const { data: trainings } = await supabase.from('blk_trainings').select('*').in('status', ['OPEN', 'CLOSED']).order('created_at', { ascending: false })
 
     return (
         <div className="bg-slate-50 font-sans pb-32">

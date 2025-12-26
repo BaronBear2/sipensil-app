@@ -2,13 +2,14 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Save, Plus, Trash2, Users } from 'lucide-react'
+import { ArrowLeft, Save, Plus, Trash2, Users, FileText, Info } from 'lucide-react'
 import Link from 'next/link'
 import { submitMagangRecord } from '@/actions/magang'
 
 export default function CreateMagangRecordPage() {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
+    const [title, setTitle] = useState('')
 
     // Initial Empty Row
     const emptyRow = {
@@ -51,6 +52,11 @@ export default function CreateMagangRecordPage() {
 
     const handleSubmit = async () => {
         // Validate
+        if (!title.trim()) {
+            alert("Mohon isi Judul Pencatatan (Contoh: Magang Batch 1 2024)")
+            return
+        }
+
         for (const row of rows) {
             if (!row.nik || !row.name) {
                 alert("Mohon lengkapi NIK dan Nama untuk semua baris.")
@@ -61,7 +67,7 @@ export default function CreateMagangRecordPage() {
         if (!confirm(`Simpan ${rows.length} data pencatatan?`)) return
 
         setLoading(true)
-        const res = await submitMagangRecord(rows)
+        const res = await submitMagangRecord(rows, title)
 
         if (res.error) {
             alert(res.error)
@@ -72,100 +78,167 @@ export default function CreateMagangRecordPage() {
         }
     }
 
-    const inputClass = "w-full border-0 bg-transparent text-sm focus:ring-0 outline-none p-2 min-w-[150px]"
-    const cellClass = "border border-gray-200 p-0"
-    const headerClass = "bg-gray-100 font-bold text-xs text-gray-600 uppercase tracking-wider px-3 py-3 border border-gray-200 min-w-[150px] whitespace-nowrap"
+    const inputStyle = "border rounded p-2 text-xs w-full focus:ring-1 focus:ring-orange-500 outline-none border-gray-300"
+    const sectionTitle = "font-bold text-gray-800 mb-4 pb-2 border-b flex items-center justify-between"
 
     return (
         <div className="min-h-screen bg-gray-50 p-6 md:p-8 animate-fade-in pb-24">
-            <div className="max-w-[95vw] mx-auto">
+            <div className="max-w-5xl mx-auto space-y-8">
                 {/* Header */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
+                <div>
+                    <Link href="/dashboard/perusahaan" className="inline-flex items-center text-gray-500 hover:text-orange-600 mb-2 transition">
+                        <ArrowLeft size={16} className="mr-1" /> Kembali ke Dashboard
+                    </Link>
+                    <h1 className="text-2xl font-extrabold text-gray-800 flex items-center gap-2">
+                        Pencatatan Peserta Magang
+                    </h1>
+                    <p className="text-gray-500 mt-1">
+                        Laporkan data peserta pemagangan dalam negeri.
+                    </p>
+                </div>
+
+                {/* SECTION 1: INFORMASI */}
+                <div className="bg-white p-6 rounded-xl border shadow-sm">
+                    <h3 className={sectionTitle}>
+                        <div className="flex items-center gap-2">
+                            <Info size={18} className="text-orange-500" />
+                            Informasi Pencatatan
+                        </div>
+                    </h3>
                     <div>
-                        <Link href="/dashboard/perusahaan" className="inline-flex items-center text-gray-500 hover:text-orange-600 mb-2 transition">
-                            <ArrowLeft size={16} className="mr-1" /> Kembali ke Dashboard
-                        </Link>
-                        <h1 className="text-2xl font-extrabold text-gray-800 flex items-center gap-2">
-                            <Users className="text-orange-600" /> Pencatatan Peserta Magang
-                        </h1>
-                        <p className="text-gray-500 mt-1 max-w-2xl">
-                            Isi tabel di bawah ini untuk melaporkan data peserta pemagangan. Anda dapat menambahkan banyak baris sekaligus.
-                        </p>
-                    </div>
-                    <div className="flex gap-3">
-                        <button onClick={handleAddRow} className="px-4 py-2 bg-blue-50 text-blue-700 font-bold rounded-lg hover:bg-blue-100 flex items-center gap-2 text-sm border border-blue-200">
-                            <Plus size={16} /> Tambah Baris
-                        </button>
-                        <button onClick={handleSubmit} disabled={loading} className="px-6 py-2 bg-orange-600 text-white font-bold rounded-lg hover:bg-orange-700 shadow-md flex items-center gap-2 text-sm disabled:bg-gray-300">
-                            <Save size={16} /> {loading ? 'Menyimpan...' : 'Simpan Data'}
-                        </button>
+                        <label className="text-xs font-bold text-gray-600 mb-1 block">Judul Pencatatan <span className="text-red-500">*</span></label>
+                        <input
+                            type="text"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            className={`${inputStyle} text-sm max-w-md`}
+                            placeholder="Contoh: Batch Januari 2025"
+                        />
+                        <p className="text-[10px] text-gray-400 mt-1">Berikan nama untuk kelompok data ini agar mudah dicari.</p>
                     </div>
                 </div>
 
-                {/* TABLE CONTAINER */}
-                <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden flex flex-col h-[70vh]">
-                    <div className="overflow-auto flex-1 relative">
-                        <table className="w-full text-left border-collapse">
-                            <thead className="sticky top-0 z-10 shadow-sm">
+                {/* SECTION 2: DATA PESERTA */}
+                <div className="bg-white p-6 rounded-xl border shadow-sm">
+                    <h3 className={sectionTitle}>
+                        <div className="flex items-center gap-2">
+                            <Users size={18} className="text-orange-500" />
+                            Data Peserta Pemagangan ({rows.length})
+                        </div>
+                    </h3>
+
+                    <div className="overflow-x-auto mb-4 border rounded-lg">
+                        <table className="w-full text-xs text-left">
+                            <thead className="bg-gray-100 font-bold text-gray-700 uppercase tracking-wider">
                                 <tr>
-                                    <th className="bg-gray-100 border border-gray-200 w-12 text-center py-3 text-xs font-bold text-gray-500">No</th>
-                                    <th className="bg-gray-100 border border-gray-200 w-12 text-center py-3 text-xs font-bold text-gray-500">Aksi</th>
-                                    <th className={headerClass}>NIK Peserta <span className="text-red-500">*</span></th>
-                                    <th className={headerClass}>Nama Lengkap <span className="text-red-500">*</span></th>
-                                    <th className={headerClass}>L/P</th>
-                                    <th className={headerClass}>Tempat Lahir</th>
-                                    <th className={headerClass}>Tanggal Lahir</th>
-                                    <th className={headerClass}>No. HP / WA</th>
-                                    <th className={headerClass}>Email</th>
-                                    <th className={headerClass}>Alamat Domisili</th>
-                                    <th className={headerClass}>Bagian / Divisi</th>
-                                    <th className={headerClass}>Durasi</th>
-                                    <th className={headerClass}>Tgl Mulai</th>
-                                    <th className={headerClass}>Tgl Selesai</th>
-                                    <th className={headerClass}>Rencana Pasca Magang</th>
+                                    <th className="p-3 border-b min-w-[50px] text-center">No</th>
+                                    <th className="p-3 border-b min-w-[150px]">Identitas (NIK & Nama)</th>
+                                    <th className="p-3 border-b min-w-[120px]">Kontak</th>
+                                    <th className="p-3 border-b min-w-[300px]">Detail Magang</th>
+                                    <th className="p-3 border-b min-w-[150px]">Lainnya</th>
+                                    <th className="p-3 border-b text-center">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="divide-y divide-gray-100">
                                 {rows.map((row, index) => (
-                                    <tr key={index} className="hover:bg-orange-50/30 transition-colors">
-                                        <td className="border border-gray-200 text-center text-xs text-gray-400 bg-gray-50">{index + 1}</td>
-                                        <td className="border border-gray-200 text-center">
-                                            <button onClick={() => handleRemoveRow(index)} className="text-red-400 hover:text-red-600 p-2 rounded hover:bg-red-50 transition">
-                                                <Trash2 size={14} />
+                                    <tr key={index} className="hover:bg-orange-50/20 transition-colors bg-white">
+                                        <td className="p-3 text-center text-gray-400 bg-gray-50/50 align-top pt-4">{index + 1}</td>
+
+                                        <td className="p-3 align-top space-y-2">
+                                            <div>
+                                                <label className="text-[10px] text-gray-400 font-bold">NIK</label>
+                                                <input value={row.nik} onChange={(e) => handleChange(index, 'nik', e.target.value)} className={inputStyle} placeholder="16 Digit NIK" />
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] text-gray-400 font-bold">Nama Lengkap</label>
+                                                <input value={row.name} onChange={(e) => handleChange(index, 'name', e.target.value)} className={inputStyle} placeholder="Nama Peserta" />
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <div className="w-1/3">
+                                                    <label className="text-[10px] text-gray-400 font-bold">L/P</label>
+                                                    <select value={row.gender} onChange={(e) => handleChange(index, 'gender', e.target.value)} className={inputStyle}>
+                                                        <option value="L">L</option>
+                                                        <option value="P">P</option>
+                                                    </select>
+                                                </div>
+                                                <div className="w-2/3">
+                                                    <label className="text-[10px] text-gray-400 font-bold">Tgl Lahir</label>
+                                                    <input type="date" value={row.date_of_birth} onChange={(e) => handleChange(index, 'date_of_birth', e.target.value)} className={inputStyle} />
+                                                </div>
+                                            </div>
+                                        </td>
+
+                                        <td className="p-3 align-top space-y-2">
+                                            <div>
+                                                <label className="text-[10px] text-gray-400 font-bold">No. HP / WA</label>
+                                                <input value={row.phone} onChange={(e) => handleChange(index, 'phone', e.target.value)} className={inputStyle} />
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] text-gray-400 font-bold">Email</label>
+                                                <input type="email" value={row.email} onChange={(e) => handleChange(index, 'email', e.target.value)} className={inputStyle} />
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] text-gray-400 font-bold">Domisili</label>
+                                                <textarea rows={2} value={row.address} onChange={(e) => handleChange(index, 'address', e.target.value)} className={inputStyle} placeholder="Alamat lengkap..." />
+                                            </div>
+                                        </td>
+
+                                        <td className="p-3 align-top space-y-2">
+                                            <div className="flex gap-2">
+                                                <div className="w-1/2">
+                                                    <label className="text-[10px] text-gray-400 font-bold">Bagian / Divisi</label>
+                                                    <input value={row.division} onChange={(e) => handleChange(index, 'division', e.target.value)} className={inputStyle} />
+                                                </div>
+                                                <div className="w-1/2">
+                                                    <label className="text-[10px] text-gray-400 font-bold">Durasi</label>
+                                                    <input value={row.duration} onChange={(e) => handleChange(index, 'duration', e.target.value)} className={inputStyle} placeholder="Cth: 6 Bulan" />
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <div className="w-1/2">
+                                                    <label className="text-[10px] text-gray-400 font-bold">Mulai</label>
+                                                    <input type="date" value={row.start_date} onChange={(e) => handleChange(index, 'start_date', e.target.value)} className={inputStyle} />
+                                                </div>
+                                                <div className="w-1/2">
+                                                    <label className="text-[10px] text-gray-400 font-bold">Selesai</label>
+                                                    <input type="date" value={row.end_date} onChange={(e) => handleChange(index, 'end_date', e.target.value)} className={inputStyle} />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] text-gray-400 font-bold">Rencana Pasca Magang</label>
+                                                <input value={row.post_activity} onChange={(e) => handleChange(index, 'post_activity', e.target.value)} className={inputStyle} placeholder="Cth: Diangkat pegawai tetap" />
+                                            </div>
+                                        </td>
+
+                                        <td className="p-3 align-top">
+                                            <div>
+                                                <label className="text-[10px] text-gray-400 font-bold">Tempat Lahir</label>
+                                                <input value={row.place_of_birth} onChange={(e) => handleChange(index, 'place_of_birth', e.target.value)} className={inputStyle} />
+                                            </div>
+                                        </td>
+
+                                        <td className="p-3 text-center align-top pt-4">
+                                            <button onClick={() => handleRemoveRow(index)} className="text-red-400 hover:text-red-600 bg-red-50 p-2 rounded-lg hover:bg-red-100 transition">
+                                                <Trash2 size={16} />
                                             </button>
                                         </td>
-
-                                        <td className={cellClass}><input type="number" value={row.nik} onChange={(e) => handleChange(index, 'nik', e.target.value)} className={inputClass} placeholder="16 Digit..." /></td>
-                                        <td className={cellClass}><input value={row.name} onChange={(e) => handleChange(index, 'name', e.target.value)} className={inputClass} placeholder="Nama Peserta..." /></td>
-
-                                        <td className={cellClass}>
-                                            <select value={row.gender} onChange={(e) => handleChange(index, 'gender', e.target.value)} className="w-full border-0 bg-transparent text-sm focus:ring-0 outline-none p-2 cursor-pointer">
-                                                <option value="L">L</option>
-                                                <option value="P">P</option>
-                                            </select>
-                                        </td>
-
-                                        <td className={cellClass}><input value={row.place_of_birth} onChange={(e) => handleChange(index, 'place_of_birth', e.target.value)} className={inputClass} /></td>
-                                        <td className={cellClass}><input type="date" value={row.date_of_birth} onChange={(e) => handleChange(index, 'date_of_birth', e.target.value)} className={inputClass} /></td>
-
-                                        <td className={cellClass}><input value={row.phone} onChange={(e) => handleChange(index, 'phone', e.target.value)} className={inputClass} /></td>
-                                        <td className={cellClass}><input type="email" value={row.email} onChange={(e) => handleChange(index, 'email', e.target.value)} className={inputClass} /></td>
-                                        <td className={cellClass}><input value={row.address} onChange={(e) => handleChange(index, 'address', e.target.value)} className={inputClass} /></td>
-
-                                        <td className={cellClass}><input value={row.division} onChange={(e) => handleChange(index, 'division', e.target.value)} className={inputClass} /></td>
-                                        <td className={cellClass}><input value={row.duration} onChange={(e) => handleChange(index, 'duration', e.target.value)} className={inputClass} /></td>
-
-                                        <td className={cellClass}><input type="date" value={row.start_date} onChange={(e) => handleChange(index, 'start_date', e.target.value)} className={inputClass} /></td>
-                                        <td className={cellClass}><input type="date" value={row.end_date} onChange={(e) => handleChange(index, 'end_date', e.target.value)} className={inputClass} /></td>
-
-                                        <td className={cellClass}><input value={row.post_activity} onChange={(e) => handleChange(index, 'post_activity', e.target.value)} className={inputClass} /></td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
+
+                    <button onClick={handleAddRow} className="text-xs text-orange-600 font-bold flex items-center gap-1 hover:underline px-2">
+                        <Plus size={16} /> Tambah Baris Peserta
+                    </button>
                 </div>
-                <p className="text-xs text-gray-400 mt-2 italic">* Tekan "Tambah Baris" untuk menambahkan peserta lain.</p>
+
+                {/* FOOTER ACTION */}
+                <div className="flex justify-end pt-4">
+                    <button onClick={handleSubmit} disabled={loading} className="bg-orange-600 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:bg-orange-700 flex items-center gap-2 transition-transform active:scale-95 disabled:bg-gray-400 border border-orange-700">
+                        <Save size={20} /> {loading ? 'Menyimpan...' : 'Simpan & Kirim Pencatatan'}
+                    </button>
+                </div>
             </div>
         </div>
     )

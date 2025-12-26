@@ -1,7 +1,7 @@
+import Link from 'next/link'
 import { createClient } from '@/utils/supabase/server'
-import { Building, FileText } from 'lucide-react'
+import { FileText, Building, CheckCircle, XCircle, Search } from 'lucide-react'
 import LPKReportTable from '@/components/admin/LPKReportTable'
-import VerificationTable from '@/components/admin/VerificationTable'
 import { deleteLpkReportAction } from '@/actions/dinas'
 
 export default async function LpkAdminPage({ searchParams }: { searchParams: Promise<{ status: string }> }) {
@@ -15,31 +15,9 @@ export default async function LpkAdminPage({ searchParams }: { searchParams: Pro
     // UI: PENDING, APPROVED, REJECTED
     // DB: SUBMITTED, APPROVED, REJECTED
     let dbStatus = 'SUBMITTED'
-    if (status === 'APPROVED') dbStatus = 'APPROVED' // Enum might be APPROVED or ACCEPTED, check schema or previous code.
-    // Previous code in line 118 actions/dinas.ts used 'APPROVED'.
+    if (status === 'APPROVED') dbStatus = 'APPROVED'
     if (status === 'REJECTED') dbStatus = 'REJECTED'
 
-    // 1. Verifikasi Akun LPK (Only show on PENDING view)
-    let pendingLpkAccounts: any[] = []
-    if (status === 'PENDING') {
-        try {
-            const { data } = await supabase
-                .from('profiles')
-                .select('*, profile_lpk(*)')
-                .eq('role', 'ADMIN_LPK')
-                .eq('account_status', 'pending')
-                .order('created_at', { ascending: false })
-
-            if (data) {
-                pendingLpkAccounts = data.map((p: any) => ({
-                    ...p,
-                    ...(p.profile_lpk || {}) // Flatten structure
-                }))
-            }
-        } catch (e) {
-            console.error(e)
-        }
-    }
 
     // 2. Laporan LPK Masuk
     let lpkReports: any[] = []
@@ -57,6 +35,7 @@ export default async function LpkAdminPage({ searchParams }: { searchParams: Pro
             .order('created_at', { ascending: false })
 
         if (data) {
+            console.log(`FETCHED LPK REPORTS [${dbStatus}]: Found ${data.length} reports.`)
             lpkReports = data.map((rep: any) => {
                 const p = rep.profiles
                 const lpk = p?.profile_lpk || {}
@@ -68,58 +47,92 @@ export default async function LpkAdminPage({ searchParams }: { searchParams: Pro
             })
         }
     } catch (e) {
-        console.error(e)
+        console.error("FETCH ERROR:", e)
     }
 
     // Dynamic UI
     let title = "Laporan Periodik LPK (Baru)"
     let desc = "Daftar laporan semester yang menunggu verifikasi."
-    let color = "text-gray-800"
 
     if (status === 'APPROVED') {
         title = "Laporan Diterima"
         desc = "Arsip laporan LPK yang telah disetujui."
-        color = "text-green-800"
     } else if (status === 'REJECTED') {
         title = "Laporan Ditolak"
         desc = "Laporan yang perlu direvisi oleh LPK."
-        color = "text-red-800"
     }
 
     return (
-        <div className="space-y-8">
-
-            {/* SECTION 1: VERIFIKASI AKUN LPK (Only PENDING) */}
-            {status === 'PENDING' && (
-                <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                        <Building className="text-blue-600" size={24} />
-                        <h2 className="text-xl font-bold text-gray-800">Verifikasi Registrasi LPK</h2>
-                    </div>
-
-                    <div className="bg-white rounded-xl shadow-sm border p-6">
-                        {pendingLpkAccounts.length === 0 ? <p className="text-gray-400 text-center py-6">Tidak ada LPK menunggu verifikasi akun.</p> :
-                            <VerificationTable users={pendingLpkAccounts} />
-                        }
-                    </div>
-                    <div className="border-t border-gray-200"></div>
-                </div>
-            )}
-
-            {/* SECTION 2: LAPORAN MASUK */}
-            <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                    <FileText className={status === 'APPROVED' ? "text-green-600" : status === 'REJECTED' ? "text-red-600" : "text-blue-600"} size={24} />
-                    <h2 className={`text-xl font-bold ${color}`}>{title}</h2>
+        <div className="font-sans min-h-screen bg-gray-50/50 pb-20">
+            {/* HERO SECTION - RED THEME */}
+            <div className="bg-gradient-to-r from-red-600 to-rose-700 text-white pt-8 pb-20 px-6 md:px-12 relative overflow-hidden rounded-b-3xl shadow-lg mb-8">
+                <div className="absolute top-0 right-0 p-4 opacity-10 transform translate-x-1/4 -translate-y-1/4">
+                    <Building size={300} />
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm border p-6">
-                    {lpkReports.length === 0 ? <p className="text-gray-400 text-center py-6">Tidak ada laporan {status.toLowerCase()}.</p> :
-                        <LPKReportTable reports={lpkReports} viewOnly={status !== 'PENDING'} onDelete={deleteLpkReportAction} />
-                    }
+                <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div>
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm border border-white/20">
+                                <FileText size={24} className="text-white" />
+                            </div>
+                            <span className="font-bold tracking-wider text-red-100 uppercase text-sm">Modul LPK</span>
+                        </div>
+                        <h1 className="text-3xl md:text-4xl font-extrabold mb-2 tracking-tight text-white">
+                            {title}
+                        </h1>
+                        <p className="text-red-100 font-medium text-lg max-w-xl">
+                            {desc}
+                        </p>
+                    </div>
+
+                    {/* Quick Stats */}
+                    <div className="flex gap-4">
+                        <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-xl text-center">
+                            <h3 className="text-2xl font-bold text-white">{lpkReports.length}</h3>
+                            <p className="text-xs text-red-100 uppercase font-bold tracking-wider">Total Laporan</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
+            {/* 2. CONTENT SECTION - Floating Up */}
+            <div className="max-w-7xl mx-auto px-6 -mt-16 relative z-20 space-y-6">
+
+                {/* Tab Navigation Card */}
+                <div className="bg-white p-2 rounded-2xl border border-gray-100 shadow-xl flex flex-col md:flex-row gap-4 items-center justify-between mb-8">
+                    <div className="flex p-1 bg-gray-50 rounded-xl w-full md:w-auto overflow-x-auto">
+                        <Link href="/dashboard/dinas/lpk?status=pending" className={`flex items-center gap-2 px-6 py-3 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${status === 'PENDING' ? 'bg-white text-red-600 shadow-md ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>
+                            <FileText size={18} /> Menunggu
+                        </Link>
+                        <Link href="/dashboard/dinas/lpk?status=approved" className={`flex items-center gap-2 px-6 py-3 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${status === 'APPROVED' ? 'bg-white text-red-600 shadow-md ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>
+                            <CheckCircle size={18} /> Diterima
+                        </Link>
+                        <Link href="/dashboard/dinas/lpk?status=rejected" className={`flex items-center gap-2 px-6 py-3 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${status === 'REJECTED' ? 'bg-white text-red-600 shadow-md ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>
+                            <XCircle size={18} /> Ditolak / Revisi
+                        </Link>
+                    </div>
+                </div>
+
+                {/* Table Card */}
+                <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+                    <div className="">
+                        {lpkReports.length === 0 ? (
+                            <div className="text-center py-20">
+                                <div className="inline-flex p-4 bg-gray-50 rounded-full mb-4">
+                                    <FileText size={40} className="text-gray-300" />
+                                </div>
+                                <h3 className="text-lg font-bold text-gray-900">Tidak ada laporan {status.toLowerCase()}</h3>
+                                <p className="text-gray-500 text-sm max-w-sm mx-auto mt-1">
+                                    Saat ini belum ada data laporan yang masuk ke dalam kategori ini.
+                                </p>
+                            </div>
+                        ) : (
+                            <LPKReportTable reports={lpkReports} viewOnly={status !== 'PENDING'} onDelete={deleteLpkReportAction} />
+                        )}
+                    </div>
+                </div>
+            </div>
         </div>
     )
 }
