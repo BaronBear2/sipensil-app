@@ -13,6 +13,8 @@ export default function VerificationTable({ users, viewOnly = false }: { users: 
    const [isRejectMode, setIsRejectMode] = useState(false)
    const [isConfirmMode, setIsConfirmMode] = useState(false)
    const [isDeleteMode, setIsDeleteMode] = useState(false)
+   const [loading, setLoading] = useState(false)
+   const [rejectReason, setRejectReason] = useState('')
 
    // Buka Modal Hapus (Untuk Riwayat)
    const openDeleteConfirm = (user: any) => {
