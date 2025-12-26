@@ -10,18 +10,22 @@ import { useRouter } from 'next/navigation'
 import logoSipensil from '@/assets/logo/logo-sipensil.jpeg'
 
 // Define Recursive Menu Type
+type ThemeColor = 'red' | 'blue' | 'green' | 'orange'
+
 type MenuItem = {
     name: string
     href?: string
     icon?: any
     children?: MenuItem[]
+    theme?: ThemeColor // Optional theme override
 }
 
 const MENU_ITEMS: MenuItem[] = [
-    { name: 'Dashboard', href: '/dashboard/dinas', icon: Home },
+    { name: 'Dashboard', href: '/dashboard/dinas', icon: Home, theme: 'red' },
     {
         name: 'Menu Pencaker',
         icon: Users,
+        theme: 'blue',
         children: [
             {
                 name: 'Pelatihan BLK',
@@ -60,6 +64,7 @@ const MENU_ITEMS: MenuItem[] = [
     {
         name: 'Menu LPK',
         icon: Building,
+        theme: 'green',
         children: [
             {
                 name: 'Laporan Periodik 6 Bulan',
@@ -81,6 +86,7 @@ const MENU_ITEMS: MenuItem[] = [
     {
         name: 'Menu Perusahaan',
         icon: FileText,
+        theme: 'orange',
         children: [
             {
                 name: 'Pencatatan Peserta Magang',
@@ -99,7 +105,7 @@ const MENU_ITEMS: MenuItem[] = [
             { name: 'Data Akun Perusahaan', href: '/dashboard/dinas/users?role=PERUSAHAAN' }
         ]
     },
-    { name: 'Manajemen User', href: '/dashboard/dinas/users', icon: Settings },
+    { name: 'Manajemen User', href: '/dashboard/dinas/users', icon: Settings, theme: 'red' },
 ]
 
 // Helpers for Activity Check
@@ -197,19 +203,56 @@ export default function AdminSidebar() {
     )
 }
 
+// Theme Styles Map
+const THEME_STYLES = {
+    red: {
+        activeBg: 'bg-red-50',
+        activeText: 'text-red-700',
+        iconActive: 'text-red-600',
+        hoverBg: 'hover:bg-red-50',
+        bullet: 'bg-red-400'
+    },
+    blue: {
+        activeBg: 'bg-blue-50',
+        activeText: 'text-blue-700',
+        iconActive: 'text-blue-600',
+        hoverBg: 'hover:bg-blue-50',
+        bullet: 'bg-blue-400'
+    },
+    green: {
+        activeBg: 'bg-green-50',
+        activeText: 'text-green-700',
+        iconActive: 'text-green-600',
+        hoverBg: 'hover:bg-green-50',
+        bullet: 'bg-green-400'
+    },
+    orange: {
+        activeBg: 'bg-orange-50',
+        activeText: 'text-orange-700',
+        iconActive: 'text-orange-600',
+        hoverBg: 'hover:bg-orange-50',
+        bullet: 'bg-orange-400'
+    },
+}
+
 interface SidebarItemProps {
     item: MenuItem
     depth?: number
     isOpen?: boolean
     onToggle?: () => void
+    inheritedTheme?: ThemeColor // Theme passed down from parent
 }
 
-function SidebarItem({ item, depth = 0, isOpen = false, onToggle }: SidebarItemProps) {
+function SidebarItem({ item, depth = 0, isOpen = false, onToggle, inheritedTheme = 'red' }: SidebarItemProps) {
     const pathname = usePathname()
     const searchParams = useSearchParams()
 
     // Internal state for children accordion
     const [openChildName, setOpenChildName] = useState<string | null>(null)
+
+    // Determine current theme (Self override OR inherited)
+    const currentTheme = item.theme || inheritedTheme
+    const themeStyle = THEME_STYLES[currentTheme] || THEME_STYLES['red']
 
     // Auto-expand children if parent is opened or path matches
     useEffect(() => {
@@ -217,9 +260,6 @@ function SidebarItem({ item, depth = 0, isOpen = false, onToggle }: SidebarItemP
             const activeChild = item.children.find(child => checkRecursiveActive(child, pathname, searchParams))
             if (activeChild) {
                 setOpenChildName(activeChild.name)
-                // If I contain active child, I should essentially be expanded. 
-                // But my expansion is controlled by parent prop `isOpen`. 
-                // The parent's useEffect handles opening ME.
             }
         }
     }, [pathname, searchParams, item.children])
@@ -232,27 +272,26 @@ function SidebarItem({ item, depth = 0, isOpen = false, onToggle }: SidebarItemP
     }
 
     if (item.children) {
+        // Parent Item (Menu Group)
         return (
             <div className="space-y-1">
                 <button
                     onClick={onToggle}
                     className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-bold transition-all 
-                        ${isCurrentActive ? 'bg-red-50 text-red-800' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
+                        ${isCurrentActive ? `${themeStyle.activeBg} ${themeStyle.activeText}` : `text-gray-600 ${themeStyle.hoverBg} hover:text-gray-900`}
                         ${depth > 0 ? 'text-xs my-0.5' : ''}
                     `}
                     style={{ paddingLeft: `${16 + (depth * 12)}px` }}
                 >
                     <div className="flex items-center gap-3">
-                        {item.icon && <item.icon size={18} className={isCurrentActive ? 'text-red-600' : 'text-gray-400'} />}
+                        {item.icon && <item.icon size={18} className={isCurrentActive ? themeStyle.iconActive : 'text-gray-400'} />}
                         <span>{item.name}</span>
                     </div>
-                    {/* Use "v" style chevron as requested */}
                     {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                 </button>
 
                 {isOpen && (
                     <div className="space-y-1 relative">
-                        {/* Recursive Render */}
                         {item.children.map((child, idx) => (
                             <SidebarItem
                                 key={idx}
@@ -260,6 +299,7 @@ function SidebarItem({ item, depth = 0, isOpen = false, onToggle }: SidebarItemP
                                 depth={depth + 1}
                                 isOpen={openChildName === child.name}
                                 onToggle={() => handleChildToggle(child.name)}
+                                inheritedTheme={currentTheme} // Pass down theme
                             />
                         ))}
                     </div>
@@ -268,17 +308,18 @@ function SidebarItem({ item, depth = 0, isOpen = false, onToggle }: SidebarItemP
         )
     }
 
+    // Leaf Item (Link)
     return (
         <Link
             href={item.href || '#'}
             className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-all
-                ${isCurrentActive ? 'bg-red-50 text-red-600 shadow-sm' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}
+                ${isCurrentActive ? `${themeStyle.activeBg} ${themeStyle.activeText} shadow-sm` : `text-gray-500 ${themeStyle.hoverBg} hover:text-gray-900`}
                 ${depth > 0 ? 'text-xs my-0.5' : ''}
             `}
             style={{ paddingLeft: `${16 + (depth * 12)}px` }}
         >
-            {item.icon && <item.icon size={18} className={isCurrentActive ? 'text-red-600' : 'text-gray-400'} />}
-            {!item.icon && depth > 1 && <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${isCurrentActive ? 'bg-red-400' : 'bg-gray-300'}`}></span>}
+            {item.icon && <item.icon size={18} className={isCurrentActive ? themeStyle.iconActive : 'text-gray-400'} />}
+            {!item.icon && depth > 1 && <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${isCurrentActive ? themeStyle.bullet : 'bg-gray-300'}`}></span>}
             {item.name}
         </Link>
     )

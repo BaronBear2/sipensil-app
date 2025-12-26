@@ -350,7 +350,7 @@ export async function kickParticipantAction(formData: FormData) {
 
 // --- 7. MANAJEMEN USER (ADMIN EDIT) ---
 export async function adminUpdateUserAction(formData: FormData) {
-  const supabase = await createClient()
+  const supabase = await createAdminClient()
   const userId = formData.get('userId') as string
   const targetRole = formData.get('role') as string // 'PENCAKER', 'PERUSAHAAN', 'LPK' ('ADMIN_LPK')
 
