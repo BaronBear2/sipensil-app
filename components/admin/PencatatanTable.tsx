@@ -166,7 +166,6 @@ export default function PencatatanTable({ permits, viewOnly = false, onDelete }:
 
                                                 {onDelete && (
                                                     <form
-                                                        // @ts-expect-error: Server Action Prop Binding
                                                         action={onDelete}
                                                     >
                                                         <input type="hidden" name="id" value={item.id} />
