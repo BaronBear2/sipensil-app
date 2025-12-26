@@ -16,7 +16,6 @@ function ProfileContent() {
    const [saving, setSaving] = useState(false)
    const [isEditing, setIsEditing] = useState(false)
    const [showConfirm, setShowConfirm] = useState(false)
-   const [hasPendingApp, setHasPendingApp] = useState(false)
 
    // State for Status Popup
    const [statusModal, setStatusModal] = useState<{
@@ -93,28 +92,9 @@ function ProfileContent() {
             })
 
             // ... rest of checking logic
-            // Cek Pending Applications (Training OR IM Japan)
-            const { count: trainingCount } = await supabase
-               .from('training_registrations')
-               .select('*', { count: 'exact', head: true })
-               .eq('user_id', user.id)
-               .in('status', ['PENDING', 'ACCEPTED', 'APPROVED', 'VERIFIED']) // Lock for all active states
-
-            const { count: imCount } = await supabase
-               .from('im_japan_registrations')
-               .select('*', { count: 'exact', head: true })
-               .eq('user_id', user.id)
-               .in('status', ['PENDING', 'VERIFIED', 'ACCEPTED']) // Lock for all active states
-
-            if ((trainingCount && trainingCount > 0) || (imCount && imCount > 0)) {
-               setHasPendingApp(true)
-               setIsEditing(false)
-            } else {
-               // Logic Auto Edit / Highlight
-               if (searchParams.get('action') === 'edit') {
-                  setIsEditing(true)
-                  setStatusModal({ isOpen: true, type: 'error', message: 'Harap lengkapi/perbarui data profil Anda terlebih dahulu sebelum mendaftar.' })
-               }
+            if (searchParams.get('action') === 'edit') {
+               setIsEditing(true)
+               setStatusModal({ isOpen: true, type: 'error', message: 'Harap lengkapi/perbarui data profil Anda terlebih dahulu sebelum mendaftar.' })
             }
          }
          setLoading(false)
@@ -345,13 +325,10 @@ function ProfileContent() {
                   </div>
 
                   {/* Tombol Edit Logic */}
-                  {!isEditing && !hasPendingApp && (
+                  {!isEditing && (
                      <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 bg-white border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 shadow-sm transition-all text-gray-700 text-xs">
                         <Edit size={14} /> Edit Data
                      </button>
-                  )}
-                  {!isEditing && hasPendingApp && (
-                     <span className="flex items-center gap-1 text-xs opacity-80 font-bold text-orange-600 bg-orange-100 px-2 py-1 rounded"><Lock size={12} /> Profil Dikunci (Ada Pendaftaran Aktif)</span>
                   )}
                   {isEditing && (
                      <span className="flex items-center gap-1 text-xs text-blue-600"><Edit size={12} /> Mode Edit Aktif</span>
