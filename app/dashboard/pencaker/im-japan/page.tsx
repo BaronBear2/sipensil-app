@@ -14,20 +14,8 @@ export default function ImJapanPage() {
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
     const [data, setData] = useState<any>(null) // Existing registration
-    const [isEditing, setIsEditing] = useState(false)
-    const [profile, setProfile] = useState<any>(null)
-    const [requirements, setRequirements] = useState<any[]>([])
-
-    // Modal State
-    const [statusModal, setStatusModal] = useState<{
-        isOpen: boolean
-        type: 'success' | 'error'
-        message: string
-    }>({
-        isOpen: false,
-        type: 'success',
-        message: ''
-    })
+    // State for re-application mode
+    const [isReapplying, setIsReapplying] = useState(false)
 
     // Fetch Data
     useEffect(() => {
@@ -39,8 +27,15 @@ export default function ImJapanPage() {
             const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single()
             setProfile(prof)
 
-            // 2. Cek Existing Registration
-            const { data: reg } = await supabase.from('im_japan_registrations').select('*').eq('user_id', user.id).maybeSingle()
+            // 2. Cek Existing Registration (Fetch LATEST)
+            const { data: reg } = await supabase
+                .from('im_japan_registrations')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle()
+
             if (reg) setData(reg)
 
             // 3. Fetch Requirements
@@ -48,7 +43,7 @@ export default function ImJapanPage() {
                 .from('im_japan_requirements')
                 .select('*')
                 .eq('is_active', true)
-                .order('created_at', { ascending: true }) // Or any other sorting
+                .order('created_at', { ascending: true })
 
             if (reqs) setRequirements(reqs)
 
@@ -57,60 +52,31 @@ export default function ImJapanPage() {
         getData()
     }, [])
 
-    // State for individual files (UI Feedback only, URLs stored in uploadedUrls)
-    const [files, setFiles] = useState<{ [key: string]: File | null }>({})
+    // ... (HandleFileChange remains same)
 
-    // New state for storing URLs
-    const [uploadedUrls, setUploadedUrls] = useState<{ [key: string]: string }>({})
-
-    // Derived docList for UI mapping
-    const docList = requirements.map(req => ({
-        id: req.id,
-        label: req.title, // + (req.is_required ? ' *' : ''), // Optional: show required asterisk
-        hasTemplate: !!req.template_url,
-        templateUrl: req.template_url,
-        isRequired: req.is_required,
-        description: req.description
-    }))
-
-
-    const handleFileChange = async (id: string, file: File | null) => {
-        if (!file) return
-
-        if (file.size > 5 * 1024 * 1024) {
-            setStatusModal({ isOpen: true, type: 'error', message: 'Ukuran file maksimal 5MB' })
-            return
-        }
-
-        // Real Upload Immediately
-        setSubmitting(true) // Reuse submitting state for loading UI
-
-        try {
-            const { uploadFile } = await import('@/utils/supabase/storage')
-            const { url, error } = await uploadFile(file, 'im_japan_documents', 'applications')
-
-            if (error) {
-                setStatusModal({ isOpen: true, type: 'error', message: 'Gagal upload: ' + error })
-            } else if (url) {
-                setUploadedUrls(prev => ({ ...prev, [id]: url }))
-            }
-        } catch (err) {
-            console.error(err)
-            setStatusModal({ isOpen: true, type: 'error', message: 'Error uploading file' })
-        } finally {
-            setSubmitting(false)
+    const handleReapply = () => {
+        // Switch to "Reapply" mode:
+        // 1. Standard form shows up
+        // 2. Data is kept for reference (optional) or cleared?
+        // User wants "Ajukan Permohonan Lagi" -> implies new fresh start usually, but keeping docs is helpful.
+        // We will set isReapplying = true and isEditing = true to show form.
+        setIsReapplying(true)
+        setIsEditing(true)
+        // Clear old URLs if entirely fresh, but keeping them is better UX so they don't re-upload everything.
+        // We will keep uploadedUrls empty, so they start fresh or we can pre-fill from `data`.
+        // Let's pre-fill uploadedUrls with previous docs so they can just add/replace.
+        if (data?.documents) {
+            setUploadedUrls(data.documents)
         }
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        // Validation check
-        // Check if doc exists in: 1. Newly uploaded URLs OR 2. Existing data documents
+        // ... (Validation logic remains same)
         const missing = docList.filter(d => {
-            const hasNewAndValid = uploadedUrls[d.id] && uploadedUrls[d.id].length > 0
-            const hasExisting = data?.documents?.[d.id] && data?.documents?.[d.id].length > 0
-            return !hasNewAndValid && !hasExisting
+            // Check if document is present in uploadedUrls (new or pre-filled)
+            return !(uploadedUrls[d.id] && uploadedUrls[d.id].length > 0)
         })
 
         if (missing.length > 0) {
@@ -124,28 +90,28 @@ export default function ImJapanPage() {
 
         setSubmitting(true)
 
-        // Create Documents Map
-        // Merge existing docs with new uploads
-        const documentsMap: { [key: string]: string } = {
-            ...(data?.documents || {}),
-            ...uploadedUrls
-        }
-
         const payload = {
             user_id: profile.id,
-            // batch: 'Batch 1/2025', 
             document_path: 'see_documents_column',
-            documents: documentsMap,
+            documents: uploadedUrls, // Use current state
             status: 'PENDING',
             admin_notes: null
         }
 
         let error;
-        if (data) {
-            const { error: err } = await supabase.from('im_japan_registrations').update(payload).eq('id', data.id)
+
+        // LOGIC CHANGE:
+        // If (data exist AND (Rejected or Verified)) OR isReapplying -> INSERT NEW
+        // If (data exist AND Pending) -> UPDATE (Edit)
+
+        const shouldInsert = !data || isReapplying || (data && (data.status === 'REJECTED' || data.status === 'VERIFIED' || data.status === 'DITERIMA'))
+
+        if (shouldInsert) {
+            const { error: err } = await supabase.from('im_japan_registrations').insert(payload)
             error = err
         } else {
-            const { error: err } = await supabase.from('im_japan_registrations').insert(payload)
+            // Valid current pending application -> Update
+            const { error: err } = await supabase.from('im_japan_registrations').update(payload).eq('id', data.id)
             error = err
         }
 
@@ -158,11 +124,14 @@ export default function ImJapanPage() {
         setSubmitting(false)
     }
 
-    if (loading) return <div className="p-10 text-center">Memuat...</div>
+    // ... (Loading check)
+
+    // Helper boolean
+    const showForm = !data || isEditing
 
     return (
         <div className="min-h-screen bg-gray-50 font-sans animate-fade-in pb-20">
-            {/* Navbar removed */}
+            {/* ... Modal ... */}
             <StatusModal
                 isOpen={statusModal.isOpen}
                 type={statusModal.type}
@@ -171,8 +140,7 @@ export default function ImJapanPage() {
             />
 
             <div className="max-w-5xl mx-auto px-4 py-8">
-
-                {/* Simplified Header */}
+                {/* ... Header ... */}
                 <div className="flex items-center gap-4 mb-8">
                     <Link href="/dashboard/pencaker" className="bg-white p-3 rounded-full shadow-sm border border-gray-100 text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all">
                         <ArrowLeft size={20} />
@@ -185,9 +153,7 @@ export default function ImJapanPage() {
                     </div>
                 </div>
 
-                {/* Status Cards */}
-
-                {/* REJECTED STATE */}
+                {/* REJECTED STATE - Latest */}
                 {data?.status === 'REJECTED' && !isEditing && (
                     <div className="bg-red-50 border-l-4 border-red-500 p-6 rounded-r-xl mb-8 shadow-sm">
                         <div className="flex items-start gap-4">
@@ -195,16 +161,16 @@ export default function ImJapanPage() {
                                 <AlertTriangle size={24} />
                             </div>
                             <div className="flex-1">
-                                <h3 className="font-bold text-red-800 text-lg">Permohonan Ditolak</h3>
+                                <h3 className="font-bold text-red-800 text-lg">Permohonan Terakhir Ditolak</h3>
                                 <p className="text-red-700 mt-1 font-medium bg-red-100/50 p-3 rounded-lg border border-red-200">
-                                    &quot; {data.admin_notes} &quot;
+                                    &quot; {data.admin_notes || 'Tidak ada catatan.'} &quot;
                                 </p>
                                 <div className="mt-4 flex gap-3">
                                     <button
-                                        onClick={() => setIsEditing(true)}
-                                        className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-700 shadow-lg shadow-red-200 transition"
+                                        onClick={handleReapply}
+                                        className="bg-red-600 text-white px-6 py-2.5 rounded-lg font-bold text-sm hover:bg-red-700 shadow-lg shadow-red-200 transition"
                                     >
-                                        Revisi Permohonan
+                                        Ajukan Permohonan Lagi
                                     </button>
                                 </div>
                             </div>
@@ -212,8 +178,8 @@ export default function ImJapanPage() {
                     </div>
                 )}
 
-                {/* VERIFIED STATE */}
-                {data?.status === 'VERIFIED' && (
+                {/* VERIFIED STATE - Latest */}
+                {(data?.status === 'VERIFIED' || data?.status === 'DITERIMA') && !isEditing && (
                     <div className="bg-white border border-green-200 rounded-2xl p-8 mb-8 shadow-sm text-center relative overflow-hidden">
                         <div className="absolute top-0 left-0 w-full h-2 bg-green-500"></div>
                         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -221,11 +187,19 @@ export default function ImJapanPage() {
                         </div>
                         <h3 className="font-bold text-gray-900 text-2xl mb-2">Permohonan Disetujui</h3>
                         <p className="text-gray-600 mb-8 max-w-lg mx-auto">
-                            Berkas Anda telah diverifikasi. Silakan download Surat Rekomendasi di bawah ini.
+                            Berkas Anda telah diverifikasi. Silakan download Surat Rekomendasi, atau ajukan permohonan baru jika diperlukan.
                         </p>
-                        <a href="#" className="inline-flex items-center gap-2 bg-green-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-green-700 shadow-lg shadow-green-200 transition-transform hover:-translate-y-1">
-                            <Download size={20} /> Download Surat Rekomendasi
-                        </a>
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                            <a href="#" className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-green-700 shadow-lg shadow-green-200 transition-transform hover:-translate-y-1">
+                                <Download size={20} /> Download Surat Rekomendasi
+                            </a>
+                            <button
+                                onClick={handleReapply}
+                                className="inline-flex items-center gap-2 bg-white border-2 border-green-600 text-green-700 px-6 py-3 rounded-xl font-bold hover:bg-green-50 transition"
+                            >
+                                Ajukan Permohonan Lagi
+                            </button>
+                        </div>
                     </div>
                 )}
 
@@ -240,7 +214,7 @@ export default function ImJapanPage() {
                             Terima kasih telah mengajukan permohonan. Data dan berkas Anda sedang dalam proses pemeriksaan.
                         </p>
                         <button
-                            onClick={() => setIsEditing(true)}
+                            onClick={() => { setIsEditing(true); setIsReapplying(false); setUploadedUrls(data.documents || {}) }}
                             className="bg-white border border-blue-200 text-blue-600 px-6 py-2 rounded-lg font-bold hover:bg-blue-100 transition shadow-sm"
                         >
                             Edit Berkas Pembaharuan

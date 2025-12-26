@@ -34,7 +34,7 @@ export async function applyTraining(formData: FormData) {
     .maybeSingle()
 
   if (activeTraining) {
-    return { error: 'Anda sedang terdaftar di pelatihan aktif. Selesaikan atau batalkan dulu.' }
+    return { error: 'Anda sedang berada di pelatihan. Selesaikan dulu, atau kontak admin untuk mengeluarkan anda dari pelatihan' }
   }
 
   // 5. VALIDASI SLOT & TANGGAL

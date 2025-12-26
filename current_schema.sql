@@ -230,6 +230,7 @@ CREATE TABLE public.training_registrations (
   status text DEFAULT 'Menunggu Verifikasi'::text,
   applied_at timestamp with time zone DEFAULT now(),
   created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  admin_notes text,
   CONSTRAINT training_registrations_pkey PRIMARY KEY (id),
   CONSTRAINT training_registrations_training_id_fkey FOREIGN KEY (training_id) REFERENCES public.blk_trainings(id),
   CONSTRAINT training_registrations_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)

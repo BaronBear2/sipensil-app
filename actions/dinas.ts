@@ -68,7 +68,10 @@ export async function verifyProfileAction(formData: FormData) {
     const statusUpdate = action === 'approve' ? 'DITERIMA' : 'DITOLAK'
     const { error: regError } = await supabase
       .from('training_registrations')
-      .update({ status: statusUpdate })
+      .update({
+        status: statusUpdate,
+        admin_notes: action === 'reject' ? reason : null // Fix: Save the reason!
+      })
       .eq('id', regId)
 
     if (regError) return { error: "Failed to update registration: " + regError.message }

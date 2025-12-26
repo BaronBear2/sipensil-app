@@ -65,13 +65,14 @@ export default function MyTrainingsPage() {
         getData()
     }, [])
 
-    const handlePrint = (reg: any) => {
+    const handlePrint = (reg: any, type: 'registration' | 'acceptance') => {
+        const title = type === 'registration' ? 'TANDA BUKTI PENDAFTARAN' : 'TANDA BUKTI DITERIMA PELATIHAN'
         const printWindow = window.open('', '_blank')
         if (printWindow) {
             printWindow.document.write(`
                 <html>
                 <head>
-                    <title>Tanda Daftar Pelatihan - SIPENSIL</title>
+                    <title>${title} - SIPENSIL</title>
                     <style>
                         body { font-family: sans-serif; padding: 40px; }
                         .header { text-align: center; border-bottom: 2px solid black; padding-bottom: 20px; margin-bottom: 30px; }
@@ -82,11 +83,14 @@ export default function MyTrainingsPage() {
                 </head>
                 <body>
                     <div class="header">
-                        <h2>TANDA BUKTI PENDAFTARAN</h2>
+                        <h2>${title}</h2>
                         <h3>SIPENSIL - Dinas Ketenagakerjaan Kab. Bekasi</h3>
                     </div>
                     <div class="content">
-                        <p>Terima kasih telah mendaftar pada program pelatihan BLK. Simpan dokumen ini sebagai bukti pendaftaran.</p>
+                        <p>${type === 'registration'
+                    ? 'Terima kasih telah mendaftar pada program pelatihan BLK. Simpan dokumen ini sebagai bukti pendaftaran.'
+                    : 'Selamat! Pendaftaran Anda telah DITERIMA/VERIFIKASI oleh Dinas. Silakan bawa bukti ini saat daftar ulang.'}
+                        </p>
                         
                         <div class="box">
                             <p><strong>Nama Peserta:</strong> ${reg.full_name || '-'}</p>
@@ -181,18 +185,31 @@ export default function MyTrainingsPage() {
                     </div>
                 )}
 
-                <div className="flex justify-end gap-3 pt-2">
-                    {/* Only show buttons for non-rejected, active items or if history details needed */}
+                <div className="flex justify-end flex-wrap gap-2 pt-2">
+                    {/* Only show DETAIL for non-rejected items */}
                     {!isRejected && (
-                        <Link href={`/dashboard/pencaker/training/${reg.blk_trainings?.id}`} className="px-4 py-2 border rounded-lg text-sm font-bold text-gray-600 hover:bg-gray-50 flex items-center gap-2">
-                            <ExternalLink size={16} /> Detail
+                        <Link href={`/dashboard/pencaker/training/${reg.blk_trainings?.id}`} className="px-3 py-2 border rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-50 flex items-center gap-2">
+                            <ExternalLink size={14} /> Detail
                         </Link>
                     )}
 
-                    {!isRejected && !isHistory && (reg.status === 'DITERIMA' || reg.status === 'APPROVED' || reg.status === 'VERIFIED') && (
-                        <button onClick={() => handlePrint(reg)} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 flex items-center gap-2 shadow-sm">
-                            <Download size={16} /> Unduh Bukti
+                    {/* Pending Buttons */}
+                    {!isRejected && !isHistory && reg.status === 'PENDING' && (
+                        <button onClick={() => handlePrint(reg, 'registration')} className="px-3 py-2 border border-blue-200 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 flex items-center gap-2 shadow-sm">
+                            <FileText size={14} /> Tanda Daftar
                         </button>
+                    )}
+
+                    {/* Accepted Buttons */}
+                    {!isRejected && !isHistory && (reg.status === 'DITERIMA' || reg.status === 'APPROVED' || reg.status === 'VERIFIED') && (
+                        <>
+                            <button onClick={() => handlePrint(reg, 'registration')} className="px-3 py-2 border border-blue-200 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 flex items-center gap-2 shadow-sm">
+                                <FileText size={14} /> Tanda Daftar
+                            </button>
+                            <button onClick={() => handlePrint(reg, 'acceptance')} className="px-3 py-2 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700 flex items-center gap-2 shadow-sm">
+                                <Download size={14} /> Download Bukti
+                            </button>
+                        </>
                     )}
                 </div>
             </div>

@@ -96,6 +96,8 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
         if (profile.account_status === 'rejected') {
             const reason = profile.rejection_message || 'Mohon cek detail penolakan di halaman Profil Saya'
             setStatusModal({ isOpen: true, type: 'error', message: `Akun Anda ditolak: "${reason}". Silakan perbaiki profil.` })
+            // Request: Redirect to profile edit on close
+            setRedirectOnClose('/dashboard/pencaker/profile?action=edit')
             return
         }
 

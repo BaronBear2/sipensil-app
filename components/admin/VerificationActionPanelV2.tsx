@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle, XCircle } from 'lucide-react'
 import { verifyProfileAction } from '@/actions/dinas'
+import StatusModal from '@/components/ui/StatusModal'
 
 export default function VerificationActionPanelV2({ user, status }: { user: any, status: string }) {
     const router = useRouter()
@@ -12,6 +13,9 @@ export default function VerificationActionPanelV2({ user, status }: { user: any,
     const [isConfirmMode, setIsConfirmMode] = useState(false)
     const [rejectReason, setRejectReason] = useState('')
     const [loading, setLoading] = useState(false)
+    const [statusModal, setStatusModal] = useState<{
+        isOpen: boolean, type: 'success' | 'error', message: string, title?: string
+    }>({ isOpen: false, type: 'success', message: '' })
 
     const executeVerify = async (action: 'approve' | 'reject') => {
         setLoading(true)
@@ -28,16 +32,35 @@ export default function VerificationActionPanelV2({ user, status }: { user: any,
 
         const res = await verifyProfileAction(formData)
 
+        setLoading(false)
+
         if (res?.error) {
-            alert(res.error)
-            setLoading(false)
+            setStatusModal({
+                isOpen: true,
+                type: 'error',
+                title: 'Gagal',
+                message: res.error
+            })
             return
         }
 
-        setLoading(false)
-        setIsConfirmMode(false)
-        setIsRejectMode(false)
-        router.push('/dashboard/dinas/verifikasi-pencaker') // Go back to list
+        // Success
+        setStatusModal({
+            isOpen: true,
+            type: 'success',
+            title: action === 'approve' ? 'Verifikasi Berhasil' : 'Pencaker Ditolak',
+            message: action === 'approve'
+                ? 'Data pencaker berhasil diverifikasi. Status pendaftaran diperbarui menjadi DITERIMA.'
+                : 'Pendaftaran pencaker telah ditolak.'
+        })
+
+        // Close logic handles redirect
+    }
+
+    const handleCloseModal = () => {
+        setStatusModal(prev => ({ ...prev, isOpen: false }))
+        // Request: Redirect to previous page (list)
+        router.push('/dashboard/dinas/verifikasi-pencaker')
         router.refresh()
     }
 
@@ -53,6 +76,14 @@ export default function VerificationActionPanelV2({ user, status }: { user: any,
 
     return (
         <div className="bg-white rounded-xl shadow-sm border p-6">
+            <StatusModal
+                isOpen={statusModal.isOpen}
+                onClose={handleCloseModal}
+                type={statusModal.type}
+                title={statusModal.title}
+                message={statusModal.message}
+            />
+
             <h3 className="font-bold text-gray-800 mb-4 border-b pb-2">Aksi Verifikasi</h3>
 
             {!isConfirmMode && !isRejectMode && (
