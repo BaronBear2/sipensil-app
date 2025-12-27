@@ -6,7 +6,7 @@ import { Plus, Trash2, Save, FileText, AlertTriangle, ChevronDown, ChevronUp } f
 import { submitLpkReport } from '@/actions/organization'
 
 // Props menerima 'initialData' jika ini adalah revisi
-export default function LpkReportForm({ profile, initialData }: { profile: any, initialData?: any }) {
+export default function LpkReportForm({ profile, initialData, userId }: { profile: any, initialData?: any, userId: string }) {
     const [loading, setLoading] = useState(false)
 
     // Default State matching 9 Sections
@@ -48,6 +48,7 @@ export default function LpkReportForm({ profile, initialData }: { profile: any, 
     }
 
     const [reportData, setReportData] = useState<any>(defaultState)
+    const [isDraftLoaded, setIsDraftLoaded] = useState(false)
 
     // EFFECT: Jika ada initialData (Draft/Revisi), masukkan ke state
     useEffect(() => {
@@ -74,10 +75,52 @@ export default function LpkReportForm({ profile, initialData }: { profile: any, 
                 data_uji_kompetensi: initialData.data_uji_kompetensi || defaultState.data_uji_kompetensi,
                 data_pengembangan_kelembagaan: initialData.data_pengembangan_kelembagaan || defaultState.data_pengembangan_kelembagaan,
                 data_mitra: initialData.data_mitra || defaultState.data_mitra,
-                data_kendala: initialData.data_kendala || defaultState.data_kendala // DB uses data_kendala or just kendala? Previously was 'kendala' in script but let's standardize
+                data_kendala: initialData.data_kendala || defaultState.data_kendala
             })
+        } else if (userId) {
+            // LOAD DRAFT IF NO INITIAL DATA (NEW REPORT)
+            const draftKey = `lpk_laporan_draft_${userId}`
+            const savedDraft = localStorage.getItem(draftKey)
+            if (savedDraft) {
+                try {
+                    const parsedDraft = JSON.parse(savedDraft)
+                    setReportData(parsedDraft)
+                    setIsDraftLoaded(true)
+                    // Auto dismiss toast after 3s? Or just show a small banner.
+                    setTimeout(() => setIsDraftLoaded(false), 5000)
+                } catch (e) {
+                    console.error("Failed to load draft", e)
+                }
+            }
         }
-    }, [initialData])
+    }, [initialData, userId])
+
+    // AUTOSAVE EFFECT
+    useEffect(() => {
+        // Don't autosave if we are editing an existing submitted report (Revison) -> logic: initialData exists.
+        // Actually, user might want autosave for revisions too? 
+        // Let's safe guard: key should probably differentiate revision vs new?
+        // For now, let's strictly do it for NEW reports to avoid overwriting "New Draft" with "Revision Work".
+        if (loading || !userId) return
+
+        // If initialData is present (Revision), we might want a different key or skip. 
+        // User request was general QOL. Let's stick to "lpk_laporan_draft" for NEW reports.
+        if (initialData) return
+
+        const draftKey = `lpk_laporan_draft_${userId}`
+        const timeoutId = setTimeout(() => {
+            localStorage.setItem(draftKey, JSON.stringify(reportData))
+        }, 1000)
+
+        return () => clearTimeout(timeoutId)
+    }, [reportData, userId, loading, initialData])
+
+    const clearDraft = () => {
+        if (!userId) return
+        localStorage.removeItem(`lpk_laporan_draft_${userId}`)
+        setReportData(defaultState)
+        alert("Draft berhasil direset.")
+    }
 
     // --- HANDLERS ---
     const handleChange = (e: any) => {
@@ -141,6 +184,10 @@ export default function LpkReportForm({ profile, initialData }: { profile: any, 
         if (res.error) {
             alert(res.error)
         } else {
+            // Clear Draft on Success (only if it was a new report)
+            if (!initialData && userId) {
+                localStorage.removeItem(`lpk_laporan_draft_${userId}`)
+            }
             alert(res.success)
             router.push('/dashboard/lpk/laporan/riwayat')
         }
@@ -469,7 +516,19 @@ export default function LpkReportForm({ profile, initialData }: { profile: any, 
             </div>
 
             {/* SUBMIT BUTTON */}
-            <div className="flex justify-end pt-5">
+            <div className="flex justify-end pt-5 gap-3 items-center">
+                {isDraftLoaded && (
+                    <div className="text-xs text-orange-600 font-bold bg-orange-100 px-3 py-1.5 rounded-lg animate-pulse mr-auto">
+                        Draft sebelumnya berhasil dipulihkan
+                    </div>
+                )}
+
+                {!initialData && (
+                    <button onClick={clearDraft} className="px-5 py-3 border border-gray-300 rounded-xl font-bold text-gray-500 hover:bg-red-50 hover:text-red-600 transition text-sm flex items-center gap-2">
+                        <Trash2 size={18} /> Reset Form
+                    </button>
+                )}
+
                 <button onClick={handleSubmit} disabled={loading} className="bg-blue-600 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:bg-blue-700 flex items-center gap-2 transition-transform active:scale-95 disabled:bg-gray-400">
                     <Save size={20} /> {loading ? 'Mengirim...' : 'Simpan & Kirim Laporan'}
                 </button>

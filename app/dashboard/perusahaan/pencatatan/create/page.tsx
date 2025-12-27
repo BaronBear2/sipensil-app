@@ -42,11 +42,15 @@ export default function CreateMagangRecordPage() {
     const [rows, setRows] = useState<any[]>([{ ...emptyRow }])
     const [currentRowToRemove, setCurrentRowToRemove] = useState<number | null>(null) // For delete confirmation if needed (optional, keeping simple delete for now or modal?) -> Let's keep simple delete for rows to be fast, but maybe confirm submit.
 
-    // 1. CHECK PROFILE COMPLETENESS
+    const [userId, setUserId] = useState<string | null>(null)
+
+    // 1. CHECK PROFILE COMPLETENESS & LOAD DRAFT
     useEffect(() => {
         const checkProfile = async () => {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) { router.push('/auth/login'); return }
+
+            setUserId(user.id)
 
             const { data: profile } = await supabase.from('profiles').select('*, profile_perusahaan(*)').eq('id', user.id).single()
 
@@ -61,10 +65,50 @@ export default function CreateMagangRecordPage() {
                     return
                 }
             }
+
+            // LOAD DRAFT IF EXISTS
+            const draftKey = `pencatatan_draft_${user.id}`
+            const savedDraft = localStorage.getItem(draftKey)
+            if (savedDraft) {
+                try {
+                    const { title: savedTitle, rows: savedRows } = JSON.parse(savedDraft)
+                    if (savedRows && savedRows.length > 0) {
+                        setTitle(savedTitle || '')
+                        setRows(savedRows)
+                        setStatusModal({ isOpen: true, type: 'success', message: 'Draf pencatatan sebelumnya berhasil dipulihkan.' })
+                    }
+                } catch (e) {
+                    console.error("Failed to parse draft", e)
+                }
+            }
+
             setPageLoading(false)
         }
         checkProfile()
     }, [])
+
+    // 2. AUTOSAVE DRAFT
+    useEffect(() => {
+        if (!userId || pageLoading) return
+
+        const draftKey = `pencatatan_draft_${userId}`
+        const saveData = { title, rows }
+
+        const timeoutId = setTimeout(() => {
+            localStorage.setItem(draftKey, JSON.stringify(saveData))
+        }, 1000) // Debounce 1s
+
+        return () => clearTimeout(timeoutId)
+    }, [title, rows, userId, pageLoading])
+
+    const clearDraft = () => {
+        if (!userId) return
+        const draftKey = `pencatatan_draft_${userId}`
+        localStorage.removeItem(draftKey)
+        setTitle('')
+        setRows([{ ...emptyRow }])
+        setStatusModal({ isOpen: true, type: 'success', message: 'Draf berhasil dihapus.' })
+    }
 
     const handleAddRow = () => {
         setRows([...rows, { ...emptyRow }])
@@ -112,6 +156,10 @@ export default function CreateMagangRecordPage() {
             setStatusModal({ isOpen: true, type: 'error', message: res.error })
             setLoading(false)
         } else {
+            // Clear draft on success
+            if (userId) {
+                localStorage.removeItem(`pencatatan_draft_${userId}`)
+            }
             setStatusModal({ isOpen: true, type: 'success', message: res.success || 'Berhasil disimpan!' })
             setTimeout(() => {
                 router.push('/dashboard/perusahaan/pencatatan/riwayat')
@@ -225,8 +273,8 @@ export default function CreateMagangRecordPage() {
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {rows.map((row, index) => (
-                                    <tr key={index} className="hover:bg-orange-50/30 transition-colors group">
-                                        <td className="px-4 py-3 text-center font-bold text-gray-400 sticky left-0 bg-white group-hover:bg-orange-50/30 z-10 border-r">{index + 1}</td>
+                                    <tr key={index} className="bg-white hover:bg-orange-50 transition-colors group">
+                                        <td className="px-4 py-3 text-center font-bold text-gray-400 sticky left-0 bg-white group-hover:bg-orange-50 z-10 border-r transition-colors shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">{index + 1}</td>
 
                                         {/* IDENTITAS */}
                                         <td className="px-2 py-3"><input value={row.nik} onChange={(e) => handleChange(index, 'nik', e.target.value)} className={inputStyle} placeholder="16 Digit" maxLength={16} /></td>
@@ -253,7 +301,7 @@ export default function CreateMagangRecordPage() {
                                         <td className="px-2 py-3"><input value={row.post_activity} onChange={(e) => handleChange(index, 'post_activity', e.target.value)} className={inputStyle} placeholder="Rencana..." /></td>
 
                                         {/* AKSI */}
-                                        <td className="px-2 py-3 text-center sticky right-0 bg-white group-hover:bg-orange-50/30 z-10 border-l">
+                                        <td className="px-2 py-3 text-center sticky right-0 bg-white group-hover:bg-orange-50 z-10 border-l transition-colors shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.05)]">
                                             <button onClick={() => handleRemoveRow(index)} className="bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 hover:border-red-200 p-2 rounded-xl transition shadow-sm mx-auto flex items-center justify-center" title="Hapus Baris">
                                                 <Trash2 size={16} />
                                             </button>
@@ -272,7 +320,10 @@ export default function CreateMagangRecordPage() {
                 </div>
 
                 {/* FOOTER ACTION */}
-                <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t z-10 md:static md:bg-transparent md:border-0 md:p-0 flex justify-end">
+                <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t z-10 md:static md:bg-transparent md:border-0 md:p-0 flex justify-end gap-3">
+                    <button onClick={clearDraft} className="px-6 py-3.5 border border-gray-300 rounded-xl font-bold text-gray-500 hover:bg-gray-100 hover:text-red-600 transition text-sm flex items-center gap-2">
+                        <Trash2 size={18} /> Reset Form
+                    </button>
                     <button onClick={validateAndPrompt} disabled={loading} className="w-full md:w-auto bg-orange-600 text-white font-bold py-3.5 px-8 rounded-xl shadow-lg shadow-orange-200 hover:bg-orange-700 flex items-center justify-center gap-2 transition-transform active:scale-95 disabled:bg-gray-400">
                         <Save size={20} /> {loading ? 'Menyimpan...' : 'Simpan & Kirim Pencatatan'}
                     </button>

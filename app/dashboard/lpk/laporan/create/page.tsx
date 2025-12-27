@@ -62,7 +62,7 @@ export default async function CreateReportPage({ searchParams }: { searchParams:
                 </div>
 
                 {/* Form Component */}
-                <LpkReportForm profile={finalProfile} initialData={initialData} />
+                <LpkReportForm profile={finalProfile} initialData={initialData} userId={user.id} />
             </div>
         </div>
     )
