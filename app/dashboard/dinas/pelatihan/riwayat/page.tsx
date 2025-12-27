@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
-import { AlertCircle, Archive, Calendar, Users, ArrowLeft } from 'lucide-react'
+import { AlertCircle, Archive, Calendar, Users, ArrowLeft, Edit } from 'lucide-react'
 import SearchInput from '@/components/admin/SearchInput'
 import Link from 'next/link'
 import RestoreTrainingButton from '@/components/admin/RestoreTrainingButton'
@@ -89,7 +89,21 @@ export default async function RiwayatPelatihanPage({ searchParams }: { searchPar
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            <RestoreTrainingButton id={item.id} title={item.title} />
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Link
+                                                    href={`/dashboard/dinas/pelatihan/${item.id}/edit`}
+                                                    className="flex items-center gap-1 px-3 py-1 bg-white border border-yellow-200 text-yellow-600 rounded-full text-xs font-bold hover:bg-yellow-50 transition"
+                                                    title="Edit Tanggal / Info"
+                                                >
+                                                    <Edit size={14} /> Edit
+                                                </Link>
+                                                <RestoreTrainingButton
+                                                    id={item.id}
+                                                    title={item.title}
+                                                    startDate={item.training_start_date}
+                                                    endDate={item.training_end_date}
+                                                />
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

@@ -6,14 +6,33 @@ import { SwalAlert, SwalConfirm, SwalToast } from '@/utils/swal'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-export default function RestoreTrainingButton({ id, title }: { id: string, title: string }) {
+export default function RestoreTrainingButton({ id, title, startDate, endDate }: { id: string, title: string, startDate?: string, endDate?: string }) {
     const [isLoading, setIsLoading] = useState(false)
     const router = useRouter()
 
     const handleRestore = async () => {
+        // 1. Validation: Check if training is expired
+        if (endDate) {
+            const end = new Date(endDate)
+            const now = new Date()
+            // Reset time to compare dates only effectively, or just compare timestamps
+            if (end < now) {
+                await SwalAlert.fire({
+                    icon: 'warning',
+                    title: 'Tidak Dapat Mengembalikan',
+                    text: `Pelatihan ini sudah berakhir pada ${end.toLocaleDateString('id-ID')}. Harap ubah tanggal berakhir terlebih dahulu melalui tombol Edit.`
+                })
+                return
+            }
+        }
+
+        const dateRangeText = startDate && endDate
+            ? `Periode: ${new Date(startDate).toLocaleDateString('id-ID')} s/d ${new Date(endDate).toLocaleDateString('id-ID')}`
+            : 'Periode tidak ditentukan'
+
         const result = await SwalConfirm.fire({
             title: 'Kembalikan Pelatihan?',
-            text: `Pelatihan "${title}" akan dikembalikan ke daftar aktif (Status: OPEN).`,
+            html: `Pelatihan "<b>${title}</b>" akan dikembalikan ke daftar aktif.<br/><br/><span class="text-sm text-gray-500">${dateRangeText}</span>`,
             confirmButtonText: 'Ya, Kembalikan',
             icon: 'question'
         })
