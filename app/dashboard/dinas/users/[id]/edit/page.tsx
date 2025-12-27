@@ -1,11 +1,11 @@
-import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/server'
 import { ArrowLeft, User, Building, Briefcase } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import EditUserForm from '@/components/admin/EditUserForm'
 
 export default async function EditUserPage({ params }: { params: Promise<{ id: string }> }) {
-    const supabase = await createClient()
+    const supabase = await createAdminClient()
     const { id } = await params
 
     // Fetch Profile

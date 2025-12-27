@@ -94,7 +94,7 @@ export default function PerusahaanProfilePage() {
         const { error: baseError } = await supabase
             .from('profiles')
             .update({
-                company_name: formData.company_name, // Keep for base
+                full_name: formData.company_name, // Update full_name for Admin View
                 phone: formData.phone,
                 account_status: 'pending',
                 rejection_message: null

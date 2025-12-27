@@ -95,7 +95,7 @@ export default function LpkProfilePage() {
     const { error: baseError } = await supabase
       .from('profiles')
       .update({
-        // company_name and phone are not in 'profiles' table anymore.
+        full_name: formData.company_name, // Sync name to base profile for Admin
         account_status: 'pending',
         rejection_message: null
       })

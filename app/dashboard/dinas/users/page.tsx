@@ -1,8 +1,8 @@
-import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/server'
 import UserManagement from '@/components/admin/UserManagement'
 
 export default async function UsersAdminPage({ searchParams }: { searchParams: Promise<{ page?: string, q?: string, role?: string }> }) {
-    const supabase = await createClient()
+    const supabase = await createAdminClient()
 
     const params = await searchParams
     const currentPage = params.page ? parseInt(params.page) : 1
