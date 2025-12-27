@@ -56,10 +56,11 @@ export default function PublicFooter() {
                         <h4 className="text-white font-bold mb-6 text-sm uppercase tracking-wider flex items-center gap-2">
                             <span className="w-8 h-0.5 bg-blue-600 inline-block"></span> Menu Utama
                         </h4>
-                        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <ul className="space-y-5">
                             {[
-                                { label: 'Profil Dinas', href: '/profil/tentang-kami' },
-                                { label: 'Pelatihan BLK', href: '/pelatihan' },
+                                { label: 'Tentang Kami', href: '/profil/tentang-kami' },
+                                { label: 'Katalog Pelatihan', href: '/pelatihan' },
+                                { label: 'Cara Menggunakan Website', href: '#' },
                                 { label: 'Kebijakan Privasi', href: '#' },
                                 { label: 'Syarat & Ketentuan', href: '#' }
                             ].map((link, idx) => (
@@ -117,7 +118,6 @@ export default function PublicFooter() {
                     <div className="flex items-center gap-1 text-slate-600">
                         <span>Made with</span>
                         <Heart size={10} className="text-red-600 fill-red-600 animate-pulse" />
-                        <span>for Bekasi</span>
                     </div>
                 </div>
             </div>
