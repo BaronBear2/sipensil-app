@@ -23,9 +23,96 @@ export default function ImJapanPage() {
     const [isReapplying, setIsReapplying] = useState(false)
     const [showConfirm, setShowConfirm] = useState(false) // Added for Modal
 
-    // ... (Modal State and useEffect remain same)
+    // Modal State
+    const [statusModal, setStatusModal] = useState<{
+        isOpen: boolean
+        type: 'success' | 'error'
+        message: string
+    }>({
+        isOpen: false,
+        type: 'success',
+        message: ''
+    })
 
-    // ... (handleFileChange remains same)
+    // Fetch Data
+    useEffect(() => {
+        const getData = async () => {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) { router.push('/auth/login'); return }
+
+            // 1. Cek Profile
+            const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+            setProfile(prof)
+
+            // 2. Cek Existing Registration (Fetch LATEST)
+            const { data: reg } = await supabase
+                .from('im_japan_registrations')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle()
+
+            if (reg) setData(reg)
+
+            // 3. Fetch Requirements
+            const { data: reqs } = await supabase
+                .from('im_japan_requirements')
+                .select('*')
+                .eq('is_active', true)
+                .order('created_at', { ascending: true })
+
+            if (reqs) setRequirements(reqs)
+
+            setLoading(false)
+        }
+        getData()
+    }, [])
+
+    // State for individual files (UI Feedback only, URLs stored in uploadedUrls)
+    const [files, setFiles] = useState<{ [key: string]: File | null }>({})
+
+    // New state for storing URLs
+    const [uploadedUrls, setUploadedUrls] = useState<{ [key: string]: string }>({})
+
+    // Derived docList for UI mapping
+    const docList = requirements.map(req => ({
+        id: req.id,
+        label: req.title, // + (req.is_required ? ' *' : ''), // Optional: show required asterisk
+        hasTemplate: !!req.template_url,
+        templateUrl: req.template_url,
+        isRequired: req.is_required,
+        description: req.description
+    }))
+
+
+    const handleFileChange = async (id: string, file: File | null) => {
+        if (!file) return
+
+        if (file.size > 5 * 1024 * 1024) {
+            setStatusModal({ isOpen: true, type: 'error', message: 'Ukuran file maksimal 5MB' })
+            return
+        }
+
+        // Real Upload Immediately
+        setSubmitting(true) // Reuse submitting state for loading UI
+
+        try {
+            const { uploadFile } = await import('@/utils/supabase/storage')
+            const { url, error } = await uploadFile(file, 'im_japan_documents', 'applications')
+
+            if (error) {
+                setStatusModal({ isOpen: true, type: 'error', message: 'Gagal upload: ' + error })
+            } else if (url) {
+                setUploadedUrls(prev => ({ ...prev, [id]: url }))
+            }
+        } catch (err) {
+            console.error(err)
+            setStatusModal({ isOpen: true, type: 'error', message: 'Error uploading file' })
+        } finally {
+            setSubmitting(false)
+        }
+    }
 
     const handleReapply = () => {
         // Switch to "Reapply" mode:
