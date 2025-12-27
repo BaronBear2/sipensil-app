@@ -3,21 +3,10 @@
 import React, { useEffect, useState } from 'react'
 import Image from 'next/image'
 import logoSipensil from '@/assets/logo/logo-sipensil.jpeg'
-import { Facebook, Instagram, Twitter, Youtube, MapPin, Phone, Mail, ExternalLink, Heart, ChevronRight } from 'lucide-react'
+import { Facebook, Instagram, Twitter, Youtube, MapPin, Phone, Mail, Heart } from 'lucide-react'
 import Link from 'next/link'
-import { getPublicActiveTrainings } from '@/actions/public'
 
 export default function PublicFooter() {
-    const [trainings, setTrainings] = useState<any[]>([])
-
-    useEffect(() => {
-        const fetchTrainings = async () => {
-            const data = await getPublicActiveTrainings()
-            if (data) setTrainings(data)
-        }
-        fetchTrainings()
-    }, [])
-
     return (
         <footer className="bg-slate-950 text-slate-400 pt-20 pb-10 border-t border-slate-900 mt-auto relative overflow-hidden">
             {/* Background Decoration */}
@@ -62,78 +51,62 @@ export default function PublicFooter() {
                         </div>
                     </div>
 
-                    {/* Links Section: Profil Dinas */}
-                    <div className="md:col-span-2">
+                    {/* Links Section */}
+                    <div className="md:col-span-4">
                         <h4 className="text-white font-bold mb-6 text-sm uppercase tracking-wider flex items-center gap-2">
-                            <span className="w-8 h-0.5 bg-blue-600 inline-block"></span> Menu
+                            <span className="w-8 h-0.5 bg-blue-600 inline-block"></span> Menu Utama
                         </h4>
-                        <ul className="space-y-4">
-                            <li>
-                                <Link href="/profil/tentang-kami" className="flex items-center gap-2 hover:text-blue-400 transition-colors group text-sm">
-                                    <ChevronRight size={14} className="opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300 text-blue-500" />
-                                    Profil Dinas
-                                </Link>
-                            </li>
-                        </ul>
-                    </div>
-
-                    {/* Links Section: Pelatihan BLK (Dynamic) */}
-                    <div className="md:col-span-3">
-                        <h4 className="text-white font-bold mb-6 text-sm uppercase tracking-wider flex items-center gap-2">
-                            <span className="w-8 h-0.5 bg-green-500 inline-block"></span> Pelatihan Aktif
-                        </h4>
-                        {trainings.length > 0 ? (
-                            <ul className="space-y-4">
-                                {trainings.map((t) => (
-                                    <li key={t.id}>
-                                        <Link href={`/pelatihan/${t.id}`} className="flex items-start gap-2 hover:text-green-400 transition-colors group text-sm leading-tight">
-                                            <ChevronRight size={14} className="mt-0.5 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300 text-green-500 shrink-0" />
-                                            <span className="line-clamp-2">{t.title}</span>
-                                        </Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p className="text-sm text-slate-600 italic">Belum ada pelatihan aktif saat ini.</p>
-                        )}
-                        <Link href="/pelatihan" className="inline-block mt-4 text-xs font-bold text-blue-500 hover:text-blue-400 uppercase tracking-wider">
-                            Lihat Semua Katalog &rarr;
-                        </Link>
-                    </div>
-
-                    {/* Contact & Legal Section */}
-                    <div className="md:col-span-3">
-                        <h4 className="text-white font-bold mb-6 text-sm uppercase tracking-wider flex items-center gap-2">
-                            <span className="w-8 h-0.5 bg-orange-500 inline-block"></span> Kebijakan
-                        </h4>
-                        <ul className="space-y-3 mb-8">
+                        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {[
+                                { label: 'Profil Dinas', href: '/profil/tentang-kami' },
+                                { label: 'Pelatihan BLK', href: '/pelatihan' },
                                 { label: 'Kebijakan Privasi', href: '#' },
-                                { label: 'Syarat & Ketentuan', href: '#' },
+                                { label: 'Syarat & Ketentuan', href: '#' }
                             ].map((link, idx) => (
                                 <li key={idx}>
-                                    <Link href={link.href} className="flex items-center gap-2 hover:text-orange-400 transition-colors group text-sm">
-                                        <ChevronRight size={14} className="opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300 text-orange-500" />
+                                    <Link href={link.href} className="flex items-center gap-2 hover:text-blue-400 transition-colors group text-sm font-medium">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-slate-600 group-hover:bg-blue-500 transition-colors"></div>
                                         {link.label}
                                     </Link>
                                 </li>
                             ))}
                         </ul>
+                    </div>
 
-                        <div className="space-y-4">
-                            <div className="flex gap-3 items-start group">
-                                <MapPin size={16} className="text-slate-500 mt-1 shrink-0 group-hover:text-blue-500 transition-colors" />
-                                <div className="text-sm text-slate-500 group-hover:text-slate-300 transition-colors">
+                    {/* Contact Section */}
+                    <div className="md:col-span-4">
+                        <h4 className="text-white font-bold mb-6 text-sm uppercase tracking-wider flex items-center gap-2">
+                            <span className="w-8 h-0.5 bg-blue-600 inline-block"></span> Kontak
+                        </h4>
+                        <div className="space-y-5">
+                            <div className="flex gap-4 items-start group">
+                                <div className="w-10 h-10 rounded-lg bg-slate-900 flex items-center justify-center text-blue-500 shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300 border border-slate-800 group-hover:border-blue-500">
+                                    <MapPin size={18} />
+                                </div>
+                                <div className="text-sm leading-relaxed text-slate-400 group-hover:text-slate-300 transition-colors">
+                                    <span className="block text-white font-semibold mb-1 text-xs uppercase tracking-wide">Alamat</span>
                                     Komplek Perkantoran Pemkab Bekasi,<br />Desa Sukamahi, Kec. Cikarang Pusat.
                                 </div>
                             </div>
-                            <div className="flex gap-3 items-center group">
-                                <Phone size={16} className="text-slate-500 shrink-0 group-hover:text-blue-500 transition-colors" />
-                                <span className="text-sm text-slate-500 group-hover:text-slate-300 transition-colors">(021) 889977</span>
+
+                            <div className="flex gap-4 items-center group">
+                                <div className="w-10 h-10 rounded-lg bg-slate-900 flex items-center justify-center text-blue-500 shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300 border border-slate-800 group-hover:border-blue-500">
+                                    <Phone size={18} />
+                                </div>
+                                <div className="text-sm text-slate-400 group-hover:text-slate-300 transition-colors">
+                                    <span className="block text-white font-semibold mb-1 text-xs uppercase tracking-wide">Telepon</span>
+                                    (021) 889977
+                                </div>
                             </div>
-                            <div className="flex gap-3 items-center group">
-                                <Mail size={16} className="text-slate-500 shrink-0 group-hover:text-blue-500 transition-colors" />
-                                <span className="text-sm text-slate-500 group-hover:text-slate-300 transition-colors">disnaker@bekasikab.go.id</span>
+
+                            <div className="flex gap-4 items-center group">
+                                <div className="w-10 h-10 rounded-lg bg-slate-900 flex items-center justify-center text-blue-500 shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300 border border-slate-800 group-hover:border-blue-500">
+                                    <Mail size={18} />
+                                </div>
+                                <div className="text-sm text-slate-400 group-hover:text-slate-300 transition-colors">
+                                    <span className="block text-white font-semibold mb-1 text-xs uppercase tracking-wide">Email</span>
+                                    disnaker@bekasikab.go.id
+                                </div>
                             </div>
                         </div>
                     </div>
