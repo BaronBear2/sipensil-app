@@ -1,10 +1,10 @@
-
 'use client'
 
 import { useState, useEffect } from 'react'
 import { CheckCircle, XCircle, FileText, X, FolderSymlink, Building, Trash2, Calendar, Users, FileSpreadsheet } from 'lucide-react'
 import { verifyPencatatanBatchAction } from '@/actions/dinas'
 import Link from 'next/link'
+import { SwalConfirm, SwalAlert, SwalToast } from '@/utils/swal'
 
 export default function PencatatanTable({ permits, viewOnly = false, onDelete }: { permits: any[], viewOnly?: boolean, onDelete?: (formData: FormData) => Promise<void> }) {
     // State untuk Modal
@@ -58,15 +58,14 @@ export default function PencatatanTable({ permits, viewOnly = false, onDelete }:
         // CHANGED: Use verifyPencatatanBatchAction instead of verifyMagangPermitAction
         const res = await verifyPencatatanBatchAction(formData)
 
-        // @ts-expect-error: Server action error handling
         if (res?.error) {
-            // @ts-expect-error
-            alert(res.error)
+            SwalAlert.fire({ icon: 'error', title: 'Gagal', text: res.error })
             setLoading(false)
             return
         }
 
         closeModal()
+        SwalToast.fire({ icon: 'success', title: action === 'approve' ? 'Berhasil Diterima' : 'Berhasil Ditolak' })
     }
 
     return (
@@ -168,18 +167,22 @@ export default function PencatatanTable({ permits, viewOnly = false, onDelete }:
 
                                                     {onDelete && (
                                                         <form
-                                                            action={onDelete}
+                                                            action={async (formData) => {
+                                                                const result = await SwalConfirm.fire({
+                                                                    title: 'Hapus Riwayat?',
+                                                                    text: 'Data yang dihapus tidak dapat dikembalikan.'
+                                                                })
+                                                                if (result.isConfirmed) {
+                                                                    await onDelete(formData)
+                                                                    SwalToast.fire({ icon: 'success', title: 'Data dihapus' })
+                                                                }
+                                                            }}
                                                         >
                                                             <input type="hidden" name="id" value={item.id} />
                                                             <button
                                                                 type="submit"
                                                                 className="text-gray-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-full transition cursor-pointer"
                                                                 title="Hapus Riwayat"
-                                                                onClick={(e) => {
-                                                                    if (!confirm('Hapus riwayat ini secara permanen?')) {
-                                                                        e.preventDefault()
-                                                                    }
-                                                                }}
                                                             >
                                                                 <Trash2 size={16} />
                                                             </button>

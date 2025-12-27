@@ -5,43 +5,47 @@ import { Save, Lock, User, Briefcase, FileText, Building, AlertTriangle, CheckCi
 import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { SwalAlert, SwalToast } from '@/utils/swal'
 
 export default function CreateUserForm() {
     const [isLoading, setIsLoading] = useState(false)
-    const [modal, setModal] = useState<{ type: 'success' | 'error', title: string, message: string } | null>(null)
     const [selectedRole, setSelectedRole] = useState<string>('PENCAKER')
     const router = useRouter()
 
     const handleSubmit = async (formData: FormData) => {
         setIsLoading(true)
-        setModal(null)
+
+        // Validate password match
+        const password = formData.get('password') as string
+        const confirm = formData.get('confirm_password') as string
+
+        if (password !== confirm) {
+            SwalAlert.fire({ icon: 'error', title: 'Validasi Gagal', text: 'Password dan Konfirmasi Password tidak cocok.' })
+            setIsLoading(false)
+            return
+        }
 
         try {
+            // Append role manual (karena select di luar form kadang) -> Actually form action contains it all if name="role" is there.
+            // But 'selectedRole' state is used to render fields.
+            // Let's rely on standard formData passing.
+
             const result = await adminCreateUserAction(formData)
 
             if (result?.error) {
-                setModal({
-                    type: 'error',
-                    title: 'Gagal Membuat Akun',
-                    message: result.error
+                const isNetworkError = result.error.toLowerCase().includes('fetch') || result.error.toLowerCase().includes('network')
+                SwalAlert.fire({
+                    icon: 'error',
+                    title: isNetworkError ? 'Gagal Terhubung' : 'Gagal Membuat User',
+                    text: isNetworkError ? 'Periksa koneksi internet.' : result.error
                 })
             } else {
-                setModal({
-                    type: 'success',
-                    title: 'Berhasil Dibuat',
-                    message: 'Akun pengguna baru berhasil dibuat.'
-                })
-                // Optional: Redirect after success
-                setTimeout(() => {
-                    router.push('/dashboard/dinas/users')
-                }, 2000)
+                SwalToast.fire({ icon: 'success', title: 'User Berhasil Dibuat' })
+                // Redirect logic is likely in server action or we can push router here.
+                // But native form action usually redirects.
             }
         } catch (error: any) {
-            setModal({
-                type: 'error',
-                title: 'Terjadi Kesalahan',
-                message: error.message || 'Terjadi kesalahan sistem yang tidak terduga.'
-            })
+            SwalAlert.fire({ icon: 'error', title: 'Terjadi Kesalahan', text: error.message })
         } finally {
             setIsLoading(false)
         }
@@ -299,30 +303,6 @@ export default function CreateUserForm() {
                     </button>
                 </div>
             </form>
-
-            {/* STATUS MODAL */}
-            {modal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all scale-100">
-                        <div className="px-6 py-6 text-center">
-                            <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${modal.type === 'success' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                                {modal.type === 'success' ? <CheckCircle size={32} /> : <AlertTriangle size={32} />}
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">{modal.title}</h3>
-                            <p className="text-gray-500 text-sm mb-6">
-                                {modal.message}
-                            </p>
-
-                            <button
-                                onClick={closeModal}
-                                className={`w-full px-5 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-lg text-white ${modal.type === 'success' ? 'bg-green-600 hover:bg-green-700 shadow-green-200' : 'bg-red-600 hover:bg-red-700 shadow-red-200'}`}
-                            >
-                                {modal.type === 'success' ? 'Selesai' : 'Tutup'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </>
     )
 }

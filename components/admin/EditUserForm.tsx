@@ -4,6 +4,7 @@ import { adminUpdateUserAction } from '@/actions/dinas'
 import { Save, Lock, User, Briefcase, FileText, Building, AlertTriangle, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
+import { SwalAlert, SwalToast } from '@/utils/swal'
 
 interface EditUserFormProps {
     profile: any
@@ -13,51 +14,28 @@ interface EditUserFormProps {
 
 export default function EditUserForm({ profile, role, roleData }: EditUserFormProps) {
     const [isLoading, setIsLoading] = useState(false)
-    const [modal, setModal] = useState<{ type: 'success' | 'error', title: string, message: string } | null>(null)
 
-    const handleSubmit = async (formData: FormData) => {
+    const handleUpdate = async (formData: FormData) => {
         setIsLoading(true)
-        setModal(null)
 
         try {
             const result = await adminUpdateUserAction(formData)
 
             if (result?.error) {
-                // Check for generic fetch/network errors
-                const isNetworkError = result.error.toLowerCase().includes('fetch') || result.error.toLowerCase().includes('network')
-                setModal({
-                    type: 'error',
-                    title: isNetworkError ? 'Gagal Terhubung' : 'Gagal Menyimpan',
-                    message: isNetworkError
-                        ? 'Terjadi masalah koneksi ke server. Periksa koneksi internet Anda dan coba lagi.'
-                        : result.error
-                })
+                SwalAlert.fire({ icon: 'error', title: 'Gagal Update', text: result.error })
             } else {
-                setModal({
-                    type: 'success',
-                    title: 'Berhasil Disimpan',
-                    message: 'Data pengguna berhasil diperbarui.'
-                })
+                SwalToast.fire({ icon: 'success', title: 'Data Berhasil Diupdate' })
             }
         } catch (error: any) {
-            const isNetworkError = error.message?.toLowerCase().includes('fetch') || error.message?.toLowerCase().includes('network')
-            setModal({
-                type: 'error',
-                title: isNetworkError ? 'Gagal Terhubung' : 'Terjadi Kesalahan',
-                message: isNetworkError
-                    ? 'Terjadi masalah koneksi ke server. Periksa koneksi internet Anda dan coba lagi.'
-                    : error.message || 'Terjadi kesalahan sistem yang tidak terduga.'
-            })
+            SwalAlert.fire({ icon: 'error', title: 'Terjadi Kesalahan', text: error.message || 'Error tidak diketahui' })
         } finally {
             setIsLoading(false)
         }
     }
 
-    const closeModal = () => setModal(null)
-
     return (
         <>
-            <form action={handleSubmit} className="p-8 space-y-8">
+            <form action={handleUpdate} className="p-8 space-y-8">
                 <input type="hidden" name="userId" value={profile.id} />
                 <input type="hidden" name="role" value={role} />
 
@@ -508,30 +486,6 @@ export default function EditUserForm({ profile, role, roleData }: EditUserFormPr
                     </button>
                 </div>
             </form>
-
-            {/* STATUS MODAL */}
-            {modal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all scale-100">
-                        <div className="px-6 py-6 text-center">
-                            <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${modal.type === 'success' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                                {modal.type === 'success' ? <CheckCircle size={32} /> : <AlertTriangle size={32} />}
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">{modal.title}</h3>
-                            <p className="text-gray-500 text-sm mb-6">
-                                {modal.message}
-                            </p>
-
-                            <button
-                                onClick={closeModal}
-                                className={`w-full px-5 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-lg text-white ${modal.type === 'success' ? 'bg-green-600 hover:bg-green-700 shadow-green-200' : 'bg-red-600 hover:bg-red-700 shadow-red-200'}`}
-                            >
-                                {modal.type === 'success' ? 'Selesai' : 'Tutup'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </>
     )
 }
