@@ -190,133 +190,85 @@ export default function CreateMagangRecordPage() {
                     </div>
                 </div>
 
-                {/* SECTION 2: DATA PESERTA */}
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between">
+                {/* SECTION 2: DATA PESERTA (TABLE LAYOUT) */}
+                <div className="bg-white border rounded-2xl shadow-sm overflow-hidden flex flex-col">
+                    <div className="p-4 border-b flex justify-between items-center bg-gray-50">
                         <h3 className="font-bold text-gray-800 flex items-center gap-2">
                             <Users size={18} className="text-orange-500" />
                             Daftar Peserta ({rows.length})
                         </h3>
-                        <div className="text-xs text-orange-600 font-medium flex items-center gap-1 bg-orange-50 px-3 py-1 rounded-full border border-orange-100">
-                            <ChevronRight size={14} /> Geser ke samping untuk isi detail
+                        <div className="text-xs text-orange-600 font-medium flex items-center gap-1 bg-orange-100 px-3 py-1 rounded-full border border-orange-200">
+                            <ChevronRight size={14} /> Geser tabel ke samping untuk melengkapi data
                         </div>
                     </div>
 
-                    {rows.map((row, index) => (
-                        <div key={index} className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow relative group">
-                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-orange-400 to-orange-600"></div>
+                    <div className="overflow-x-auto custom-scrollbar">
+                        <table className="w-full text-sm text-left">
+                            <thead className="text-xs text-gray-500 font-bold uppercase bg-gray-50 border-b">
+                                <tr>
+                                    <th className="px-4 py-3 min-w-[50px] sticky left-0 bg-gray-50 z-10 text-center">#</th>
+                                    <th className="px-4 py-3 min-w-[180px]">NIK <span className="text-red-500">*</span></th>
+                                    <th className="px-4 py-3 min-w-[200px]">Nama Lengkap <span className="text-red-500">*</span></th>
+                                    <th className="px-4 py-3 min-w-[120px]">Jenis Kelamin</th>
+                                    <th className="px-4 py-3 min-w-[150px]">Tempat Lahir</th>
+                                    <th className="px-4 py-3 min-w-[150px]">Tanggal Lahir</th>
+                                    <th className="px-4 py-3 min-w-[250px]">Alamat Domisili</th>
+                                    <th className="px-4 py-3 min-w-[150px]">No. HP/WA</th>
+                                    <th className="px-4 py-3 min-w-[200px]">Email</th>
+                                    <th className="px-4 py-3 min-w-[180px]">Divisi / Bagian</th>
+                                    <th className="px-4 py-3 min-w-[150px]">Mulai Magang</th>
+                                    <th className="px-4 py-3 min-w-[150px]">Selesai Magang</th>
+                                    <th className="px-4 py-3 min-w-[120px]">Durasi (Bulan)</th>
+                                    <th className="px-4 py-3 min-w-[250px]">Rencana Pasca Magang</th>
+                                    <th className="px-4 py-3 min-w-[80px] text-center sticky right-0 bg-gray-50 z-10">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {rows.map((row, index) => (
+                                    <tr key={index} className="hover:bg-orange-50/30 transition-colors group">
+                                        <td className="px-4 py-3 text-center font-bold text-gray-400 sticky left-0 bg-white group-hover:bg-orange-50/30 z-10 border-r">{index + 1}</td>
 
-                            <div className="p-4 bg-gray-50/50 border-b flex justify-between items-center">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-orange-100 text-orange-700 flex items-center justify-center font-bold text-xs ring-2 ring-white">
-                                        {index + 1}
-                                    </div>
-                                    <span className="text-sm font-bold text-gray-700">Data Peserta ke-{index + 1}</span>
-                                </div>
-                                <button onClick={() => handleRemoveRow(index)} className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition" title="Hapus Baris">
-                                    <Trash2 size={18} />
-                                </button>
-                            </div>
-
-                            {/* HORIZONTAL SCROLL AREA */}
-                            <div className="p-6 overflow-x-auto custom-scrollbar">
-                                <div className="flex gap-6 min-w-max pb-2">
-
-                                    {/* CLUSTER 1: IDENTITAS */}
-                                    <div className={`${groupStyle} border-r pr-6 border-blue-100`}>
-                                        <div className="text-xs font-bold text-blue-600 mb-3 flex items-center gap-1 bg-blue-50 px-2 py-1 rounded w-fit">
-                                            Identitas Diri
-                                        </div>
-                                        <div>
-                                            <label className={labelStyle}>NIK (KTP) <span className="text-red-500">*</span></label>
-                                            <input value={row.nik} onChange={(e) => handleChange(index, 'nik', e.target.value)} className={inputStyle} placeholder="16 Digit NIK" maxLength={16} />
-                                        </div>
-                                        <div>
-                                            <label className={labelStyle}>Nama Lengkap <span className="text-red-500">*</span></label>
-                                            <input value={row.name} onChange={(e) => handleChange(index, 'name', e.target.value)} className={inputStyle} placeholder="Nama Sesuai KTP" />
-                                        </div>
-                                        <div>
-                                            <label className={labelStyle}>Jenis Kelamin</label>
+                                        {/* IDENTITAS */}
+                                        <td className="px-2 py-3"><input value={row.nik} onChange={(e) => handleChange(index, 'nik', e.target.value)} className={inputStyle} placeholder="16 Digit" maxLength={16} /></td>
+                                        <td className="px-2 py-3"><input value={row.name} onChange={(e) => handleChange(index, 'name', e.target.value)} className={inputStyle} placeholder="Nama Lengkap" /></td>
+                                        <td className="px-2 py-3">
                                             <select value={row.gender} onChange={(e) => handleChange(index, 'gender', e.target.value)} className={inputStyle}>
                                                 <option value="L">Laki-laki</option>
                                                 <option value="P">Perempuan</option>
                                             </select>
-                                        </div>
-                                    </div>
+                                        </td>
+                                        <td className="px-2 py-3"><input value={row.place_of_birth} onChange={(e) => handleChange(index, 'place_of_birth', e.target.value)} className={inputStyle} placeholder="Kota" /></td>
+                                        <td className="px-2 py-3"><input type="date" value={row.date_of_birth} onChange={(e) => handleChange(index, 'date_of_birth', e.target.value)} className={inputStyle} /></td>
 
-                                    {/* CLUSTER 2: KONTAK & ALAMAT */}
-                                    <div className={`${groupStyle} border-r pr-6 border-green-100`}>
-                                        <div className="text-xs font-bold text-green-600 mb-3 flex items-center gap-1 bg-green-50 px-2 py-1 rounded w-fit">
-                                            Kontak & Domisili
-                                        </div>
-                                        <div>
-                                            <label className={labelStyle}>Tempat Lahir</label>
-                                            <input value={row.place_of_birth} onChange={(e) => handleChange(index, 'place_of_birth', e.target.value)} className={inputStyle} />
-                                        </div>
-                                        <div>
-                                            <label className={labelStyle}>Tanggal Lahir</label>
-                                            <input type="date" value={row.date_of_birth} onChange={(e) => handleChange(index, 'date_of_birth', e.target.value)} className={inputStyle} />
-                                        </div>
-                                        <div>
-                                            <label className={labelStyle}>Alamat Domisili</label>
-                                            <input value={row.address} onChange={(e) => handleChange(index, 'address', e.target.value)} className={inputStyle} placeholder="Jalan, RT/RW..." />
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <div>
-                                                <label className={labelStyle}>No. HP/WA</label>
-                                                <input value={row.phone} onChange={(e) => handleChange(index, 'phone', e.target.value)} className={`${inputStyle} min-w-0`} />
-                                            </div>
-                                            <div>
-                                                <label className={labelStyle}>Email</label>
-                                                <input value={row.email} type="email" onChange={(e) => handleChange(index, 'email', e.target.value)} className={`${inputStyle} min-w-0`} />
-                                            </div>
-                                        </div>
-                                    </div>
+                                        {/* KONTAK */}
+                                        <td className="px-2 py-3"><input value={row.address} onChange={(e) => handleChange(index, 'address', e.target.value)} className={inputStyle} placeholder="Alamat Lengkap" /></td>
+                                        <td className="px-2 py-3"><input value={row.phone} onChange={(e) => handleChange(index, 'phone', e.target.value)} className={inputStyle} placeholder="08..." /></td>
+                                        <td className="px-2 py-3"><input type="email" value={row.email} onChange={(e) => handleChange(index, 'email', e.target.value)} className={inputStyle} placeholder="email@contoh.com" /></td>
 
-                                    {/* CLUSTER 3: DATA MAGANG */}
-                                    <div className={`${groupStyle} border-r pr-6 border-purple-100`}>
-                                        <div className="text-xs font-bold text-purple-600 mb-3 flex items-center gap-1 bg-purple-50 px-2 py-1 rounded w-fit">
-                                            Data Magang
-                                        </div>
-                                        <div>
-                                            <label className={labelStyle}>Bagian / Divisi</label>
-                                            <input value={row.division} onChange={(e) => handleChange(index, 'division', e.target.value)} className={inputStyle} placeholder="Dept. Marketing" />
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <div>
-                                                <label className={labelStyle}>Mulai Magang</label>
-                                                <input type="date" value={row.start_date} onChange={(e) => handleChange(index, 'start_date', e.target.value)} className={`${inputStyle} min-w-0`} />
-                                            </div>
-                                            <div>
-                                                <label className={labelStyle}>Selesai Magang</label>
-                                                <input type="date" value={row.end_date} onChange={(e) => handleChange(index, 'end_date', e.target.value)} className={`${inputStyle} min-w-0`} />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className={labelStyle}>Durasi (Bulan)</label>
-                                            <input value={row.duration} onChange={(e) => handleChange(index, 'duration', e.target.value)} className={inputStyle} placeholder="6 Bulan" />
-                                        </div>
-                                    </div>
+                                        {/* MAGANG */}
+                                        <td className="px-2 py-3"><input value={row.division} onChange={(e) => handleChange(index, 'division', e.target.value)} className={inputStyle} placeholder="Divisi" /></td>
+                                        <td className="px-2 py-3"><input type="date" value={row.start_date} onChange={(e) => handleChange(index, 'start_date', e.target.value)} className={inputStyle} /></td>
+                                        <td className="px-2 py-3"><input type="date" value={row.end_date} onChange={(e) => handleChange(index, 'end_date', e.target.value)} className={inputStyle} /></td>
+                                        <td className="px-2 py-3"><input value={row.duration} onChange={(e) => handleChange(index, 'duration', e.target.value)} className={inputStyle} placeholder="Bln" /></td>
+                                        <td className="px-2 py-3"><input value={row.post_activity} onChange={(e) => handleChange(index, 'post_activity', e.target.value)} className={inputStyle} placeholder="Rencana..." /></td>
 
-                                    {/* CLUSTER 4: LAINNYA */}
-                                    <div className={`${groupStyle}`}>
-                                        <div className="text-xs font-bold text-gray-500 mb-3 flex items-center gap-1 bg-gray-100 px-2 py-1 rounded w-fit">
-                                            Pasca Magang
-                                        </div>
-                                        <div>
-                                            <label className={labelStyle}>Rencana Pasca Magang</label>
-                                            <textarea rows={3} value={row.post_activity} onChange={(e) => handleChange(index, 'post_activity', e.target.value)} className={`${inputStyle} h-full`} placeholder="Misal: Diangkat pegawai, atau selesai kontrak..." />
-                                        </div>
-                                    </div>
+                                        {/* AKSI */}
+                                        <td className="px-2 py-3 text-center sticky right-0 bg-white group-hover:bg-orange-50/30 z-10 border-l">
+                                            <button onClick={() => handleRemoveRow(index)} className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition" title="Hapus Baris">
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
 
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-
-                    <button onClick={handleAddRow} className="w-full py-4 bg-orange-50 border-2 border-dashed border-orange-200 rounded-xl text-orange-600 font-bold flex items-center justify-center gap-2 hover:bg-orange-100 transition">
-                        <Plus size={20} /> Tambah Baris Peserta
-                    </button>
+                    <div className="p-4 border-t bg-gray-50">
+                        <button onClick={handleAddRow} className="w-full py-3 bg-white border-2 border-dashed border-orange-200 rounded-xl text-orange-600 font-bold flex items-center justify-center gap-2 hover:bg-orange-50 transition shadow-sm">
+                            <Plus size={18} /> Tambah Baris Peserta
+                        </button>
+                    </div>
                 </div>
 
                 {/* FOOTER ACTION */}
