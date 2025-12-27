@@ -61,7 +61,8 @@ export default async function RiwayatPelatihanPage({ searchParams }: { searchPar
                                     <th className="px-6 py-4 rounded-l-lg">Nama Pelatihan</th>
                                     <th className="px-6 py-4">Periode</th>
                                     <th className="px-6 py-4 text-center">Kuota / Terisi</th>
-                                    <th className="px-6 py-4 text-center rounded-r-lg">Status</th>
+                                    <th className="px-6 py-4 text-center">Status</th>
+                                    <th className="px-6 py-4 text-center rounded-r-lg">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
@@ -83,12 +84,12 @@ export default async function RiwayatPelatihanPage({ searchParams }: { searchPar
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            <div className="flex flex-col items-center gap-2">
-                                                <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full border border-gray-200">
-                                                    SELESAI
-                                                </span>
-                                                <RestoreTrainingButton id={item.id} title={item.title} />
-                                            </div>
+                                            <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full border border-gray-200">
+                                                SELESAI
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <RestoreTrainingButton id={item.id} title={item.title} />
                                         </td>
                                     </tr>
                                 ))}
