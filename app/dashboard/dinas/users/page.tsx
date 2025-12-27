@@ -12,12 +12,7 @@ export default async function UsersAdminPage({ searchParams }: { searchParams: P
     const currentRole = (params.role || 'PENCAKER').toUpperCase()
     const ITEMS_PER_PAGE = 10
 
-    let dbRoles = [currentRole, currentRole.toLowerCase()]
-    if (currentRole === 'LPK') {
-        dbRoles = ['ADMIN_LPK', 'admin_lpk', 'LPK', 'lpk'] // Cover all legacy bases
-    } else if (currentRole === 'PERUSAHAAN') {
-        dbRoles = ['ADMIN_PERUSAHAAN', 'admin_perusahaan', 'PERUSAHAAN', 'perusahaan']
-    }
+    const dbRoles = [currentRole]
 
     // 1. Base Query
     let dbQuery = supabase

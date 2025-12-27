@@ -263,7 +263,7 @@ export default function EditUserForm({ profile, role, roleData }: EditUserFormPr
                     </div>
                 )}
 
-                {(role === 'PERUSAHAAN' || role === 'ADMIN_PERUSAHAAN' || role === 'admin_perusahaan') && (
+                {role === 'PERUSAHAAN' && (
                     <div className="space-y-4">
                         <div className="flex items-center gap-2 border-b pb-2 mb-4">
                             <Briefcase className="text-gray-400" size={18} />
