@@ -75,7 +75,7 @@ export default function CreateMagangRecordPage() {
                     if (savedRows && savedRows.length > 0) {
                         setTitle(savedTitle || '')
                         setRows(savedRows)
-                        setStatusModal({ isOpen: true, type: 'success', message: 'Draf pencatatan sebelumnya berhasil dipulihkan.' })
+                        setStatusModal({ isOpen: true, type: 'success', message: 'Selamat Datang Kembali! Draft Sebelumnya Terpulihkan.' })
                     }
                 } catch (e) {
                     console.error("Failed to parse draft", e)
