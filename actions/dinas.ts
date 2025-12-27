@@ -615,7 +615,100 @@ export async function deleteLpkAction(formData: FormData) {
   return { success: true }
 }
 
-// --- 11. PERUSAHAAN ACTIONS ---
+// --- 11. ADMIN USER MANAGEMENT ---
+
+export async function adminCreateUserAction(formData: FormData) {
+  const supabase = await createAdminClient()
+
+  // Common Fields
+  const email = formData.get('email') as string
+  const password = formData.get('password') as string
+  const full_name = formData.get('full_name') as string
+  const role = formData.get('role') as string // PENCAKER, PERUSAHAAN, LPK
+
+  if (!email || !password || !full_name || !role) {
+    return { error: 'Semua field wajib diisi.' }
+  }
+
+  // 1. Create Auth User
+  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { role, full_name }
+  })
+
+  if (authError) return { error: authError.message }
+  const userId = authData.user.id
+
+  // 2. Update Profile (Base)
+  const { error: profileError } = await supabase.from('profiles').update({
+    full_name,
+    role,
+    account_status: 'verified' // Direct Verify by Admin
+  }).eq('id', userId)
+
+  if (profileError) return { error: profileError.message }
+
+  // 3. Create Role Specific Data
+  if (role === 'PENCAKER') {
+    const nik = formData.get('nik') as string
+    const phone = formData.get('phone') as string
+    const gender = formData.get('gender') as string
+    const place_of_birth = formData.get('place_of_birth') as string
+    const date_of_birth = formData.get('date_of_birth') as string
+
+    // Insert empty or partial data. Trigger might handle creation, so let's use Upsert.
+    const { error } = await supabase.from('profile_pencaker').upsert({
+      user_id: userId,
+      nik: nik || null,
+      phone: phone || null,
+      gender: gender || null,
+      place_of_birth: place_of_birth || null,
+      date_of_birth: date_of_birth || null
+    })
+    if (error) return { error: 'Gagal membuat data pencaker: ' + error.message }
+
+  } else if (role === 'PERUSAHAAN') {
+    const nib = formData.get('nib') as string
+    const sector = formData.get('sector') as string
+    const address = formData.get('address') as string
+    const phone = formData.get('phone') as string
+    const pic_name = formData.get('pic_name') as string
+
+    const { error } = await supabase.from('profile_perusahaan').upsert({
+      user_id: userId,
+      company_name: full_name, // Default to same name
+      nib: nib || null,
+      sector: sector || null,
+      address_office: address || null,
+      phone: phone || null,
+      pic_name: pic_name || null
+    })
+    if (error) return { error: 'Gagal membuat data perusahaan: ' + error.message }
+
+  } else if (role === 'LPK') {
+    const nips = formData.get('nips') as string
+    const lpk_type = formData.get('lpk_type') as string
+    const address = formData.get('address') as string
+    const phone = formData.get('phone') as string
+
+    const { error } = await supabase.from('profile_lpk').upsert({
+      user_id: userId,
+      lpk_name: full_name,
+      nips: nips || null,
+      lpk_type: lpk_type || 'Swasta',
+      address_office: address || null,
+      phone: phone || null
+    })
+    if (error) return { error: 'Gagal membuat data LPK: ' + error.message }
+  }
+
+  revalidatePath('/dashboard/dinas/users')
+  return { success: true }
+}
+
+// --- 12. PERUSAHAAN ACTIONS ---
 export async function deleteMagangPermitAction(formData: FormData) {
   const supabase = await createAdminClient()
   const id = formData.get('id') as string

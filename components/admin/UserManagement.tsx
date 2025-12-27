@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
-import { Search, ChevronLeft, ChevronRight, Edit2, UserCheck, User, Building, Store, Phone, Users, Trash2, X, AlertTriangle, CheckCircle } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, Edit2, UserCheck, User, Building, Store, Phone, Users, Trash2, X, AlertTriangle, CheckCircle, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { useDebouncedCallback } from 'use-debounce'
 import { useState } from 'react'
@@ -184,16 +184,26 @@ export default function UserManagement({ users, currentPage, totalPages, totalCo
                     </Link>
                 </div>
 
-                {/* Search Bar */}
-                <div className="relative w-full md:w-80 mr-2">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                    <input
-                        type="text"
-                        placeholder="Cari nama, email, atau NIK..."
-                        className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-transparent focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-100 rounded-xl text-sm transition outline-none font-medium"
-                        onChange={(e) => handleSearch(e.target.value)}
-                        defaultValue={searchParams.get('q')?.toString()}
-                    />
+                {/* Search & Actions */}
+                <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto items-center pr-2">
+                    <div className="relative w-full md:w-80">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                        <input
+                            type="text"
+                            placeholder="Cari nama, email, atau NIK..."
+                            className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-transparent focus:bg-white focus:border-red-500 focus:ring-4 focus:ring-red-100 rounded-xl text-sm transition outline-none font-medium"
+                            onChange={(e) => handleSearch(e.target.value)}
+                            defaultValue={searchParams.get('q')?.toString()}
+                        />
+                    </div>
+
+                    <Link
+                        href="/dashboard/dinas/users/create"
+                        className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-200 flex-shrink-0"
+                        title="Buat Akun Baru"
+                    >
+                        <Plus size={20} />
+                    </Link>
                 </div>
             </div>
 
