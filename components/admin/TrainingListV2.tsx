@@ -1,66 +1,68 @@
-'use client'
-
 import { Edit, Trash2, Users, Calendar, MapPin, Archive } from 'lucide-react'
 import Link from 'next/link'
 import { deleteTrainingAction, archiveTrainingAction } from '@/actions/dinas'
 import { useState } from 'react'
+import { SwalAlert, SwalConfirm, SwalToast } from '@/utils/swal'
 
 export default function TrainingListV2({ trainings }: { trainings: any[] }) {
-    const [loadingMap, setLoadingMap] = useState<{ [key: string]: boolean }>({})
-    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean, id: string | null, title: string | null }>({ isOpen: false, id: null, title: null })
-    const [archiveModal, setArchiveModal] = useState<{ isOpen: boolean, id: string | null, title: string | null }>({ isOpen: false, id: null, title: null })
     const [isDeleting, setIsDeleting] = useState(false)
     const [isArchiving, setIsArchiving] = useState(false)
 
-    const handleDeleteClick = (item: any) => {
-        setDeleteModal({ isOpen: true, id: item.id, title: item.title })
-    }
+    const handleDeleteClick = async (item: any) => {
+        const result = await SwalConfirm.fire({
+            title: 'Hapus Pelatihan?',
+            text: `Anda akan menghapus pelatihan "${item.title}". Pastikan tidak ada peserta yang terdaftar!`,
+            confirmButtonText: 'Ya, Hapus',
+            confirmButtonColor: '#d33'
+        })
 
-    const confirmDelete = async () => {
-        if (!deleteModal.id) return
+        if (!result.isConfirmed) return
 
         setIsDeleting(true)
         try {
             const formData = new FormData()
-            formData.append('id', deleteModal.id)
+            formData.append('id', item.id)
             const res = await deleteTrainingAction(formData)
 
             if (res?.error) {
-                alert(res.error) // Show specific error from server (e.g. "Masih ada peserta")
+                SwalAlert.fire({ icon: 'error', title: 'Gagal Menghapus', text: res.error })
             } else {
-                window.location.reload() // Or revalidate logic
+                SwalToast.fire({ icon: 'success', title: 'Pelatihan Dihapus' })
+                window.location.reload()
             }
         } catch (e) {
-            alert('Terjadi kesalahan sistem.')
+            SwalAlert.fire({ icon: 'error', title: 'Error', text: 'Terjadi kesalahan sistem.' })
         } finally {
             setIsDeleting(false)
-            setDeleteModal({ isOpen: false, id: null, title: null })
         }
     }
 
-    const handleArchiveClick = (item: any) => {
-        setArchiveModal({ isOpen: true, id: item.id, title: item.title })
-    }
+    const handleArchiveClick = async (item: any) => {
+        const result = await SwalConfirm.fire({
+            title: 'Arsipkan Pelatihan?',
+            text: `Pelatihan "${item.title}" akan dipindahkan ke arsip (Legacy) dan status peserta akan diselesaikan.`,
+            confirmButtonText: 'Ya, Arsipkan',
+            icon: 'info'
+        })
 
-    const confirmArchive = async () => {
-        if (!archiveModal.id) return
+        if (!result.isConfirmed) return
 
         setIsArchiving(true)
         try {
             const formData = new FormData()
-            formData.append('id', archiveModal.id)
+            formData.append('id', item.id)
             const res = await archiveTrainingAction(formData)
 
             if (res?.error) {
-                alert(res.error)
+                SwalAlert.fire({ icon: 'error', title: 'Gagal Mengarsipkan', text: res.error })
             } else {
+                SwalToast.fire({ icon: 'success', title: 'Pelatihan Diarsipkan' })
                 window.location.reload()
             }
         } catch (e) {
-            alert('Terjadi kesalahan sistem.')
+            SwalAlert.fire({ icon: 'error', title: 'Error', text: 'Terjadi kesalahan sistem.' })
         } finally {
             setIsArchiving(false)
-            setArchiveModal({ isOpen: false, id: null, title: null })
         }
     }
 
@@ -127,84 +129,6 @@ export default function TrainingListV2({ trainings }: { trainings: any[] }) {
                     </div>
                 ))}
             </div>
-
-            {/* Delete Warning Modal */}
-            {deleteModal.isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
-                        <div className="flex flex-col items-center text-center">
-                            <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-4">
-                                <Trash2 size={32} />
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">Hapus Pelatihan?</h3>
-                            <p className="text-gray-500 text-sm mb-6">
-                                Anda akan menghapus pelatihan <span className="font-bold text-gray-800">"{deleteModal.title}"</span>.
-                                <br /><br />
-                                <span className="bg-red-50 text-red-600 px-2 py-1 rounded font-bold text-xs uppercase tracking-wide">PENTING</span>
-                                <br />
-                                Pastikan <span className="font-bold">tidak ada peserta</span> yang terdaftar atau sedang dalam proses verifikasi. Jika masih ada data terkait, penghapusan akan digagalkan oleh sistem.
-                            </p>
-
-                            <div className="flex gap-3 w-full">
-                                <button
-                                    onClick={() => setDeleteModal({ isOpen: false, id: null, title: null })}
-                                    className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition"
-                                    disabled={isDeleting}
-                                >
-                                    Batal
-                                </button>
-                                <button
-                                    onClick={confirmDelete}
-                                    className="flex-1 py-3 px-4 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition flex items-center justify-center gap-2"
-                                    disabled={isDeleting}
-                                >
-                                    {isDeleting ? 'Menghapus...' : 'Ya, Hapus'}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Archive Confirmation Modal */}
-            {archiveModal.isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
-                        <div className="flex flex-col items-center text-center">
-                            <div className="w-16 h-16 bg-blue-100 text-blue-500 rounded-full flex items-center justify-center mb-4">
-                                <Archive size={32} />
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">Arsipkan Pelatihan?</h3>
-                            <p className="text-gray-500 text-sm mb-6">
-                                Anda akan mengarsipkan pelatihan <span className="font-bold text-gray-800">"{archiveModal.title}"</span> ke status <span className="font-bold">SELESAI/LEGACY</span>.
-                                <br /><br />
-                                Pelatihan ini akan hilang dari katalog pencaker dan pindah ke halaman "Riwayat / Legacy".
-                                <br /><br />
-                                <span className="bg-orange-50 text-orange-600 px-2 py-1 rounded font-bold text-xs uppercase tracking-wide">PERINGATAN</span>
-                                <br />
-                                Tindakan ini akan otomatis mengubah status semua peserta yang sedang pelatihan menjadi <span className="font-bold">SUDAH SELESAI</span>.
-                            </p>
-
-                            <div className="flex gap-3 w-full">
-                                <button
-                                    onClick={() => setArchiveModal({ isOpen: false, id: null, title: null })}
-                                    className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition"
-                                    disabled={isArchiving}
-                                >
-                                    Batal
-                                </button>
-                                <button
-                                    onClick={confirmArchive}
-                                    className="flex-1 py-3 px-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition flex items-center justify-center gap-2"
-                                    disabled={isArchiving}
-                                >
-                                    {isArchiving ? 'Menyimpan...' : 'Ya, Arsipkan'}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
         </>
     )
 }

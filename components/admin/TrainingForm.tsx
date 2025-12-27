@@ -1,9 +1,8 @@
-'use client'
-
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Save, Upload } from 'lucide-react'
+import { SwalAlert, SwalConfirm, SwalToast } from '@/utils/swal'
 
 interface TrainingFormProps {
     initialData?: any
@@ -46,7 +45,14 @@ export default function TrainingForm({ initialData, actionFn, isEdit = false }: 
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!confirm(isEdit ? "Simpan perubahan?" : "Buat pelatihan baru?")) return
+
+        const confirm = await SwalConfirm.fire({
+            title: isEdit ? 'Simpan Perubahan?' : 'Buat Pelatihan Baru?',
+            text: isEdit ? 'Pastikan data yang diubah sudah benar.' : 'Pelatihan akan segera ditayangkan di katalog.',
+            confirmButtonText: isEdit ? 'Ya, Simpan' : 'Ya, Buat'
+        })
+
+        if (!confirm.isConfirmed) return
 
         setLoading(true)
 
@@ -58,14 +64,14 @@ export default function TrainingForm({ initialData, actionFn, isEdit = false }: 
 
             const res = await actionFn(fd)
             if (res?.error) {
-                alert(res.error)
+                SwalAlert.fire({ icon: 'error', title: 'Gagal Menyimpan', text: res.error })
             } else {
-                alert(isEdit ? "Berhasil update data!" : "Berhasil membuat pelatihan!")
+                SwalToast.fire({ icon: 'success', title: isEdit ? 'Data Berhasil Diupdate' : 'Pelatihan Berhasil Dibuat' })
                 router.push('/dashboard/dinas/pelatihan')
                 router.refresh()
             }
         } catch (err) {
-            alert("Terjadi kesalahan sistem.")
+            SwalAlert.fire({ icon: 'error', title: 'Error', text: 'Terjadi kesalahan sistem.' })
         } finally {
             setLoading(false)
         }

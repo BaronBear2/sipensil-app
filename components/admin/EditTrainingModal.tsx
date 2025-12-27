@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { X, Save, Upload } from 'lucide-react'
 import { updateTrainingAction } from '@/actions/dinas'
+import { SwalAlert, SwalConfirm, SwalToast } from '@/utils/swal'
 
 export default function EditTrainingModal({ training, onClose }: { training: any, onClose: () => void }) {
     const [isLoading, setIsLoading] = useState(false)
@@ -36,7 +37,13 @@ export default function EditTrainingModal({ training, onClose }: { training: any
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!confirm("Simpan perubahan?")) return
+
+        const confirmResult = await SwalConfirm.fire({
+            title: 'Simpan Perubahan?',
+            text: 'Data pelatihan akan diperbarui.'
+        })
+
+        if (!confirmResult.isConfirmed) return
 
         setIsLoading(true)
 
@@ -46,9 +53,9 @@ export default function EditTrainingModal({ training, onClose }: { training: any
 
         const res = await updateTrainingAction(fd)
         if (res?.error) {
-            alert(res.error)
+            SwalAlert.fire({ icon: 'error', title: 'Gagal', text: res.error })
         } else {
-            alert("Berhasil update data pelatihan!")
+            await SwalToast.fire({ icon: 'success', title: 'Berhasil update data pelatihan!' })
             window.location.reload()
         }
         setIsLoading(false)

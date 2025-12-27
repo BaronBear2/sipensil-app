@@ -2,8 +2,25 @@
 
 import { Save, Trash2 } from 'lucide-react'
 import { updateImJapanRequirementAction, deleteImJapanRequirementAction } from '@/actions/dinas'
+import { SwalConfirm, SwalToast } from '@/utils/swal'
 
 export default function ImJapanRequirementItem({ req }: { req: any }) {
+
+    const handleDelete = async () => {
+        const result = await SwalConfirm.fire({
+            title: 'Hapus Dokumen?',
+            text: 'Dokumen ini akan dihapus permanen.'
+        })
+
+        if (!result.isConfirmed) return
+
+        const formData = new FormData()
+        formData.append('id', req.id)
+
+        await deleteImJapanRequirementAction(formData)
+        SwalToast.fire({ icon: 'success', title: 'Dokumen dihapus' })
+    }
+
     return (
         <div className="bg-white p-4 rounded-xl shadow-sm border hover:shadow-md transition group relative">
             <form action={updateImJapanRequirementAction} className="flex flex-col gap-4">
@@ -65,12 +82,13 @@ export default function ImJapanRequirementItem({ req }: { req: any }) {
             </form>
 
             {/* DELETE BUTTON (Absolute) */}
-            <form action={deleteImJapanRequirementAction} className="absolute top-4 right-4" onSubmit={(e) => !confirm('Hapus dokumen ini?') && e.preventDefault()}>
-                <input type="hidden" name="id" value={req.id} />
-                <button className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition" title="Hapus Dokumen">
-                    <Trash2 size={18} />
-                </button>
-            </form>
+            <button
+                onClick={handleDelete}
+                className="absolute top-4 right-4 p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition"
+                title="Hapus Dokumen"
+            >
+                <Trash2 size={18} />
+            </button>
         </div>
     )
 }
