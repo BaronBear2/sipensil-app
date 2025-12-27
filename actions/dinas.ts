@@ -323,6 +323,8 @@ export async function archiveTrainingAction(formData: FormData) {
     .eq('status', 'DITERIMA')
 
   revalidatePath('/dashboard/dinas')
+  revalidatePath('/dashboard/dinas/pelatihan')
+  revalidatePath('/dashboard/dinas/pelatihan/riwayat')
   return { success: true }
 }
 
@@ -340,6 +342,8 @@ export async function unarchiveTrainingAction(formData: FormData) {
   // The admin can manually manage participants if needed.
 
   revalidatePath('/dashboard/dinas')
+  revalidatePath('/dashboard/dinas/pelatihan')
+  revalidatePath('/dashboard/dinas/pelatihan/riwayat')
   return { success: true }
 }
 
