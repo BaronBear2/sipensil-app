@@ -37,7 +37,7 @@ export default function LandingPage() {
       <PublicNavbar />
 
       {/* 1. HERO SECTION */}
-      <header className="relative min-h-[600px] flex items-center overflow-hidden pt-20">
+      <header className="relative min-h-[450px] flex items-center overflow-hidden pt-20">
         {/* Background Layer */}
         <div className="absolute inset-0 z-0">
           <img
@@ -51,16 +51,16 @@ export default function LandingPage() {
           <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
         </div>
 
-        <div className="container mx-auto px-4 lg:px-8 relative z-10 pt-10">
+        <div className="container mx-auto px-4 lg:px-8 relative z-10 pt-8 pb-8">
           <div className="max-w-4xl">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-white/10 border border-white/10 text-blue-200 text-xs font-bold mb-8 backdrop-blur-md animate-fade-in-up">
+            <div className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-white/10 border border-white/10 text-blue-200 text-xs font-bold mb-6 backdrop-blur-md animate-fade-in-up">
               <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
               PORTAL RESMI DINAS KETENAGAKERJAAN
             </div>
 
             {/* Headline */}
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-8 leading-tight tracking-tight animate-fade-in-up delay-100">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight tracking-tight animate-fade-in-up delay-100">
               Sistem Informasi <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
                 Pelayanan Sipil & Ketenagakerjaan
@@ -68,7 +68,7 @@ export default function LandingPage() {
             </h1>
 
             {/* Description */}
-            <p className="text-lg md:text-xl text-slate-300 mb-10 max-w-2xl font-light leading-relaxed animate-fade-in-up delay-200">
+            <p className="text-base md:text-lg text-slate-300 mb-8 max-w-2xl font-light leading-relaxed animate-fade-in-up delay-200">
               Platform digital terintegrasi untuk mengakses berbagai layanan ketenagakerjaan, mulai dari pelatihan kompetensi, pemagangan, hingga perizinan lembaga pelatihan.
             </p>
 
@@ -76,7 +76,7 @@ export default function LandingPage() {
             <div className="flex flex-wrap gap-4 animate-fade-in-up delay-300">
               <button
                 onClick={() => openAuth('REGISTER')}
-                className="group bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-xl font-bold transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] border border-blue-500 flex items-center gap-2"
+                className="group bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] border border-blue-500 flex items-center gap-2"
               >
                 Buat Akun Sekarang
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
@@ -87,14 +87,14 @@ export default function LandingPage() {
       </header>
 
       {/* 2. PORTALS SECTION - Focused on Core User Types */}
-      <section className="py-24 relative overflow-hidden bg-slate-50">
+      <section className="py-16 relative overflow-hidden bg-slate-50">
         <div className="container mx-auto px-4 lg:px-8 relative">
-          <div className="text-center mb-16 max-w-3xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4 tracking-tight">Portal Layanan Terpadu</h2>
-            <p className="text-slate-500 text-lg">Pilih layanan yang sesuai dengan kebutuhan Anda.</p>
+          <div className="text-center mb-12 max-w-3xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2 tracking-tight">Portal Layanan Terpadu</h2>
+            <p className="text-slate-500">Pilih layanan yang sesuai dengan kebutuhan Anda.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
 
             {/* Portal 1: Pencari Kerja */}
             <div className="group bg-white p-8 rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-2 transition-all duration-300 flex flex-col items-center text-center">
