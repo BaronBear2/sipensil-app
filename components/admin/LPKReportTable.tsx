@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useEffect } from 'react'
 import { CheckCircle, XCircle, FileText, X, Download, Building, Trash2 } from 'lucide-react'
 import { verifyLpkReportAction } from '@/actions/dinas'

@@ -1,4 +1,7 @@
+'use client'
+
 import { Edit, Trash2, Users, Calendar, MapPin, Archive } from 'lucide-react'
+
 import Link from 'next/link'
 import { deleteTrainingAction, archiveTrainingAction } from '@/actions/dinas'
 import { useState } from 'react'
