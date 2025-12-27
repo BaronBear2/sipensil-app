@@ -51,7 +51,7 @@ export default function CreateUserForm() {
         }
     }
 
-    const closeModal = () => setModal(null)
+
 
     return (
         <>
