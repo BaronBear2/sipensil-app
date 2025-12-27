@@ -56,20 +56,20 @@ export default function LandingPage() {
             {/* Badge */}
             <div className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-white/10 border border-white/10 text-blue-200 text-xs font-bold mb-6 backdrop-blur-md animate-fade-in-up">
               <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
-              PORTAL RESMI DINAS KETENAGAKERJAAN
+              PORTAL RESMI DINAS KETENAGAKERJAAN KABUPATEN BEKASI
             </div>
 
             {/* Headline */}
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight tracking-tight animate-fade-in-up delay-100">
               Sistem Informasi <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
-                Pelayanan Sipil & Ketenagakerjaan
+                Pencatatan Pelatihan Kompetensi Softskill & Hardskill
               </span>
             </h1>
 
             {/* Description */}
             <p className="text-base md:text-lg text-slate-300 mb-8 max-w-2xl font-light leading-relaxed animate-fade-in-up delay-200">
-              Platform digital terintegrasi untuk mengakses berbagai layanan ketenagakerjaan, mulai dari pelatihan kompetensi, pemagangan, hingga perizinan lembaga pelatihan.
+              Platform digital terintegrasi untuk mengakses berbagai layanan ketenagakerjaan, mulai dari pelatihan kompetensi, permohonan surat rekomendasi tes IM-Japan, pelaporan periodik 6 bulan, dan pencatatan peserta pemagangan
             </p>
 
             {/* CTAs */}
