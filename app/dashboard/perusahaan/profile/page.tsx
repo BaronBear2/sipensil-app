@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
-import { Building, MapPin, Save, ArrowLeft, ShieldCheck, User, Phone, Briefcase, AlertTriangle } from 'lucide-react'
+import { Building, MapPin, Save, ArrowLeft, ShieldCheck, User, Phone, Briefcase, AlertTriangle, Info } from 'lucide-react'
 import Link from 'next/link'
+import StatusModal from '@/components/ui/StatusModal'
+import Modal from '@/components/ui/Modal'
 
 export default function PerusahaanProfilePage() {
     const supabase = createClient()
@@ -12,6 +14,13 @@ export default function PerusahaanProfilePage() {
 
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
+
+    // Modals
+    const [statusModal, setStatusModal] = useState<{ isOpen: boolean, type: 'success' | 'error', message: string }>({
+        isOpen: false, type: 'success', message: ''
+    })
+    const [showWelcomeModal, setShowWelcomeModal] = useState(false)
+    const [showConfirmModal, setShowConfirmModal] = useState(false)
 
     // State Data Perusahaan
     const [formData, setFormData] = useState({
@@ -55,6 +64,15 @@ export default function PerusahaanProfilePage() {
                     pic_phone: comp.pic_phone || profile.pic_phone || ''
                 })
             }
+
+            // Check for alerts (Redirect from Pencatatan)
+            const params = new URLSearchParams(window.location.search)
+            const alertType = params.get('alert')
+
+            if (alertType === 'complete_profile') {
+                setShowWelcomeModal(true)
+            }
+
             setLoading(false)
         }
         getData()
@@ -66,10 +84,8 @@ export default function PerusahaanProfilePage() {
     }
 
     // 3. Handle Simpan
-    const handleSave = async (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!confirm("Simpan data perusahaan? Status akan berubah menjadi Pending verifikasi.")) return
-
+    const handleSave = async () => { // Called by Modal
+        setShowConfirmModal(false)
         setSaving(true)
         const { data: { user } } = await supabase.auth.getUser()
 
@@ -86,7 +102,7 @@ export default function PerusahaanProfilePage() {
             .eq('id', user?.id)
 
         if (baseError) {
-            alert('Gagal update base profil: ' + baseError.message)
+            setStatusModal({ isOpen: true, type: 'error', message: 'Gagal update base profil: ' + baseError.message })
             setSaving(false)
             return
         }
@@ -110,21 +126,81 @@ export default function PerusahaanProfilePage() {
         const error = detailError
 
         if (error) {
-            alert('Gagal: ' + error.message)
+            setStatusModal({ isOpen: true, type: 'error', message: 'Gagal: ' + error.message })
         } else {
-            alert('Profil berhasil disimpan! Menunggu verifikasi Dinas.')
-            router.push('/dashboard/perusahaan')
+            setStatusModal({ isOpen: true, type: 'success', message: 'Profil berhasil disimpan! Menunggu verifikasi Dinas.' })
+            setTimeout(() => router.push('/dashboard/perusahaan'), 1500)
         }
         setSaving(false)
     }
 
-    if (loading) return <div className="p-10 text-center text-gray-400">Memuat profil...</div>
+    const onFormSubmit = (e: React.FormEvent) => {
+        e.preventDefault()
+        setShowConfirmModal(true)
+    }
+
+    if (loading) return <div className="p-10 text-center text-gray-400 animate-pulse">Memuat profil...</div>
 
     const inputClass = "w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-purple-200 transition-all text-sm bg-white"
     const labelClass = "block text-xs font-bold text-gray-600 mb-1"
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8 px-4 font-sans animate-fade-in">
+        <div className="min-h-screen bg-gray-50 py-8 px-4 font-sans animate-fade-in pb-24">
+            <StatusModal {...statusModal} onClose={() => setStatusModal(prev => ({ ...prev, isOpen: false }))} />
+
+            {/* WELCOME / COMPLETE PROFILE MODAL */}
+            {showWelcomeModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg text-center p-8 animate-bounce-small relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-2 bg-purple-600"></div>
+                        <div className="mb-6">
+                            <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-600">
+                                <AlertTriangle size={40} className="text-orange-500" />
+                            </div>
+                            <h2 className="text-2xl font-bold text-gray-800">Data Belum Lengkap</h2>
+                            <p className="text-gray-500 mt-2 leading-relaxed">
+                                Mohon lengkapi <strong>Profil Perusahaan</strong> (Identitas, Alamat, PIC) sebelum Anda dapat melakukan Pencatatan Magang.
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => setShowWelcomeModal(false)}
+                            className="bg-purple-600 text-white font-bold py-3 px-8 rounded-xl hover:bg-purple-700 transition shadow-lg w-full"
+                        >
+                            Siap, Lengkapi Sekarang
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* CONFIRMATION MODAL */}
+            <Modal isOpen={showConfirmModal} onClose={() => setShowConfirmModal(false)} title="Konfirmasi Simpan">
+                <div className="p-6">
+                    <div className="flex items-center gap-4 mb-4 bg-purple-50 p-4 rounded-xl border border-purple-100">
+                        <div className="bg-purple-100 p-3 rounded-full text-purple-600">
+                            <Save size={24} />
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-gray-800 text-sm">Simpan Profil Perusahaan</h4>
+                            <p className="font-bold text-purple-700">Update Data</p>
+                        </div>
+                    </div>
+                    <p className="text-gray-600 text-sm mb-6 leading-relaxed">
+                        Data yang Anda simpan akan diverifikasi ulang oleh Dinas Ketenagakerjaan. Status akun akan berubah menjadi <strong>Pending</strong>.
+                        <br />
+                        Apakah Anda yakin?
+                    </p>
+                    <div className="flex gap-3">
+                        <button onClick={() => setShowConfirmModal(false)} className="flex-1 py-3 border border-gray-300 rounded-xl font-bold text-gray-600 hover:bg-gray-50 text-sm transition">
+                            Batal
+                        </button>
+                        <button onClick={handleSave} className="flex-1 py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 text-sm shadow-lg shadow-purple-200 transition">
+                            Ya, Simpan
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+
             <div className="max-w-4xl mx-auto">
 
                 {/* HEADER */}
@@ -156,7 +232,7 @@ export default function PerusahaanProfilePage() {
                 )}
 
                 {/* FORM */}
-                <form onSubmit={handleSave} className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
+                <form onSubmit={onFormSubmit} className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
                         {/* Identitas Perusahaan */}

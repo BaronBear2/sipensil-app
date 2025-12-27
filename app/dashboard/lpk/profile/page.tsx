@@ -3,8 +3,11 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
-import { Building, MapPin, Save, ArrowLeft, ShieldCheck, User, Phone, FileText, AlertTriangle, X, Lock } from 'lucide-react'
+import { Building, MapPin, Save, ArrowLeft, ShieldCheck, User, Phone, FileText, AlertTriangle, X, Lock, Info } from 'lucide-react'
 import Link from 'next/link'
+
+import Modal from '@/components/ui/Modal'
+import StatusModal from '@/components/ui/StatusModal'
 
 export default function LpkProfilePage() {
   const supabase = createClient()
@@ -12,6 +15,13 @@ export default function LpkProfilePage() {
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+
+  // Modals
+  const [statusModal, setStatusModal] = useState<{ isOpen: boolean, type: 'success' | 'error', message: string }>({
+    isOpen: false, type: 'success', message: ''
+  })
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false)
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
 
   // State Data Khusus LPK
   const [formData, setFormData] = useState({
@@ -35,9 +45,6 @@ export default function LpkProfilePage() {
     rejection_message: ''
   })
 
-  // State for Alert Modal
-  const [showWelcomeModal, setShowWelcomeModal] = useState(false)
-
   // 1. Fetch Data
   useEffect(() => {
     const getData = async () => {
@@ -55,9 +62,7 @@ export default function LpkProfilePage() {
           address_office: lpk.address_office || profile.address_office || '',
           // Ensure controlled inputs
           company_name: lpk.lpk_name || profile.company_name || '',
-          vin: lpk.nips || profile.vin || '', // VIN mapped to nips in new schema or keep as nips? Schema said 'nips' -- comment says "Nomor Induk Peserta(or NPSN/VIN)"
-          // Form uses 'vin', Schema uses 'nips'. Let's map vin <-> nips
-          // Logic: formData.vin <-> db.nips
+          vin: lpk.nips || profile.vin || '', // VIN mapped to nips
         })
       }
 
@@ -80,10 +85,8 @@ export default function LpkProfilePage() {
   }
 
   // 3. Handle Simpan
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!confirm("Simpan data lembaga? Status akan berubah menjadi Pending verifikasi.")) return
-
+  const handleSave = async () => {
+    setShowConfirmModal(false)
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -93,14 +96,13 @@ export default function LpkProfilePage() {
       .from('profiles')
       .update({
         // company_name and phone are not in 'profiles' table anymore.
-        // They are stored in 'profile_lpk' table.
         account_status: 'pending',
         rejection_message: null
       })
       .eq('id', user?.id)
 
     if (baseError) {
-      alert('Gagal update base profil: ' + baseError.message)
+      setStatusModal({ isOpen: true, type: 'error', message: 'Gagal update base profil: ' + baseError.message })
       setSaving(false)
       return
     }
@@ -121,34 +123,62 @@ export default function LpkProfilePage() {
         lpk_type: formData.lpk_type,
         director_name: formData.director_name,
         director_phone: formData.director_phone,
-
-        // Should I add operational_pj fields? Form doesn't seem to edit them here, maybe in register only? 
-        // Checking form... No operational PJ fields in form state/render. 
-        // If they exist in DB, they might be lost if we don't include them in upsert?
-        // UPSERT updates existing row. If I don't include column, it keeps old value? 
-        // NO, Supabase UPSERT needs all columns if inserting new, but if updating it might wipe if I pass object? 
-        // Actually upsert updates columns provided. 
       }, { onConflict: 'user_id' })
 
     const error = detailError
 
     if (error) {
-      alert('Gagal: ' + error.message)
+      setStatusModal({ isOpen: true, type: 'error', message: 'Gagal: ' + error.message })
     } else {
-      alert('Berhasil disimpan! Silakan lanjut mengisi laporan.')
-      router.push('/dashboard/lpk') // Kembali ke dashboard
+      setStatusModal({ isOpen: true, type: 'success', message: 'Berhasil disimpan! Silakan lanjut mengisi laporan.' })
+      setTimeout(() => router.push('/dashboard/lpk'), 1500)
     }
     setSaving(false)
   }
 
-  if (loading) return <div className="p-10 text-center text-gray-400">Memuat profil...</div>
+  const onFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setShowConfirmModal(true)
+  }
+
+  if (loading) return <div className="p-10 text-center text-gray-400 animate-pulse">Memuat profil...</div>
 
   // Logic Styling
   const inputClass = "w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-emerald-200 transition-all text-sm bg-white"
   const labelClass = "block text-xs font-bold text-gray-600 mb-1"
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 font-sans animate-fade-in">
+    <div className="min-h-screen bg-gray-50 py-8 px-4 font-sans animate-fade-in pb-24">
+      <StatusModal {...statusModal} onClose={() => setStatusModal(prev => ({ ...prev, isOpen: false }))} />
+
+      {/* CONFIRMATION MODAL */}
+      <Modal isOpen={showConfirmModal} onClose={() => setShowConfirmModal(false)} title="Konfirmasi Simpan">
+        <div className="p-6">
+          <div className="flex items-center gap-4 mb-4 bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+            <div className="bg-emerald-100 p-3 rounded-full text-emerald-600">
+              <Save size={24} />
+            </div>
+            <div>
+              <h4 className="font-bold text-gray-800 text-sm">Simpan Profil LPK</h4>
+              <p className="font-bold text-emerald-700">Update Data</p>
+            </div>
+          </div>
+          <p className="text-gray-600 text-sm mb-6 leading-relaxed">
+            Data yang Anda simpan akan diverifikasi ulang oleh Dinas Ketenagakerjaan. Status akun akan berubah menjadi <strong>Pending</strong>.
+            <br />
+            Apakah Anda yakin?
+          </p>
+          <div className="flex gap-3">
+            <button onClick={() => setShowConfirmModal(false)} className="flex-1 py-3 border border-gray-300 rounded-xl font-bold text-gray-600 hover:bg-gray-50 text-sm transition">
+              Batal
+            </button>
+            <button onClick={handleSave} className="flex-1 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 text-sm shadow-lg shadow-emerald-200 transition">
+              Ya, Simpan
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       <div className="max-w-4xl mx-auto">
 
         {/* FIRST TIME WELCOME MODAL */}
@@ -215,7 +245,7 @@ export default function LpkProfilePage() {
         )}
 
         {/* FORM */}
-        <form onSubmit={handleSave} className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
+        <form onSubmit={onFormSubmit} className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
             {/* Identitas Lembaga */}
