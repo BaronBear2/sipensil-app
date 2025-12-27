@@ -254,8 +254,8 @@ export default function CreateMagangRecordPage() {
 
                                         {/* AKSI */}
                                         <td className="px-2 py-3 text-center sticky right-0 bg-white group-hover:bg-orange-50/30 z-10 border-l">
-                                            <button onClick={() => handleRemoveRow(index)} className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition" title="Hapus Baris">
-                                                <Trash2 size={18} />
+                                            <button onClick={() => handleRemoveRow(index)} className="bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 hover:border-red-200 p-2 rounded-xl transition shadow-sm mx-auto flex items-center justify-center" title="Hapus Baris">
+                                                <Trash2 size={16} />
                                             </button>
                                         </td>
                                     </tr>
