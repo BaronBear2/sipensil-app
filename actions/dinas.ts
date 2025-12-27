@@ -408,7 +408,7 @@ export async function adminUpdateUserAction(formData: FormData) {
       await supabase.from('profiles').update({ photo_url: formData.get('photo_url') as string }).eq('id', userId)
     }
 
-  } else if (targetRole === 'PERUSAHAAN') {
+  } else if (targetRole === 'PERUSAHAAN' || targetRole === 'ADMIN_PERUSAHAAN' || targetRole === 'admin_perusahaan') {
     const { error: detailError } = await supabase.from('profile_perusahaan').upsert({
       user_id: userId,
       company_name: formData.get('company_name') as string,
@@ -423,7 +423,7 @@ export async function adminUpdateUserAction(formData: FormData) {
     }, { onConflict: 'user_id' })
     if (detailError) return { error: detailError.message }
 
-  } else if (targetRole === 'LPK' || targetRole === 'ADMIN_LPK') {
+  } else if (targetRole === 'LPK' || targetRole === 'ADMIN_LPK' || targetRole === 'admin_lpk') {
     const { error: detailError } = await supabase.from('profile_lpk').upsert({
       user_id: userId,
       lpk_name: formData.get('lpk_name') as string,

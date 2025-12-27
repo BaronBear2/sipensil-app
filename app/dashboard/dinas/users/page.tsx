@@ -1,6 +1,8 @@
 import { createAdminClient } from '@/utils/supabase/server'
 import UserManagement from '@/components/admin/UserManagement'
 
+export const dynamic = 'force-dynamic'
+
 export default async function UsersAdminPage({ searchParams }: { searchParams: Promise<{ page?: string, q?: string, role?: string }> }) {
     const supabase = await createAdminClient()
 
