@@ -729,9 +729,12 @@ export async function verifyPencatatanBatchAction(formData: FormData) {
   const action = formData.get('action') as string
   const reason = formData.get('reason') as string
 
+  let error
+
   if (action === 'approve') {
     // Approve Batch
-    await supabase.from('pencatatan_batches').update({ status: 'APPROVED', rejection_reason: null }).eq('id', id)
+    const res = await supabase.from('pencatatan_batches').update({ status: 'APPROVED', rejection_reason: null }).eq('id', id)
+    error = res.error
 
     // Also approve all waiting agreements in this batch?
     // Usually agreements are auto-approved if batch is approved, or we leave them.
@@ -739,8 +742,12 @@ export async function verifyPencatatanBatchAction(formData: FormData) {
 
   } else {
     // Reject Batch
-    await supabase.from('pencatatan_batches').update({ status: 'REJECTED', rejection_reason: reason }).eq('id', id)
+    const res = await supabase.from('pencatatan_batches').update({ status: 'REJECTED', rejection_reason: reason }).eq('id', id)
+    error = res.error
   }
+
+  if (error) return { error: error.message }
+
   revalidatePath('/dashboard/dinas/pemagangan')
   return { success: true }
 }
