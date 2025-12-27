@@ -326,6 +326,23 @@ export async function archiveTrainingAction(formData: FormData) {
   return { success: true }
 }
 
+export async function unarchiveTrainingAction(formData: FormData) {
+  const supabase = await createClient()
+  const id = formData.get('id') as string
+
+  // 1. Restore status to OPEN
+  const { error } = await supabase.from('blk_trainings').update({ status: 'OPEN' }).eq('id', id)
+
+  if (error) return { error: error.message }
+
+  // 2. Note: We do NOT automatically revert participants from SELESAI to DITERIMA.
+  // This is because we don't know if they truly finished or not.
+  // The admin can manually manage participants if needed.
+
+  revalidatePath('/dashboard/dinas')
+  return { success: true }
+}
+
 
 // --- 6. MANAJEMEN PESERTA (KICK) ---
 export async function kickParticipantAction(formData: FormData) {

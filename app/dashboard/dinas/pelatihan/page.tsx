@@ -11,7 +11,11 @@ export default async function PelatihanAdminPage() {
     await autoUpdateTrainingStatusAction()
 
     let dataTab5: any[] = []
-    const { data } = await supabase.from('blk_trainings').select('*').order('created_at', { ascending: false })
+    const { data } = await supabase
+        .from('blk_trainings')
+        .select('*')
+        .neq('status', 'FINISHED') // Filter out archived items
+        .order('created_at', { ascending: false })
     if (data) dataTab5 = data
 
     return (

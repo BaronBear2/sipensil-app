@@ -2,6 +2,7 @@ import { createClient } from '@/utils/supabase/server'
 import { AlertCircle, Archive, Calendar, Users, ArrowLeft } from 'lucide-react'
 import SearchInput from '@/components/admin/SearchInput'
 import Link from 'next/link'
+import RestoreTrainingButton from '@/components/admin/RestoreTrainingButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -82,9 +83,12 @@ export default async function RiwayatPelatihanPage({ searchParams }: { searchPar
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full border border-gray-200">
-                                                SELESAI
-                                            </span>
+                                            <div className="flex flex-col items-center gap-2">
+                                                <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full border border-gray-200">
+                                                    SELESAI
+                                                </span>
+                                                <RestoreTrainingButton id={item.id} title={item.title} />
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
