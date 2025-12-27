@@ -95,7 +95,6 @@ export default function PerusahaanProfilePage() {
             .from('profiles')
             .update({
                 full_name: formData.company_name, // Update full_name for Admin View
-                phone: formData.phone,
                 account_status: 'pending',
                 rejection_message: null
             })

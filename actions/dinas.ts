@@ -579,8 +579,8 @@ export async function createLpkAction(formData: FormData) {
   const { error: lpkError } = await supabase.from('profile_lpk').upsert({
     user_id: userId,
     lpk_name: name,
-    phone_number: phone,
-    address: address
+    phone: phone,
+    address_office: address
   })
 
   if (lpkError) return { error: lpkError.message }
@@ -597,7 +597,7 @@ export async function updateLpkAction(formData: FormData) {
   const address = formData.get('address') as string
 
   await supabase.from('profiles').update({ full_name: name }).eq('id', userId)
-  await supabase.from('profile_lpk').update({ lpk_name: name, phone_number: phone, address }).eq('user_id', userId)
+  await supabase.from('profile_lpk').update({ lpk_name: name, phone: phone, address_office: address }).eq('user_id', userId)
 
   revalidatePath('/dashboard/dinas/lpk/data')
   return { success: true }
@@ -664,7 +664,7 @@ export async function createPerusahaanAction(formData: FormData) {
     user_id: userId,
     company_name: name,
     phone: phone,
-    address: address
+    address_office: address
   })
 
   if (compError) return { error: compError.message }
@@ -681,7 +681,7 @@ export async function updatePerusahaanAction(formData: FormData) {
   const address = formData.get('address') as string
 
   await supabase.from('profiles').update({ full_name: name }).eq('id', userId)
-  await supabase.from('profile_perusahaan').update({ company_name: name, phone, address }).eq('user_id', userId)
+  await supabase.from('profile_perusahaan').update({ company_name: name, phone, address_office: address }).eq('user_id', userId)
 
   revalidatePath('/dashboard/dinas/perusahaan/data')
   return { success: true }
