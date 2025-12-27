@@ -66,7 +66,7 @@ export default function CreateUserForm() {
                                     onChange={(e) => setSelectedRole(e.target.value)}
                                     className="w-4 h-4 text-blue-600 focus:ring-blue-500"
                                 />
-                                <span className="font-bold text-gray-700 text-sm">{role === 'PENCAKER' ? 'Pencari Kerja' : role}</span>
+                                <span className="font-bold text-gray-700 text-sm">{role === 'PENCAKER' ? 'PENCAKER' : role}</span>
                             </label>
                         ))}
                     </div>
