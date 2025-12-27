@@ -1,11 +1,13 @@
 import Link from 'next/link'
-import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/server'
 import { FileText, Building, CheckCircle, XCircle } from 'lucide-react'
 import PencatatanTable from '@/components/admin/PencatatanTable'
 import { deletePencatatanBatchAction } from '@/actions/dinas'
 
+export const dynamic = 'force-dynamic'
+
 export default async function PemaganganAdminPage({ searchParams }: { searchParams: Promise<{ status: string }> }) {
-    const supabase = await createClient()
+    const supabase = await createAdminClient()
 
     const params = await searchParams
     // Filter Status (Default: PENDING)
