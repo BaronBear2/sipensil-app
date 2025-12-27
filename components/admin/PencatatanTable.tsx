@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react'
 import { CheckCircle, XCircle, FileText, X, FolderSymlink, Building, Trash2, Calendar, Users, FileSpreadsheet } from 'lucide-react'
-import { verifyMagangPermitAction } from '@/actions/dinas'
+import { verifyPencatatanBatchAction } from '@/actions/dinas'
 import Link from 'next/link'
 
 export default function PencatatanTable({ permits, viewOnly = false, onDelete }: { permits: any[], viewOnly?: boolean, onDelete?: (formData: FormData) => Promise<void> }) {
@@ -55,7 +55,8 @@ export default function PencatatanTable({ permits, viewOnly = false, onDelete }:
         formData.append('action', action)
         formData.append('reason', rejectReason)
 
-        const res = await verifyMagangPermitAction(formData)
+        // CHANGED: Use verifyPencatatanBatchAction instead of verifyMagangPermitAction
+        const res = await verifyPencatatanBatchAction(formData)
 
         // @ts-expect-error: Server action error handling
         if (res?.error) {
@@ -150,41 +151,43 @@ export default function PencatatanTable({ permits, viewOnly = false, onDelete }:
                                         )}
                                     </td>
 
-                                    <td className="px-6 py-4 flex justify-center gap-2">
-                                        {!viewOnly ? (
-                                            <>
-                                                <button onClick={() => openConfirmAccept(item)} className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-green-700 hover:shadow shadow-green-200 transition flex items-center gap-1.5">
-                                                    <CheckCircle size={14} /> Terima
-                                                </button>
-                                                <button onClick={() => openRejectForm(item)} className="bg-white border border-red-200 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-50 hover:text-red-700 transition flex items-center gap-1.5">
-                                                    <XCircle size={14} /> Tolak
-                                                </button>
-                                            </>
-                                        ) : (
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs text-gray-400 font-bold italic mr-2">Selesai</span>
+                                    <td className="px-6 py-4">
+                                        <div className="flex justify-center items-center gap-2">
+                                            {!viewOnly ? (
+                                                <>
+                                                    <button onClick={() => openConfirmAccept(item)} className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-green-700 hover:shadow shadow-green-200 transition flex items-center gap-1.5">
+                                                        <CheckCircle size={14} /> Terima
+                                                    </button>
+                                                    <button onClick={() => openRejectForm(item)} className="bg-white border border-red-200 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-50 hover:text-red-700 transition flex items-center gap-1.5">
+                                                        <XCircle size={14} /> Tolak
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs text-gray-400 font-bold italic mr-2">Selesai</span>
 
-                                                {onDelete && (
-                                                    <form
-                                                        action={onDelete}
-                                                    >
-                                                        <input type="hidden" name="id" value={item.id} />
-                                                        <button
-                                                            type="submit"
-                                                            className="text-gray-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-full transition cursor-pointer"
-                                                            title="Hapus Riwayat"
-                                                            onClick={(e) => {
-                                                                if (!confirm('Hapus riwayat ini secara permanen?')) {
-                                                                    e.preventDefault()
-                                                                }
-                                                            }}
+                                                    {onDelete && (
+                                                        <form
+                                                            action={onDelete}
                                                         >
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    </form>
-                                                )}
-                                            </div>
-                                        )}
+                                                            <input type="hidden" name="id" value={item.id} />
+                                                            <button
+                                                                type="submit"
+                                                                className="text-gray-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-full transition cursor-pointer"
+                                                                title="Hapus Riwayat"
+                                                                onClick={(e) => {
+                                                                    if (!confirm('Hapus riwayat ini secara permanen?')) {
+                                                                        e.preventDefault()
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </form>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
                                     </td>
                                 </tr>
                             ))

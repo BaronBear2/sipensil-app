@@ -723,6 +723,28 @@ export async function deletePencatatanBatchAction(formData: FormData) {
   revalidatePath('/dashboard/dinas/pemagangan')
 }
 
+export async function verifyPencatatanBatchAction(formData: FormData) {
+  const supabase = await createAdminClient()
+  const id = formData.get('permitId') as string
+  const action = formData.get('action') as string
+  const reason = formData.get('reason') as string
+
+  if (action === 'approve') {
+    // Approve Batch
+    await supabase.from('pencatatan_batches').update({ status: 'APPROVED', rejection_reason: null }).eq('id', id)
+
+    // Also approve all waiting agreements in this batch?
+    // Usually agreements are auto-approved if batch is approved, or we leave them.
+    // Let's assume Batch Approval implies "Letter Issued".
+
+  } else {
+    // Reject Batch
+    await supabase.from('pencatatan_batches').update({ status: 'REJECTED', rejection_reason: reason }).eq('id', id)
+  }
+  revalidatePath('/dashboard/dinas/pemagangan')
+  return { success: true }
+}
+
 // Data Perusahaan CRUD
 export async function createPerusahaanAction(formData: FormData) {
   const supabase = await createAdminClient()
