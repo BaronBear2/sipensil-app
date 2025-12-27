@@ -65,7 +65,7 @@ export default async function LpkLaporanPage({ searchParams }: { searchParams: P
 
                 {/* FORM ASLI (Blur Effect di Background) */}
                 <div className={!isUnlocked ? 'filter blur-[2px] opacity-40 pointer-events-none select-none grayscale' : ''}>
-                    <LpkReportForm profile={profile} initialData={initialData} />
+                    <LpkReportForm profile={profile} initialData={initialData} userId={user.id} />
                 </div>
 
             </div>
