@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   GraduationCap, Briefcase, FileCheck2, ArrowRight,
   UserCircle2, Building2, School
@@ -10,6 +11,7 @@ import Modal from '@/components/ui/Modal';
 import AuthModalContent from '@/components/auth/AuthModalContent';
 import PublicNavbar from '@/components/PublicNavbar';
 import PublicFooter from '@/components/PublicFooter';
+import bannerPemkabbek from '@/assets/logo/Pemkabbek.jpg'
 
 export default function LandingPage() {
   const [isAuthModalOpen, setAuthModalOpen] = useState(false)
@@ -40,10 +42,12 @@ export default function LandingPage() {
       <header className="relative min-h-[450px] flex items-center overflow-hidden pt-20">
         {/* Background Layer */}
         <div className="absolute inset-0 z-0">
-          <img
-            src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1920&q=80"
-            alt="Background Office"
-            className="w-full h-full object-cover"
+          <Image
+            src={bannerPemkabbek}
+            alt="Banner pemKabbek"
+            fill
+            className="object-cover"
+            priority
           />
           {/* Modern Gradient Overlay */}
           <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/90 to-blue-900/40"></div>
