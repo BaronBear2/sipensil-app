@@ -204,7 +204,7 @@ export default function AdminSidebar() {
                 <div className="p-6 border-b border-gray-100 shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2">
-                            <Image src={logoSipensil} alt="Logo Sipensil" className="h-8 w-auto" />
+                            <Image src={logoSipensil} alt="Logo Sipensil" className="h-8 w-auto rounded-xl" />
                         </div>
                         <div>
                             <h1 className="font-bold text-gray-800 leading-none">SIPENSIL</h1>
@@ -225,7 +225,7 @@ export default function AdminSidebar() {
                     ))}
                 </nav>
 
-                <div className="p-4 border-t border-gray-100 shrink-0">
+                <div className="p-4 border-t border-gray-100 shrink-0 mb-6">
                     <button
                         onClick={handleLogout}
                         className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 w-full transition-all"
