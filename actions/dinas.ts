@@ -376,7 +376,11 @@ export async function kickParticipantAction(formData: FormData) {
 export async function adminUpdateUserAction(formData: FormData) {
   const supabase = await createAdminClient()
   const userId = formData.get('userId') as string
-  const targetRole = formData.get('role') as string // 'PENCAKER', 'PERUSAHAAN', 'LPK' ('ADMIN_LPK')
+  let targetRole = formData.get('role') as string // 'PENCAKER', 'PERUSAHAAN', 'LPK' ('ADMIN_LPK')
+
+  // Normalize Role
+  if (targetRole === 'LPK') targetRole = 'ADMIN_LPK'
+  if (targetRole === 'PERUSAHAAN') targetRole = 'ADMIN_PERUSAHAAN' // Optional standardization
 
   const fullName = formData.get('full_name') as string
   const email = formData.get('email') as string
@@ -401,6 +405,7 @@ export async function adminUpdateUserAction(formData: FormData) {
 
   if (error) return { error: error.message }
 
+  // 3. Update Details based on Role
   // 3. Update Details based on Role
   if (targetRole === 'PENCAKER') {
     const { error: detailError } = await supabase.from('profile_pencaker').upsert({
@@ -429,7 +434,7 @@ export async function adminUpdateUserAction(formData: FormData) {
       await supabase.from('profiles').update({ photo_url: formData.get('photo_url') as string }).eq('id', userId)
     }
 
-  } else if (targetRole === 'PERUSAHAAN') {
+  } else if (targetRole === 'PERUSAHAAN' || targetRole === 'ADMIN_PERUSAHAAN') {
     const { error: detailError } = await supabase.from('profile_perusahaan').upsert({
       user_id: userId,
       company_name: formData.get('company_name') as string,
@@ -444,7 +449,7 @@ export async function adminUpdateUserAction(formData: FormData) {
     }, { onConflict: 'user_id' })
     if (detailError) return { error: detailError.message }
 
-  } else if (targetRole === 'LPK') {
+  } else if (targetRole === 'LPK' || targetRole === 'ADMIN_LPK') {
     const { error: detailError } = await supabase.from('profile_lpk').upsert({
       user_id: userId,
       lpk_name: formData.get('lpk_name') as string,
@@ -645,7 +650,11 @@ export async function adminCreateUserAction(formData: FormData) {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
   const full_name = formData.get('full_name') as string
-  const role = formData.get('role') as string // PENCAKER, PERUSAHAAN, LPK
+  let role = formData.get('role') as string // PENCAKER, PERUSAHAAN, LPK
+
+  // Normalize Role
+  if (role === 'LPK') role = 'ADMIN_LPK'
+  if (role === 'PERUSAHAAN') role = 'ADMIN_PERUSAHAAN' // Optional standardization
 
   if (!email || !password || !full_name || !role) {
     return { error: 'Semua field wajib diisi.' }
@@ -690,7 +699,7 @@ export async function adminCreateUserAction(formData: FormData) {
     })
     if (error) return { error: 'Gagal membuat data pencaker: ' + error.message }
 
-  } else if (role === 'PERUSAHAAN') {
+  } else if (role === 'PERUSAHAAN' || role === 'ADMIN_PERUSAHAAN') {
     const nib = formData.get('nib') as string
     const sector = formData.get('sector') as string
     const address = formData.get('address') as string
@@ -708,7 +717,7 @@ export async function adminCreateUserAction(formData: FormData) {
     })
     if (error) return { error: 'Gagal membuat data perusahaan: ' + error.message }
 
-  } else if (role === 'LPK') {
+  } else if (role === 'LPK' || role === 'ADMIN_LPK') {
     const nips = formData.get('nips') as string
     const lpk_type = formData.get('lpk_type') as string
     const address = formData.get('address') as string
