@@ -81,14 +81,14 @@ export default function PublicNavbar() {
 
                         {/* Logo Area */}
                         <Link href="/" className="flex items-center gap-3 group cursor-pointer">
-                            <div className="flex items-center gap-3">
+                            <div className="hidden md:flex items-center gap-3">
                                 <Image src={logoPemkab} alt="Logo Pemkab Bekasi" className="h-9 w-auto" priority />
                                 <div className="border-l border-slate-300 h-6"></div>
                                 <Image src={logoSipensil} alt="Logo Sipensil" className="h-9 w-auto" priority />
                             </div>
 
                             <div className="flex flex-col">
-                                <span className="font-bold text-lg text-slate-800 leading-none tracking-tight group-hover:text-blue-700 transition">SIPENSIL</span>
+                                <span className="font-bold text-base md:text-lg text-slate-800 leading-none tracking-tight group-hover:text-blue-700 transition">SIPENSIL</span>
                                 <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mt-0.5">Dinas Ketenagakerjaan</span>
                             </div>
                         </Link>
@@ -122,9 +122,6 @@ export default function PublicNavbar() {
                                 </button>
                             )}
 
-                            <button className="lg:hidden text-slate-600 p-2">
-                                <Menu size={24} />
-                            </button>
                         </div>
                     </div>
                 </div>

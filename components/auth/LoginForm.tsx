@@ -107,11 +107,11 @@ export default function LoginForm({ onRegisterClick, onForgotPasswordClick, onSu
                             {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                         </button>
                     </div>
-                    <div className="flex justify-end mt-1">
+                    <div className="flex justify-end mt-2">
                         <button
                             type="button"
                             onClick={onForgotPasswordClick}
-                            className="text-xs text-blue-600 hover:text-blue-800 transition-colors"
+                            className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors italic"
                         >
                             Lupa Password?
                         </button>
