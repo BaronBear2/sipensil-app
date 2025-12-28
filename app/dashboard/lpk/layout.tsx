@@ -41,7 +41,7 @@ export default async function LpkLayout({ children }: { children: React.ReactNod
     return (
         <div className="flex min-h-screen bg-gray-50 font-sans">
             <LpkSidebar />
-            <main className="flex-1 w-full max-w-[100vw] overflow-hidden">
+            <main className="flex-1 w-full max-w-[100vw] overflow-hidden pt-16 md:pt-0">
                 {children}
             </main>
         </div>

@@ -64,7 +64,7 @@ export default function LandingPage() {
             </div>
 
             {/* Headline */}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight tracking-tight animate-fade-in-up delay-100">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight tracking-tight animate-fade-in-up delay-100">
               Sistem Informasi <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
                 Pencatatan Pelatihan Kompetensi Softskill & Hardskill
@@ -72,7 +72,7 @@ export default function LandingPage() {
             </h1>
 
             {/* Description */}
-            <p className="text-base md:text-lg text-slate-300 mb-8 max-w-2xl font-light leading-relaxed animate-fade-in-up delay-200">
+            <p className="text-sm sm:text-base md:text-lg text-slate-300 mb-8 max-w-2xl font-light leading-relaxed animate-fade-in-up delay-200">
               Platform digital terintegrasi untuk mengakses berbagai layanan ketenagakerjaan, mulai dari pelatihan kompetensi, permohonan surat rekomendasi tes IM-Japan, pelaporan periodik 6 bulan, dan pencatatan peserta pemagangan
             </p>
 
@@ -80,7 +80,7 @@ export default function LandingPage() {
             <div className="flex flex-wrap gap-4 animate-fade-in-up delay-300">
               <button
                 onClick={() => openAuth('REGISTER')}
-                className="group bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] border border-blue-500 flex items-center gap-2"
+                className="w-full sm:w-auto group bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] border border-blue-500 flex items-center justify-center gap-2"
               >
                 Buat Akun Sekarang
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />

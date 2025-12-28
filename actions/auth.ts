@@ -145,3 +145,41 @@ export async function logout() {
   revalidatePath('/', 'layout')
   redirect('/auth/login')
 }
+
+// 4. REQUEST PASSWORD RESET ACTION
+export async function requestPasswordReset(email: string) {
+  const supabase = await createClient()
+
+  // Assuming the user is not logged in, we use the public client to request recovery
+  // The redirect URL should point to our reset password page
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback?next=/auth/reset-password&type=recovery`,
+  })
+
+  if (error) {
+    console.error('Reset Password Error:', error.message)
+    return { error: error.message }
+  }
+
+  return { success: true }
+}
+
+// 5. UPDATE PASSWORD ACTION (For Reset Flow)
+export async function updateUserPassword(password: string) {
+  const supabase = await createClient()
+
+  // This requires a valid session (which is established by the callback link)
+  const { error } = await supabase.auth.updateUser({
+    password: password
+  })
+
+  if (error) {
+    console.error('Update Password Error:', error.message)
+    return { error: error.message }
+  }
+
+  // Refresh session/cookies
+  await supabase.auth.refreshSession()
+
+  return { success: true }
+}

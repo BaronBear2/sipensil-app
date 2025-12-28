@@ -28,7 +28,7 @@ export default async function PerusahaanLayout({ children }: { children: React.R
     return (
         <div className="flex min-h-screen bg-gray-50 font-sans">
             <PerusahaanSidebar />
-            <main className="flex-1 w-full max-w-[100vw] overflow-hidden">
+            <main className="flex-1 w-full max-w-[100vw] overflow-hidden pt-16 md:pt-0">
                 {children}
             </main>
         </div>

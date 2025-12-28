@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { Lock, User, AlertCircle, Eye, EyeOff } from 'lucide-react'
 
-export default function LoginForm({ onRegisterClick, onSuccess }: { onRegisterClick: () => void, onSuccess: () => void }) {
+export default function LoginForm({ onRegisterClick, onForgotPasswordClick, onSuccess }: { onRegisterClick: () => void, onForgotPasswordClick: () => void, onSuccess: () => void }) {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
@@ -105,6 +105,15 @@ export default function LoginForm({ onRegisterClick, onSuccess }: { onRegisterCl
                             className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
                         >
                             {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                    </div>
+                    <div className="flex justify-end mt-1">
+                        <button
+                            type="button"
+                            onClick={onForgotPasswordClick}
+                            className="text-xs text-blue-600 hover:text-blue-800 transition-colors"
+                        >
+                            Lupa Password?
                         </button>
                     </div>
                 </div>

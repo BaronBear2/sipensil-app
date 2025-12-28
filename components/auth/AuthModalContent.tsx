@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import LoginForm from './LoginForm'
 import RegisterFormManager from './RegisterFormManager'
 import VerificationSuccess from './VerificationSuccess'
+import ForgotPasswordForm from './ForgotPasswordForm'
 
-type AuthView = 'LOGIN' | 'REGISTER' | 'VERIFY_SUCCESS'
+type AuthView = 'LOGIN' | 'REGISTER' | 'VERIFY_SUCCESS' | 'FORGOT_PASSWORD'
 
 interface AuthModalProps {
     initialView: AuthView
@@ -30,6 +31,7 @@ export default function AuthModalContent({ initialView, onSwitch, onClose }: Aut
         return (
             <LoginForm
                 onRegisterClick={() => handleSwitch('REGISTER')}
+                onForgotPasswordClick={() => handleSwitch('FORGOT_PASSWORD')}
                 onSuccess={() => { }} // Redirection is handled by LoginForm
             />
         )
@@ -39,7 +41,7 @@ export default function AuthModalContent({ initialView, onSwitch, onClose }: Aut
         return (
             <RegisterFormManager
                 onLoginClick={() => handleSwitch('LOGIN')}
-                onSuccess={() => setView('VERIFY_SUCCESS')} // Don't notify parent for this internal state, or do? Parent ignores it anyway.
+                onSuccess={() => setView('VERIFY_SUCCESS')}
             />
         )
     }
@@ -47,6 +49,12 @@ export default function AuthModalContent({ initialView, onSwitch, onClose }: Aut
     if (view === 'VERIFY_SUCCESS') {
         return (
             <VerificationSuccess onLoginClick={() => handleSwitch('LOGIN')} />
+        )
+    }
+
+    if (view === 'FORGOT_PASSWORD') {
+        return (
+            <ForgotPasswordForm onBackClick={() => handleSwitch('LOGIN')} />
         )
     }
 

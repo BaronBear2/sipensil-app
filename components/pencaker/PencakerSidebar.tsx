@@ -54,7 +54,8 @@ export default function PencakerSidebar() {
     return (
         <>
             {/* Mobile Toggle */}
-            <div className="md:hidden p-4 bg-white border-b flex justify-between items-center sticky top-0 z-50 shadow-sm">
+            {/* Mobile Toggle */}
+            <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b flex justify-between items-center px-4 z-50 shadow-sm">
                 <div className="flex items-center gap-3">
                     <Image src={logoSipensil} alt="Logo Sipensil" className="h-7 w-auto" />
                     <div className="flex flex-col ml-1">

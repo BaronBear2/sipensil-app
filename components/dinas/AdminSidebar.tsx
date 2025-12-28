@@ -145,6 +145,7 @@ export default function AdminSidebar() {
     const searchParams = useSearchParams()
 
     const [openMenuName, setOpenMenuName] = useState<string | null>(null)
+    const [isMobileOpen, setIsMobileOpen] = useState(false) // Mobile Menu State
 
     const handleLogout = async () => {
         await supabase.auth.signOut()
@@ -160,46 +161,81 @@ export default function AdminSidebar() {
         }
     }, [pathname, searchParams])
 
+    // Close mobile menu on route change
+    useEffect(() => {
+        setIsMobileOpen(false)
+    }, [pathname, searchParams])
+
     const handleToggle = (name: string) => {
         setOpenMenuName(prev => prev === name ? null : name)
     }
 
     return (
-        <aside className="w-64 bg-white border-r border-gray-100 min-h-screen hidden md:flex flex-col sticky top-0 h-screen overflow-hidden">
-            <div className="p-6 border-b border-gray-100 shrink-0">
+        <>
+            {/* MOBILE HEADER (Visible only on small screens) */}
+            <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-100 z-50 flex items-center justify-between px-4">
                 <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2">
-                        <Image src={logoSipensil} alt="Logo Sipensil" className="h-8 w-auto" />
-                    </div>
-                    <div>
-                        <h1 className="font-bold text-gray-800 leading-none">SIPENSIL</h1>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">Admin Dinas</p>
-                    </div>
+                    <Image src={logoSipensil} alt="Logo Sipensil" className="h-8 w-auto" />
+                    <span className="font-bold text-gray-800">SIPENSIL</span>
                 </div>
-            </div>
-
-            <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-                <div className="mb-2 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Menu Utama</div>
-                {MENU_ITEMS.map((item, index) => (
-                    <SidebarItem
-                        key={index}
-                        item={item}
-                        isOpen={openMenuName === item.name}
-                        onToggle={() => handleToggle(item.name)}
-                    />
-                ))}
-            </nav>
-
-            <div className="p-4 border-t border-gray-100 shrink-0">
                 <button
-                    onClick={handleLogout}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 w-full transition-all"
+                    onClick={() => setIsMobileOpen(!isMobileOpen)}
+                    className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
                 >
-                    <LogOut size={18} />
-                    Logout
+                    <Layers size={24} />
                 </button>
             </div>
-        </aside>
+
+            {/* BACKDROP (Visible only when mobile menu is open) */}
+            {isMobileOpen && (
+                <div
+                    className="fixed inset-0 bg-black/50 z-40 md:hidden animate-fade-in"
+                    onClick={() => setIsMobileOpen(false)}
+                />
+            )}
+
+            {/* SIDEBAR */}
+            <aside className={`
+                fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 min-h-screen flex flex-col 
+                transform transition-transform duration-300 ease-in-out
+                ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
+                md:translate-x-0 md:sticky md:top-0 md:h-screen
+            `}>
+                <div className="p-6 border-b border-gray-100 shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                            <Image src={logoSipensil} alt="Logo Sipensil" className="h-8 w-auto" />
+                        </div>
+                        <div>
+                            <h1 className="font-bold text-gray-800 leading-none">SIPENSIL</h1>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">Admin Dinas</p>
+                        </div>
+                    </div>
+                </div>
+
+                <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+                    <div className="mb-2 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Menu Utama</div>
+                    {MENU_ITEMS.map((item, index) => (
+                        <SidebarItem
+                            key={index}
+                            item={item}
+                            isOpen={openMenuName === item.name}
+                            onToggle={() => handleToggle(item.name)}
+                        />
+                    ))}
+                </nav>
+
+                <div className="p-4 border-t border-gray-100 shrink-0">
+                    <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 w-full transition-all"
+                    >
+                        <LogOut size={18} />
+                        Logout
+                    </button>
+                </div>
+            </aside>
+        </>
     )
 }
 
