@@ -80,12 +80,11 @@ export default function EditUserForm({ profile, role, roleData }: EditUserFormPr
                             <label className="block text-xs font-bold text-gray-700 mb-2">Status Akun</label>
                             <select
                                 name="account_status"
-                                defaultValue={profile.account_status || 'pending'}
+                                defaultValue={profile.account_status || 'unverified'}
                                 className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white"
                             >
-                                <option value="pending">Pending / Unverified</option>
+                                <option value="unverified">Unverified</option>
                                 <option value="verified">Verified (Aktif)</option>
-                                <option value="rejected">Rejected (Ditolak)</option>
                             </select>
                         </div>
                     </div>
