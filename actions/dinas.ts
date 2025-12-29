@@ -687,6 +687,10 @@ export async function adminCreateUserAction(formData: FormData) {
     const gender = formData.get('gender') as string
     const place_of_birth = formData.get('place_of_birth') as string
     const date_of_birth = formData.get('date_of_birth') as string
+    const address_ktp = formData.get('address_ktp') as string
+    const address_dom = formData.get('address_dom') as string
+    const religion = formData.get('religion') as string
+    const education = formData.get('education') as string
 
     // Insert empty or partial data. Trigger might handle creation, so let's use Upsert.
     const { error } = await supabase.from('profile_pencaker').upsert({
@@ -695,41 +699,71 @@ export async function adminCreateUserAction(formData: FormData) {
       phone: phone || null,
       gender: gender || null,
       place_of_birth: place_of_birth || null,
-      date_of_birth: date_of_birth || null
+      date_of_birth: date_of_birth || null,
+      address_ktp: address_ktp || null,
+      address_dom: address_dom || null,
+      religion: religion || null,
+      education: education || null
     })
     if (error) return { error: 'Gagal membuat data pencaker: ' + error.message }
 
   } else if (role === 'PERUSAHAAN' || role === 'ADMIN_PERUSAHAAN') {
     const nib = formData.get('nib') as string
     const sector = formData.get('sector') as string
-    const address = formData.get('address') as string
+    const address_office = formData.get('address_office') as string
     const phone = formData.get('phone') as string
     const pic_name = formData.get('pic_name') as string
+    const pic_phone = formData.get('pic_phone') as string
+    const email_official = formData.get('email_official') as string
+    const director_name = formData.get('director_name') as string
 
     const { error } = await supabase.from('profile_perusahaan').upsert({
       user_id: userId,
       company_name: full_name, // Default to same name
       nib: nib || null,
       sector: sector || null,
-      address_office: address || null,
+      address_office: address_office || null,
       phone: phone || null,
-      pic_name: pic_name || null
+      pic_name: pic_name || null,
+      pic_phone: pic_phone || null,
+      email_official: email_official || null,
+      director_name: director_name || null
     })
     if (error) return { error: 'Gagal membuat data perusahaan: ' + error.message }
 
   } else if (role === 'LPK' || role === 'ADMIN_LPK') {
     const nips = formData.get('nips') as string
     const lpk_type = formData.get('lpk_type') as string
-    const address = formData.get('address') as string
+    const address_office = formData.get('address_office') as string
     const phone = formData.get('phone') as string
+    const license_number = formData.get('license_number') as string
+    const license_date = formData.get('license_date') as string
+    const fax = formData.get('fax') as string
+    const email_official = formData.get('email_official') as string
+    const director_name = formData.get('director_name') as string
+    const director_phone = formData.get('director_phone') as string
+
+    // Mandatory for Auth but also saved in profile
+    const operational_pj = formData.get('operational_pj') as string
+    const operational_pj_title = formData.get('operational_pj_title') as string
+    const operational_pj_phone = formData.get('operational_pj_phone') as string
 
     const { error } = await supabase.from('profile_lpk').upsert({
       user_id: userId,
       lpk_name: full_name,
       nips: nips || null,
       lpk_type: lpk_type || 'Swasta',
-      address_office: address || null,
-      phone: phone || null
+      address_office: address_office || null,
+      phone: phone || null,
+      license_number: license_number || null,
+      license_date: license_date || null,
+      fax: fax || null,
+      email_official: email_official || null,
+      director_name: director_name || null,
+      director_phone: director_phone || null,
+      operational_pj: operational_pj || null,
+      operational_pj_title: operational_pj_title || null,
+      operational_pj_phone: operational_pj_phone || null
     })
     if (error) return { error: 'Gagal membuat data LPK: ' + error.message }
   }
