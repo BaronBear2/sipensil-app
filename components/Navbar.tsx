@@ -49,8 +49,8 @@ export default function Navbar() {
     const r = role.toUpperCase() // Paksa huruf besar biar aman
 
     if (r === 'ADMIN_DINAS') return '/dashboard/dinas'
-    if (r === 'ADMIN_LPK') return '/dashboard/lpk'
-    if (r === 'ADMIN_PERUSAHAAN') return '/dashboard/perusahaan'
+    if (r === 'PERUSAHAAN') return '/dashboard/perusahaan'
+    if (r === 'LPK') return '/dashboard/lpk'
     return '/dashboard/pencaker' // Default ke pencaker
   }
 

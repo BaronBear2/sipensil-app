@@ -11,7 +11,7 @@ export default async function LpkLaporanPage({ searchParams }: { searchParams: P
 
     const { data: rawProfile } = await supabase.from('profiles').select('*, profile_lpk(*)').eq('id', user.id).single()
     // No need access check, handled by layout/sidebar logic mostly, but good safety measure
-    if (rawProfile?.role !== 'ADMIN_LPK') return <div>Akses Ditolak</div>
+    if (rawProfile?.role !== 'LPK') return <div>Akses Ditolak</div>
 
     // FLATTEN for Component
     const profile = {

@@ -51,13 +51,13 @@ export async function GET() {
         if (errP) throw new Error('Failed to delete profiles: ' + errP.message)
 
         // SEED DATA
-        const roles = ['PENCAKER', 'PERUSAHAAN', 'ADMIN_LPK'] // Mapping to LPK role logic
+        const roles = ['PENCAKER', 'PERUSAHAAN', 'LPK'] // Mapping to LPK role logic
         // Status distribution: 2 pending, 2 verified, 2 rejected per role.
 
         const dummies = []
 
         for (const role of roles) {
-            const roleName = role === 'ADMIN_LPK' ? 'LPK' : role
+            const roleName = role
 
             for (let i = 0; i < 6; i++) {
                 const status = i < 2 ? 'pending' : (i < 4 ? 'verified' : 'rejected')
@@ -127,7 +127,7 @@ export async function GET() {
                     nib: '912010210' + Math.floor(Math.random() * 100),
                     pic_name: 'PIC ' + p.full_name
                 })
-            } else if (p.role === 'ADMIN_LPK') {
+            } else if (p.role === 'LPK') {
                 await supabase.from('profile_lpk').insert({
                     id: p.id,
                     lpk_name: p.full_name,

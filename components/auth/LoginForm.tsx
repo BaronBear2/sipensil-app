@@ -45,10 +45,9 @@ export default function LoginForm({ onRegisterClick, onForgotPasswordClick, onSu
 
             if (role === 'ADMIN_DINAS') {
                 router.push('/dashboard/dinas')
-            } else if (role === 'ADMIN_LPK') {
+            } else if (role === 'LPK') {
                 router.push('/dashboard/lpk')
-            } else if (role === 'ADMIN_PERUSAHAAN' || role === 'PERUSAHAAN') {
-                // Handle both role names just in case
+            } else if (role === 'PERUSAHAAN') {
                 router.push('/dashboard/perusahaan')
             } else {
                 router.push('/dashboard/pencaker')

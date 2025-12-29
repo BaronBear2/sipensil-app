@@ -49,8 +49,8 @@ export default function PublicNavbar() {
         if (!role) return '/'
         const r = role.toUpperCase()
         if (r === 'ADMIN_DINAS') return '/dashboard/dinas'
-        if (r === 'ADMIN_LPK') return '/dashboard/lpk'
-        if (r === 'ADMIN_PERUSAHAAN') return '/dashboard/perusahaan'
+        if (r === 'PERUSAHAAN') return '/dashboard/perusahaan'
+        if (r === 'LPK') return '/dashboard/lpk'
         return '/dashboard/pencaker'
     }
 

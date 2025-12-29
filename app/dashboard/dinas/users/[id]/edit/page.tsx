@@ -34,12 +34,12 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
         roleData = Array.isArray(pencakerRaw) ? pencakerRaw[0] : (pencakerRaw || {})
         roleName = 'Pencaker'
         RoleIcon = User
-    } else if (role === 'PERUSAHAAN' || role === 'ADMIN_PERUSAHAAN') {
+    } else if (role === 'PERUSAHAAN') {
         const perusahaanRaw = profile.profile_perusahaan
         roleData = Array.isArray(perusahaanRaw) ? perusahaanRaw[0] : (perusahaanRaw || {})
         roleName = 'Perusahaan'
         RoleIcon = Briefcase
-    } else if (role === 'LPK' || role === 'ADMIN_LPK') {
+    } else if (role === 'LPK') {
         const lpkRaw = profile.profile_lpk
         roleData = Array.isArray(lpkRaw) ? lpkRaw[0] : (lpkRaw || {})
         roleName = 'LPK'

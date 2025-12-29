@@ -378,9 +378,7 @@ export async function adminUpdateUserAction(formData: FormData) {
   const userId = formData.get('userId') as string
   let targetRole = formData.get('role') as string // 'PENCAKER', 'PERUSAHAAN', 'LPK' ('ADMIN_LPK')
 
-  // Normalize Role
-  if (targetRole === 'LPK') targetRole = 'ADMIN_LPK'
-  if (targetRole === 'PERUSAHAAN') targetRole = 'ADMIN_PERUSAHAAN' // Optional standardization
+
 
   const fullName = formData.get('full_name') as string
   const email = formData.get('email') as string
@@ -434,7 +432,7 @@ export async function adminUpdateUserAction(formData: FormData) {
       await supabase.from('profiles').update({ photo_url: formData.get('photo_url') as string }).eq('id', userId)
     }
 
-  } else if (targetRole === 'PERUSAHAAN' || targetRole === 'ADMIN_PERUSAHAAN') {
+  } else if (targetRole === 'PERUSAHAAN') {
     const { error: detailError } = await supabase.from('profile_perusahaan').upsert({
       user_id: userId,
       company_name: formData.get('company_name') as string,
@@ -449,7 +447,7 @@ export async function adminUpdateUserAction(formData: FormData) {
     }, { onConflict: 'user_id' })
     if (detailError) return { error: detailError.message }
 
-  } else if (targetRole === 'LPK' || targetRole === 'ADMIN_LPK') {
+  } else if (targetRole === 'LPK') {
     const { error: detailError } = await supabase.from('profile_lpk').upsert({
       user_id: userId,
       lpk_name: formData.get('lpk_name') as string,
@@ -652,9 +650,7 @@ export async function adminCreateUserAction(formData: FormData) {
   const full_name = formData.get('full_name') as string
   let role = formData.get('role') as string // PENCAKER, PERUSAHAAN, LPK
 
-  // Normalize Role
-  if (role === 'LPK') role = 'ADMIN_LPK'
-  if (role === 'PERUSAHAAN') role = 'ADMIN_PERUSAHAAN' // Optional standardization
+
 
   if (!email || !password || !full_name || !role) {
     return { error: 'Semua field wajib diisi.' }
@@ -707,7 +703,7 @@ export async function adminCreateUserAction(formData: FormData) {
     })
     if (error) return { error: 'Gagal membuat data pencaker: ' + error.message }
 
-  } else if (role === 'PERUSAHAAN' || role === 'ADMIN_PERUSAHAAN') {
+  } else if (role === 'PERUSAHAAN') {
     const nib = formData.get('nib') as string
     const sector = formData.get('sector') as string
     const address_office = formData.get('address_office') as string
@@ -731,7 +727,7 @@ export async function adminCreateUserAction(formData: FormData) {
     })
     if (error) return { error: 'Gagal membuat data perusahaan: ' + error.message }
 
-  } else if (role === 'LPK' || role === 'ADMIN_LPK') {
+  } else if (role === 'LPK') {
     const nips = formData.get('nips') as string
     const lpk_type = formData.get('lpk_type') as string
     const address_office = formData.get('address_office') as string

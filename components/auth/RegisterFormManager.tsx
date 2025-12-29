@@ -90,7 +90,7 @@ function RegisterFormImpl({ role, onBack, onSuccess }: { role: string, onBack: (
             }
         }
 
-        const dbRole = role === 'lpk' ? 'ADMIN_LPK' : role === 'perusahaan' ? 'ADMIN_PERUSAHAAN' : 'PENCAKER'
+        const dbRole = role === 'lpk' ? 'LPK' : role === 'perusahaan' ? 'PERUSAHAAN' : 'PENCAKER'
         const metadata: any = {
             full_name: formData.name,
             role: dbRole,

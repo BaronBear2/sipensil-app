@@ -33,7 +33,7 @@ export default async function DashboardAdmin() {
     supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'PENCAKER'),
 
     // 6. Verifikasi Akun LPK
-    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'ADMIN_LPK').eq('account_status', 'pending')
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'LPK').eq('account_status', 'pending')
   ] as const
 
   const [

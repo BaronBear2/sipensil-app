@@ -13,8 +13,8 @@ export default async function PerusahaanLayout({ children }: { children: React.R
     const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
     const role = profile?.role?.toUpperCase()
 
-    // Allow ADMIN_PERUSAHAAN or PERUSAHAAN
-    if (role !== 'PERUSAHAAN' && role !== 'ADMIN_PERUSAHAAN') {
+    // Allow PERUSAHAAN
+    if (role !== 'PERUSAHAAN') {
         return (
             <div className="flex h-screen items-center justify-center bg-gray-50">
                 <div className="text-center p-8 bg-white rounded-xl shadow-lg border">

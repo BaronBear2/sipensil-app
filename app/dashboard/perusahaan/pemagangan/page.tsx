@@ -26,8 +26,8 @@ export default function MagangPage() {
 
             const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single()
 
-            if (prof.role !== 'ADMIN_PERUSAHAAN' && prof.role !== 'PERUSAHAAN') {
-                alert(`AKSES DITOLAK: Akun Anda terdaftar sebagai '${prof.role}', bukan 'ADMIN_PERUSAHAAN'.`)
+            if (prof.role !== 'PERUSAHAAN') {
+                alert(`AKSES DITOLAK: Akun Anda terdaftar sebagai '${prof.role}', bukan 'PERUSAHAAN'.`)
                 router.push('/dashboard')
                 return
             }

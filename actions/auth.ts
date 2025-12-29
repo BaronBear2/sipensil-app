@@ -36,8 +36,13 @@ export async function login(formData: FormData) {
   let redirectUrl = '/dashboard/pencaker' // Default
   if (role === 'SUPER_ADMIN') redirectUrl = '/dashboard/super-admin'
   if (role === 'ADMIN_DINAS') redirectUrl = '/dashboard/dinas'
-  if (role === 'ADMIN_LPK') redirectUrl = '/dashboard/lpk'
-  if (role === 'ADMIN_PERUSAHAAN') redirectUrl = '/dashboard/perusahaan'
+  if (role === 'LPK') {
+    return redirect('/dashboard/lpk')
+  }
+
+  if (role === 'PERUSAHAAN') {
+    redirectUrl = '/dashboard/perusahaan'
+  }
 
   revalidatePath('/', 'layout')
   redirect(redirectUrl)
@@ -93,7 +98,7 @@ export async function signup(formData: FormData) {
   // We will keep the timing logs for now to help the user debug if it persists.
 
 
-  if (role === 'ADMIN_LPK') {
+  if (role === 'LPK') {
     metadata.company_name = company_name || fullName // Form field 'name' maps to this
     metadata.operational_pj = operational_pj
     metadata.operational_pj_title = operational_pj_title
@@ -101,7 +106,7 @@ export async function signup(formData: FormData) {
     metadata.operational_pj_email = email // USE MAIN EMAIL AS PJ EMAIL (V5.4-02)
   }
 
-  if (role === 'ADMIN_PERUSAHAAN') {
+  if (role === 'PERUSAHAAN') {
     metadata.company_name = company_name || fullName
     metadata.nib = nib
     metadata.phone = phone

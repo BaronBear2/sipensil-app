@@ -12,7 +12,7 @@ export default async function LpkLayout({ children }: { children: React.ReactNod
 
     // 2. Role Check
     const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-    if (profile?.role !== 'ADMIN_LPK') {
+    if (profile?.role !== 'LPK') {
         return (
             <div className="flex h-screen items-center justify-center bg-gray-50">
                 <div className="text-center p-8 bg-white rounded-xl shadow-lg border">

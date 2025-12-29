@@ -103,7 +103,7 @@ export default function RegisterForm({ params }: { params: Promise<{ role: strin
     fd.append('password', formData.password)
 
     // Metadata Fields
-    const dbRole = role === 'lpk' ? 'ADMIN_LPK' : role === 'perusahaan' ? 'ADMIN_PERUSAHAAN' : 'PENCAKER'
+    const dbRole = role === 'lpk' ? 'LPK' : role === 'perusahaan' ? 'PERUSAHAAN' : 'PENCAKER'
     fd.append('role', dbRole)
     fd.append('fullName', formData.name) // Official field
     fd.append('name', formData.name) // Fallback for action
