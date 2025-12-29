@@ -396,8 +396,7 @@ export async function adminUpdateUserAction(formData: FormData) {
   // 2. Update Base Profile
   const { error } = await supabase.from('profiles').update({
     full_name: fullName,
-    // Allow status updates if needed
-    // account_status: formData.get('account_status'), 
+    account_status: formData.get('account_status') as string,
     // verification_status: formData.get('verification_status') 
   }).eq('id', userId)
 
@@ -667,18 +666,28 @@ export async function adminCreateUserAction(formData: FormData) {
   if (authError) return { error: authError.message }
   const userId = authData.user.id
 
+  // Determine Verification Status based on Profile Data
+  // If optional fields (NIK/NIB/License) are filled, assume verified. Else unverified.
+  const nik = formData.get('nik') as string
+  const nib = formData.get('nib') as string
+  const license_number = formData.get('license_number') as string
+
+  let account_status = 'unverified'
+  if (role === 'PENCAKER' && nik && nik.length > 5) account_status = 'verified'
+  if (role === 'PERUSAHAAN' && nib && nib.length > 5) account_status = 'verified'
+  if (role === 'LPK' && license_number && license_number.length > 3) account_status = 'verified'
+
   // 2. Update Profile (Base)
   const { error: profileError } = await supabase.from('profiles').update({
     full_name,
     role,
-    account_status: 'verified' // Direct Verify by Admin
+    account_status: account_status
   }).eq('id', userId)
 
   if (profileError) return { error: profileError.message }
 
   // 3. Create Role Specific Data
   if (role === 'PENCAKER') {
-    const nik = formData.get('nik') as string
     const phone = formData.get('phone') as string
     const gender = formData.get('gender') as string
     const place_of_birth = formData.get('place_of_birth') as string
@@ -704,7 +713,6 @@ export async function adminCreateUserAction(formData: FormData) {
     if (error) return { error: 'Gagal membuat data pencaker: ' + error.message }
 
   } else if (role === 'PERUSAHAAN') {
-    const nib = formData.get('nib') as string
     const sector = formData.get('sector') as string
     const address_office = formData.get('address_office') as string
     const phone = formData.get('phone') as string
@@ -732,7 +740,7 @@ export async function adminCreateUserAction(formData: FormData) {
     const lpk_type = formData.get('lpk_type') as string
     const address_office = formData.get('address_office') as string
     const phone = formData.get('phone') as string
-    const license_number = formData.get('license_number') as string
+    // license_number already extracted
     const license_date = formData.get('license_date') as string
     const fax = formData.get('fax') as string
     const email_official = formData.get('email_official') as string
