@@ -50,7 +50,7 @@ export default function LandingPage() {
             priority
           />
           {/* Modern Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/90 to-blue-900/40"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-900/95 to-slate-900/80"></div>
           {/* Abstract Shapes Decoration */}
           <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
         </div>

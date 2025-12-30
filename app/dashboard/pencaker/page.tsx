@@ -225,7 +225,7 @@ export default async function DashboardPencaker({ searchParams }: { searchParams
       <footer className="bg-white border-t border-slate-100 py-8">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">
-            &copy; {new Date().getFullYear()} All rights reserved to Dinas Ketenagakerjaan Kabupaten Bekasi
+            &copy; {new Date().getFullYear()} Dinas Ketenagakerjaan Kabupaten Bekasi
           </p>
         </div>
       </footer>
