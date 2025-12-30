@@ -43,18 +43,11 @@ export default async function BLKProgramsPage() {
             <div className="flex-1 max-w-7xl mx-auto px-4 md:px-6 -mt-10 relative z-20 pb-20 w-full">
 
                 {/* Search/Filter Bar (Visual Only for now) */}
-                <div className="bg-white p-4 rounded-xl shadow-lg border border-slate-100 mb-8 flex flex-col md:flex-row items-center gap-4">
-                    <div className="relative w-full md:w-96">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                        <input
-                            type="text"
-                            placeholder="Cari program pelatihan..."
-                            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                            disabled
-                        />
-                    </div>
-                    <div className="flex items-center gap-2 ml-auto text-sm text-slate-500">
-                        <span className="font-bold text-blue-600">{trainings?.length || 0}</span> Program Tersedia
+                {/* Search/Filter Bar (Removed as per request, just showing count) */}
+                <div className="bg-white p-4 rounded-xl shadow-lg border border-slate-100 mb-8 flex items-center justify-between">
+                    <h2 className="text-lg font-bold text-slate-700">Program Pelatihan Tersedia</h2>
+                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                        <span className="font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">{trainings?.length || 0} Program</span>
                     </div>
                 </div>
 
