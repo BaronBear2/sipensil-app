@@ -12,6 +12,9 @@ const formatDate = (dateString: string | null) => {
     return new Date(dateString).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
+import { cancelRegistrationAction } from '@/actions/cancel_registration'
+import { SwalConfirm, SwalToast, SwalAlert } from '@/utils/swal'
+
 export default function MyTrainingsPage() {
     const supabase = createClient()
     const router = useRouter()
@@ -19,6 +22,9 @@ export default function MyTrainingsPage() {
     const [activeRegistrations, setActiveRegistrations] = useState<any[]>([])
     const [historyRegistrations, setHistoryRegistrations] = useState<any[]>([])
     const [rejectedRegistrations, setRejectedRegistrations] = useState<any[]>([])
+
+    // For Cancelling
+    const [isCancelling, setIsCancelling] = useState(false)
 
     useEffect(() => {
         const getData = async () => {
@@ -68,7 +74,7 @@ export default function MyTrainingsPage() {
             setLoading(false)
         }
         getData()
-    }, [])
+    }, [isCancelling]) // Refresh when cancelling state changes (trigger re-fetch)
 
     const handlePrint = (reg: any, type: 'registration' | 'acceptance') => {
         const title = type === 'registration' ? 'TANDA BUKTI PENDAFTARAN' : 'TANDA BUKTI DITERIMA PELATIHAN'
@@ -126,6 +132,54 @@ export default function MyTrainingsPage() {
         }
     }
 
+    const handleCancel = async (reg: any) => {
+        if (isCancelling) return
+
+        const result = await SwalConfirm.fire({
+            title: 'Batalkan Pendaftaran?',
+            text: 'Apakah anda yakin ingin membatalkan pendaftaran ini? Status akun anda akan kembali menjadi belum diverifikasi.',
+            icon: 'warning',
+            confirmButtonText: 'Ya, Batalkan',
+            confirmButtonColor: '#d33',
+            cancelButtonText: 'Kembali'
+        })
+
+        if (result.isConfirmed) {
+            setIsCancelling(true)
+            const formData = new FormData()
+            formData.append('regId', reg.id)
+
+            try {
+                const res = await cancelRegistrationAction(formData)
+                if (res.error) {
+                    SwalAlert.fire({ title: 'Gagal', text: res.error, icon: 'error' })
+                } else {
+                    await SwalToast.fire({ title: 'Pendaftaran Berhasil Dibatalkan', icon: 'success' })
+                    // Force refresh data locally
+                    router.refresh()
+                    // Manually trigger re-fetching is pointless if page is SSC, but this is client component so useEffect will rerun if we toggle something or just router.refresh() might be enough
+                    // But we used useEffect with [isCancelling], so toggling it off later will re-trigger
+                }
+            } catch (err) {
+                console.error(err)
+                SwalAlert.fire({ title: 'Error', text: 'Terjadi kesalahan sistem', icon: 'error' })
+            } finally {
+                setIsCancelling(false)
+            }
+        }
+    }
+
+    // Check if cancellation is allowed (date valid)
+    const canCancel = (reg: any) => {
+        if (!reg.blk_trainings?.registration_end) return true // If no end date, assume cancellable? Or false? Let's assume true for open-ended, or usually there is a date.
+
+        const today = new Date()
+        const endDate = new Date(reg.blk_trainings.registration_end)
+        endDate.setHours(23, 59, 59, 999)
+
+        return today <= endDate
+    }
+
     if (loading) return <div className="p-10 text-center text-gray-500 animate-pulse">Memuat riwayat pelatihan...</div>
 
     const TrainingCard = ({ reg, isHistory = false, isRejected = false }: { reg: any, isHistory?: boolean, isRejected?: boolean }) => (
@@ -158,9 +212,10 @@ export default function MyTrainingsPage() {
                     )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 text-sm text-gray-500 mb-6 border-y py-3 bg-gray-50/50 px-4 -mx-6">
+                {/* INFO GRID - Responsive Fix (1 col on mobile, 2 on larger) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-500 mb-6 border-y py-3 bg-gray-50/50 px-4 -mx-6">
                     {/* New Field: Registration Period */}
-                    <div className="flex items-center gap-2 col-span-2">
+                    <div className="flex items-center gap-2 md:col-span-2">
                         <FileText size={14} className="text-purple-500" />
                         <div>
                             <span className="text-[10px] text-gray-400 block">Masa Pendaftaran</span>
@@ -213,9 +268,26 @@ export default function MyTrainingsPage() {
 
                     {/* Pending Buttons */}
                     {!isRejected && !isHistory && reg.status === 'PENDING' && (
-                        <button onClick={() => handlePrint(reg, 'registration')} className="px-3 py-2 border border-blue-200 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 flex items-center gap-2 shadow-sm">
-                            <FileText size={14} /> Tanda Daftar
-                        </button>
+                        <>
+                            {/* Cancel Button - Only if Registration Period is Valid */}
+                            {canCancel(reg) && (
+                                <button
+                                    onClick={() => handleCancel(reg)}
+                                    className="px-3 py-2 border border-red-200 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 flex items-center gap-2 shadow-sm"
+                                    disabled={isCancelling}
+                                >
+                                    {isCancelling ? 'Memproses...' : (
+                                        <>
+                                            <XCircle size={14} /> Batalkan Pendaftaran
+                                        </>
+                                    )}
+                                </button>
+                            )}
+
+                            <button onClick={() => handlePrint(reg, 'registration')} className="px-3 py-2 border border-blue-200 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 flex items-center gap-2 shadow-sm">
+                                <FileText size={14} /> Tanda Daftar
+                            </button>
+                        </>
                     )}
 
                     {/* Accepted Buttons (Active or History) - If History, maybe they still want proofs? Usually yes. */}

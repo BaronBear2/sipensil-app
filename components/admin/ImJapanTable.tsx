@@ -67,8 +67,8 @@ export default function ImJapanTable({ data, viewOnly = false }: { data: any[], 
     }
 
     return (
-        <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left border rounded-lg">
+        <div className="overflow-x-auto w-full">
+            <table className="w-full text-sm text-left border rounded-lg min-w-[600px]">
                 <thead className="bg-gray-100 text-xs font-bold uppercase text-gray-700">
                     <tr>
                         <th className="px-4 py-3">Pelamar</th>

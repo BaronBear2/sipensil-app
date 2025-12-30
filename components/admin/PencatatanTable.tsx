@@ -71,8 +71,8 @@ export default function PencatatanTable({ permits, viewOnly = false, onDelete }:
     return (
         <>
             {/* TABEL DATA */}
-            <div className="overflow-x-auto min-h-[500px]">
-                <table className="w-full text-sm text-left">
+            <div className="overflow-x-auto min-h-[500px] w-full">
+                <table className="w-full text-sm text-left min-w-[900px]">
                     <thead className="text-xs text-gray-700 uppercase bg-gray-100">
                         <tr>
                             <th className="px-6 py-3">Perusahaan & Kontak</th>

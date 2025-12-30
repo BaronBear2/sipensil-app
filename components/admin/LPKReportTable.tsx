@@ -72,8 +72,8 @@ export default function LPKReportTable({ reports, viewOnly = false, onDelete }: 
     return (
         <>
             {/* TABEL DATA */}
-            <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left">
+            <div className="overflow-x-auto w-full">
+                <table className="w-full text-sm text-left min-w-[800px]">
                     <thead className="text-xs text-gray-700 uppercase bg-gray-100">
                         <tr>
                             <th className="px-6 py-3">LPK & Kontak</th>
