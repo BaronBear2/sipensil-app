@@ -7,7 +7,7 @@ import { Building, MapPin, Save, ArrowLeft, ShieldCheck, User, Phone, FileText, 
 import Link from 'next/link'
 
 import Modal from '@/components/ui/Modal'
-import StatusModal from '@/components/ui/StatusModal'
+import Swal from 'sweetalert2'
 
 export default function LpkProfilePage() {
   const supabase = createClient()
@@ -17,9 +17,6 @@ export default function LpkProfilePage() {
   const [saving, setSaving] = useState(false)
 
   // Modals
-  const [statusModal, setStatusModal] = useState<{ isOpen: boolean, type: 'success' | 'error', message: string }>({
-    isOpen: false, type: 'success', message: ''
-  })
   const [showWelcomeModal, setShowWelcomeModal] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
 
@@ -40,6 +37,9 @@ export default function LpkProfilePage() {
     lpk_type: 'Swasta', // Default
     director_name: '',
     director_phone: '',
+    operational_pj: '',
+    operational_pj_title: '',
+    operational_pj_phone: '',
 
     account_status: 'unverified',
     rejection_message: ''
@@ -102,7 +102,7 @@ export default function LpkProfilePage() {
       .eq('id', user?.id)
 
     if (baseError) {
-      setStatusModal({ isOpen: true, type: 'error', message: 'Gagal update base profil: ' + baseError.message })
+      Swal.fire({ icon: 'error', title: 'Gagal', text: 'Gagal update base profil: ' + baseError.message })
       setSaving(false)
       return
     }
@@ -123,15 +123,23 @@ export default function LpkProfilePage() {
         lpk_type: formData.lpk_type,
         director_name: formData.director_name,
         director_phone: formData.director_phone,
+        operational_pj: formData.operational_pj,
+        operational_pj_title: formData.operational_pj_title,
+        operational_pj_phone: formData.operational_pj_phone,
       }, { onConflict: 'user_id' })
 
     const error = detailError
 
     if (error) {
-      setStatusModal({ isOpen: true, type: 'error', message: 'Gagal: ' + error.message })
+      Swal.fire({ icon: 'error', title: 'Gagal', text: 'Gagal: ' + error.message })
     } else {
-      setStatusModal({ isOpen: true, type: 'success', message: 'Berhasil disimpan! Silakan lanjut mengisi laporan.' })
-      setTimeout(() => router.push('/dashboard/lpk'), 1500)
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil',
+        text: 'Berhasil disimpan! Silakan lanjut mengisi laporan.',
+        timer: 2000,
+        showConfirmButton: false
+      }).then(() => router.push('/dashboard/lpk'))
     }
     setSaving(false)
   }
@@ -149,8 +157,6 @@ export default function LpkProfilePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 font-sans animate-fade-in pb-24">
-      <StatusModal {...statusModal} onClose={() => setStatusModal(prev => ({ ...prev, isOpen: false }))} />
-
       {/* CONFIRMATION MODAL */}
       <Modal isOpen={showConfirmModal} onClose={() => setShowConfirmModal(false)} title="Konfirmasi Simpan">
         <div className="p-6">
@@ -290,6 +296,15 @@ export default function LpkProfilePage() {
 
               <div><label className={labelClass}>Nama Kepala / Direktur LPK</label><input required name="director_name" value={formData.director_name || ''} onChange={handleChange} className={inputClass} placeholder="Nama Lengkap" /></div>
               <div><label className={labelClass}>No. Telepon Kepala / Direktur</label><input required name="director_phone" value={formData.director_phone || ''} onChange={handleChange} className={inputClass} placeholder="08xxxxxxxxxx" /></div>
+
+              <div className="pt-4 border-t mt-4">
+                <h4 className="text-sm font-bold text-gray-700 mb-3">Penanggung Jawab Operasional</h4>
+                <div className="space-y-4">
+                  <div><label className={labelClass}>Nama Penanggung Jawab</label><input name="operational_pj" value={formData.operational_pj || ''} onChange={handleChange} className={inputClass} placeholder="Nama PJ Operasional" /></div>
+                  <div><label className={labelClass}>Jabatan</label><input name="operational_pj_title" value={formData.operational_pj_title || ''} onChange={handleChange} className={inputClass} placeholder="Contoh: Manajer Pelatihan" /></div>
+                  <div><label className={labelClass}>No. Telepon PJ</label><input name="operational_pj_phone" value={formData.operational_pj_phone || ''} onChange={handleChange} className={inputClass} placeholder="08xxxxxxxxxx" /></div>
+                </div>
+              </div>
             </div>
 
           </div>

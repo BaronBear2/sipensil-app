@@ -4,7 +4,7 @@ import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 // --- 1. LOGIC LPK (SIMPAN/UPDATE LAPORAN) ---
-export async function submitLpkReport(data: any) {
+export async function submitLpkReport(data: any, overwrite = false) {
   const supabase = await createClient()
 
   // 1. Cek User
@@ -14,7 +14,6 @@ export async function submitLpkReport(data: any) {
   // 2. Cek Status Profil
   const { data: profile } = await supabase.from('profiles').select('account_status').eq('id', user.id).single()
 
-  // LOGIC BARU: Boleh submit jika Verified ATAU Pending (artinya sudah isi profil)
   if (profile?.account_status === 'unverified') {
     return { error: 'Profil Lembaga belum lengkap. Silakan edit profil terlebih dahulu sebelum mengisi laporan.' }
   }
@@ -29,16 +28,30 @@ export async function submitLpkReport(data: any) {
     .eq('tahun', data.tahun)
     .single()
 
+  // Prevent duplicate/overwrite without permission if it's not a revision of the SAME ID
+  // (Jika user sedang edit form untuk ID X, tidak apa apa. Tapi jika User create New form, tapi semester sama dengan ID Y, harus confirm)
+  // Disini kita asumsi data.id kosong jika Create New.
+
+  if (existing && !overwrite) {
+    // Check if we are actually editing the same report?
+    // Since `submitLpkReport` logic on `existing` branch was originally implicit upsert-by-semester.
+    // We return a specialized status to trigger Modal in frontend.
+    return {
+      status: 'EXISTS',
+      message: `Laporan untuk Semester ${data.semester} ${data.tahun} sudah ada. Apakah Anda ingin menimpanya?`,
+      existingId: existing.id
+    }
+  }
+
   let error;
 
   if (existing) {
-    // UPDATE (Revisi/Draft)
+    // UPDATE (Revisi/Draft/Overwrite)
     const { error: err } = await supabase
       .from('lpk_reports')
       .update({
         nama_lpk: data.namaLpk,
         no_reg: data.noReg,
-
         // Update all JSONB columns
         data_akreditasi: data.data_akreditasi,
         data_karyawan: data.data_karyawan,
@@ -49,9 +62,8 @@ export async function submitLpkReport(data: any) {
         data_pengembangan_kelembagaan: data.data_pengembangan_kelembagaan,
         data_mitra: data.data_mitra,
         data_kendala: data.data_kendala,
-
-        status: 'SUBMITTED', // Status kembali ke Submitted agar Admin notif
-        updated_at: new Date() // Trigger update timestamp
+        status: 'SUBMITTED',
+        // updated_at deleted
       })
       .eq('id', existing.id)
     error = err;

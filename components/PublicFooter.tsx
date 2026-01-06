@@ -60,9 +60,7 @@ export default function PublicFooter() {
                             {[
                                 { label: 'Tentang Kami', href: '/profil/tentang-kami' },
                                 { label: 'Katalog Pelatihan', href: '/pelatihan' },
-                                { label: 'Cara Menggunakan Website', href: '#' },
-                                { label: 'Kebijakan Privasi', href: '#' },
-                                { label: 'Syarat & Ketentuan', href: '#' }
+                                { label: 'Panduan Pengguna', href: '#' }
                             ].map((link, idx) => (
                                 <li key={idx}>
                                     <Link href={link.href} className="flex items-center gap-2 hover:text-blue-400 transition-colors group text-sm font-medium">

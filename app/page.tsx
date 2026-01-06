@@ -116,7 +116,7 @@ export default function LandingPage() {
                 >
                   <GraduationCap size={18} /> Daftar Pelatihan
                 </button>
-                <div className="text-xs text-slate-400 font-medium">Tersedia: Pelatihan BLK, Magang, IM Japan</div>
+                <div className="text-xs text-slate-400 font-medium">Tersedia: Pendaftaran Pelatihan BLK, Permohonan Surat Tes IM-Japan</div>
               </div>
             </div>
 
@@ -127,7 +127,7 @@ export default function LandingPage() {
               </div>
               <h3 className="text-2xl font-bold text-slate-800 mb-4">Perusahaan</h3>
               <p className="text-slate-500 leading-relaxed mb-8">
-                Buka peluang <strong>Pemagangan</strong> di perusahaan Anda dan kelola proses administrasi serta pelaporan (Pencatatan) secara digital.
+                Kelola proses <strong> pencatatan </strong> peserta magang secara digital.
               </p>
               <div className="flex flex-col gap-3 w-full mt-auto">
                 <button
@@ -136,7 +136,7 @@ export default function LandingPage() {
                 >
                   <Briefcase size={18} /> Daftar Perusahaan
                 </button>
-                <div className="text-xs text-slate-400 font-medium">Layanan: Pencatatan Pemagangan, Seleksi</div>
+                <div className="text-xs text-slate-400 font-medium">Layanan: Pencatatan Peserta Magang</div>
               </div>
             </div>
 
@@ -156,7 +156,7 @@ export default function LandingPage() {
                 >
                   <FileCheck2 size={18} /> Portal LPK
                 </button>
-                <div className="text-xs text-slate-400 font-medium">Fitur: Pelaporan Online, Manajemen Data</div>
+                <div className="text-xs text-slate-400 font-medium">Fitur: Pelaporan Periodik 6 Bulan</div>
               </div>
             </div>
 

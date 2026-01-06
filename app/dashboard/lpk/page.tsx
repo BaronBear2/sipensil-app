@@ -14,11 +14,6 @@ export default async function DashboardLPK() {
     const { data: profile } = await supabase.from('profiles').select('*, profile_lpk(*)').eq('id', user.id).single()
     const lpkData = profile?.profile_lpk || {} // Detailed LPK data
 
-    // --- REDIRECT LOGIC FOR FIRST TIME LOGIN ---
-    if (profile?.account_status === 'unverified') {
-        redirect('/dashboard/lpk/profile?alert=first_login')
-    }
-
     // Fetch Summary Stats
     const { count: reportsCount } = await supabase.from('lpk_reports').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
     const { count: pendingCount } = await supabase.from('lpk_reports').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'PENDING')

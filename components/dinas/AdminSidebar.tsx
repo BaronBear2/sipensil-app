@@ -31,14 +31,14 @@ const MENU_ITEMS: MenuItem[] = [
                 name: 'Pelatihan BLK',
                 // icon: GraduationCap, // Optional sub-icon
                 children: [
-                    { name: 'Verifikasi Pending', href: '/dashboard/dinas/verifikasi-pencaker?status=pending' },
+                    { name: 'Pendaftaran Belum Verifikasi', href: '/dashboard/dinas/verifikasi-pencaker?status=pending' },
                     { name: 'Data Pelatihan BLK', href: '/dashboard/dinas/pelatihan' },
-                    { name: 'Pencaker yang sedang mengikuti pelatihan', href: '/dashboard/dinas/peserta' }, // Filter logic to be added
+                    { name: 'Data Pencaker Sedang Pelatihan', href: '/dashboard/dinas/peserta' }, // Filter logic to be added
                     {
                         name: 'Riwayat Verifikasi',
                         children: [
-                            { name: 'Pencaker yang pernah diterima', href: '/dashboard/dinas/verifikasi-pencaker?status=verified' },
-                            { name: 'Pencaker yang pernah ditolak', href: '/dashboard/dinas/verifikasi-pencaker?status=rejected' },
+                            { name: 'Data Pencaker diterima', href: '/dashboard/dinas/verifikasi-pencaker?status=verified' },
+                            { name: 'Data Pencaker ditolak', href: '/dashboard/dinas/verifikasi-pencaker?status=rejected' },
                         ]
                     }
                 ]
@@ -46,14 +46,14 @@ const MENU_ITEMS: MenuItem[] = [
             {
                 name: 'IM-Japan',
                 children: [
-                    { name: 'Verifikasi Pending', href: '/dashboard/dinas/im-japan?status=pending' },
-                    { name: 'Edit Persyaratan Permohonan', href: '/dashboard/dinas/im-japan/requirements' },
+                    { name: 'Permohonan Belum Verifikasi', href: '/dashboard/dinas/im-japan?status=pending' },
+                    { name: 'Konfigurasi Persyaratan Permohonan', href: '/dashboard/dinas/im-japan/requirements' },
                     { name: 'Data Permohonan', href: '/dashboard/dinas/im-japan?status=approved' }, // Placeholder param
                     {
                         name: 'Riwayat Verifikasi',
                         children: [
-                            { name: 'Permohonan yang pernah diterima', href: '/dashboard/dinas/im-japan?status=approved' },
-                            { name: 'Permohonan yang pernah ditolak', href: '/dashboard/dinas/im-japan?status=rejected' },
+                            { name: 'Data Permohonan diterima', href: '/dashboard/dinas/im-japan?status=approved' },
+                            { name: 'Data Permohonan ditolak', href: '/dashboard/dinas/im-japan?status=rejected' },
                         ]
                     }
                 ]
@@ -69,13 +69,13 @@ const MENU_ITEMS: MenuItem[] = [
             {
                 name: 'Laporan Periodik 6 Bulan',
                 children: [
-                    { name: 'Verifikasi Pending', href: '/dashboard/dinas/lpk?status=pending' },
+                    { name: 'Laporan Belum Verifikasi', href: '/dashboard/dinas/lpk?status=pending' },
                     { name: 'Data Laporan', href: '/dashboard/dinas/lpk?status=approved' },
                     {
                         name: 'Riwayat Verifikasi',
                         children: [
-                            { name: 'Laporan yang pernah diterima', href: '/dashboard/dinas/lpk?status=approved' },
-                            { name: 'Laporan yang pernah ditolak', href: '/dashboard/dinas/lpk?status=rejected' },
+                            { name: 'Laporan diterima', href: '/dashboard/dinas/lpk?status=approved' },
+                            { name: 'Laporan ditolak', href: '/dashboard/dinas/lpk?status=rejected' },
                         ]
                     }
                 ]
@@ -91,13 +91,13 @@ const MENU_ITEMS: MenuItem[] = [
             {
                 name: 'Pencatatan Peserta Magang',
                 children: [
-                    { name: 'Verifikasi Pending', href: '/dashboard/dinas/pemagangan?status=pending' },
+                    { name: 'Pencatatan Belum Verifikasi', href: '/dashboard/dinas/pemagangan?status=pending' },
                     { name: 'Data Pencatatan', href: '/dashboard/dinas/pemagangan?status=approved' },
                     {
                         name: 'Riwayat Verifikasi',
                         children: [
-                            { name: 'Pencatatan yang pernah diterima', href: '/dashboard/dinas/pemagangan?status=approved' },
-                            { name: 'Pencatatan yang pernah ditolak', href: '/dashboard/dinas/pemagangan?status=rejected' },
+                            { name: 'Pencatatan diterima', href: '/dashboard/dinas/pemagangan?status=approved' },
+                            { name: 'Pencatatan ditolak', href: '/dashboard/dinas/pemagangan?status=rejected' },
                         ]
                     }
                 ]

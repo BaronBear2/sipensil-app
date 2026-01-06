@@ -112,7 +112,7 @@ export default function LPKReportTable({ reports, viewOnly = false, onDelete }: 
                                     </td>
                                     <td className="px-6 py-4 text-center">
                                         {/* Word Button: Blue Style */}
-                                        <a href={`/api/export/lpk-report/${item.id}`} className="text-blue-600 text-xs font-bold border border-blue-200 px-4 py-2 rounded-lg hover:bg-blue-50 hover:shadow-sm transition flex items-center justify-center gap-2 w-28 mx-auto group">
+                                        <a href={`/api/generate-word/lpk-report?id=${item.id}`} className="text-blue-600 text-xs font-bold border border-blue-200 px-4 py-2 rounded-lg hover:bg-blue-50 hover:shadow-sm transition flex items-center justify-center gap-2 w-28 mx-auto group">
                                             <Download size={14} className="group-hover:scale-110 transition" /> Word
                                         </a>
                                     </td>

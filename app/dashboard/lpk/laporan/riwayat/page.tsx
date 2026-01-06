@@ -136,7 +136,7 @@ function ReportCard({ report, variant }: { report: any, variant: 'pending' | 'ac
                         <Edit size={14} /> Revisi Sekarang
                     </Link>
                 ) : (
-                    <a href={`/api/export/lpk-report/${report.id}`} className="flex-1 bg-blue-50 text-blue-600 border border-blue-200 text-xs font-bold py-2 rounded-lg text-center hover:bg-blue-100 flex items-center justify-center gap-1 transition-colors">
+                    <a href={`/api/generate-word/lpk-report?id=${report.id}`} className="flex-1 bg-blue-50 text-blue-600 border border-blue-200 text-xs font-bold py-2 rounded-lg text-center hover:bg-blue-100 flex items-center justify-center gap-1 transition-colors">
                         <FileText size={14} /> Download Word
                     </a>
                 )}

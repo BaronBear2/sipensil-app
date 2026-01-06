@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Trash2, Save, FileText, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react'
 import { submitLpkReport } from '@/actions/organization'
+import Swal from 'sweetalert2'
 
 // Props menerima 'initialData' jika ini adalah revisi
 export default function LpkReportForm({ profile, initialData, userId }: { profile: any, initialData?: any, userId: string }) {
@@ -119,7 +120,13 @@ export default function LpkReportForm({ profile, initialData, userId }: { profil
         if (!userId) return
         localStorage.removeItem(`lpk_laporan_draft_${userId}`)
         setReportData(defaultState)
-        alert("Draft berhasil direset.")
+        Swal.fire({
+            icon: 'info',
+            title: 'Draft Direset',
+            text: 'Formulir telah dikosongkan.',
+            timer: 1500,
+            showConfirmButton: false
+        })
     }
 
     // --- HANDLERS ---
@@ -165,10 +172,16 @@ export default function LpkReportForm({ profile, initialData, userId }: { profil
 
     // State for Confirmation Modal
     const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+    // State for Overwrite Confirmation
+    const [overwriteModal, setOverwriteModal] = useState(false)
+    const [overwriteMessage, setOverwriteMessage] = useState('')
 
     const handleSubmit = async () => {
         // Validasi simple (optional)
-        if (!reportData.namaLpk) return alert("Nama LPK tidak boleh kosong")
+        if (!reportData.namaLpk) {
+            Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Nama LPK tidak boleh kosong' })
+            return
+        }
 
         // Open Modal Confirmation
         setIsConfirmOpen(true)
@@ -176,20 +189,30 @@ export default function LpkReportForm({ profile, initialData, userId }: { profil
 
     const router = useRouter()
 
-    const executeSubmit = async () => {
+    const executeSubmit = async (overwrite = false) => {
         setLoading(true)
         setIsConfirmOpen(false)
+        setOverwriteModal(false)
 
-        const res = await submitLpkReport(reportData)
+        const res = await submitLpkReport(reportData, overwrite)
+
+        if (res.status === 'EXISTS') {
+            setLoading(false)
+            setOverwriteMessage(res.message)
+            setOverwriteModal(true)
+            return
+        }
+
         if (res.error) {
-            alert(res.error)
+            Swal.fire({ icon: 'error', title: 'Gagal', text: res.error })
         } else {
             // Clear Draft on Success (only if it was a new report)
             if (!initialData && userId) {
                 localStorage.removeItem(`lpk_laporan_draft_${userId}`)
             }
-            alert(res.success)
-            router.push('/dashboard/lpk/laporan/riwayat')
+            Swal.fire({ icon: 'success', title: 'Berhasil', text: res.success }).then(() => {
+                router.push('/dashboard/lpk/laporan/riwayat')
+            })
         }
         setLoading(false)
     }
@@ -209,7 +232,7 @@ export default function LpkReportForm({ profile, initialData, userId }: { profil
                             <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <FileText size={32} />
                             </div>
-                            <h3 className="text-xl font-bold text-gray-800 mb-2">Kirim Laporan?</h3>
+                            <h3 className="text-xl font-bold text-gray-800 mb-2">Item Konfirmasi</h3>
                             <p className="text-sm text-gray-600 mb-6">
                                 Pastikan seluruh data yang Anda isi sudah benar. <br />
                                 Data akan dikirim ke Dinas untuk diverifikasi.
@@ -222,11 +245,43 @@ export default function LpkReportForm({ profile, initialData, userId }: { profil
                                     Batal
                                 </button>
                                 <button
-                                    onClick={executeSubmit}
+                                    onClick={() => executeSubmit(false)}
                                     disabled={loading}
                                     className="px-5 py-2.5 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 text-sm shadow-md"
                                 >
                                     Ya, Kirim Laporan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* OVERWRITE CONFIRMATION MODAL */}
+            {overwriteModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in-up">
+                        <div className="p-6 text-center">
+                            <div className="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <AlertTriangle size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-800 mb-2">Laporan Sudah Ada</h3>
+                            <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+                                {overwriteMessage || 'Laporan untuk periode ini sudah ada.'}
+                            </p>
+                            <div className="flex gap-3 justify-center">
+                                <button
+                                    onClick={() => setOverwriteModal(false)}
+                                    className="px-5 py-2.5 rounded-lg border font-bold text-gray-600 hover:bg-gray-50 text-sm"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    onClick={() => executeSubmit(true)}
+                                    disabled={loading}
+                                    className="px-5 py-2.5 rounded-lg bg-orange-600 text-white font-bold hover:bg-orange-700 text-sm shadow-md"
+                                >
+                                    Timpa Laporan
                                 </button>
                             </div>
                         </div>
