@@ -48,25 +48,7 @@ export default function CreateUserForm() {
     return (
         <>
             <form action={handleSubmit} className="p-8 space-y-8">
-                {/* SECTION: ROLE SELECTION */}
-                <div className="bg-blue-50/50 p-6 rounded-xl border border-blue-100">
-                    <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Pilih Role Akun</label>
-                    <div className="flex flex-wrap gap-4">
-                        {['PENCAKER', 'PERUSAHAAN', 'LPK'].map((role) => (
-                            <label key={role} className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${selectedRole === role ? 'bg-white border-blue-500 shadow-md ring-1 ring-blue-500' : 'bg-white border-gray-200 hover:border-blue-300'}`}>
-                                <input
-                                    type="radio"
-                                    name="role"
-                                    value={role}
-                                    checked={selectedRole === role}
-                                    onChange={(e) => setSelectedRole(e.target.value)}
-                                    className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-                                />
-                                <span className="font-bold text-gray-700 text-sm">{role === 'PENCAKER' ? 'PENCAKER' : role}</span>
-                            </label>
-                        ))}
-                    </div>
-                </div>
+                {/* SECTION: ROLE SELECTION (Removed) */}
 
                 {/* --- BAGIAN 1: DATA WAJIB (REGISTRASI) --- */}
                 <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
@@ -80,13 +62,13 @@ export default function CreateUserForm() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="md:col-span-2">
                                 <label className="block text-xs font-bold text-gray-700 mb-2">
-                                    {selectedRole === 'PENCAKER' ? 'Nama Lengkap (Sesuai KTP)' : selectedRole === 'LPK' ? 'Nama Lembaga (LPK)' : 'Nama Perusahaan'} <span className="text-red-500">*</span>
+                                    Nama Lengkap (Sesuai KTP) <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="text"
                                     name="full_name"
                                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                                    placeholder={selectedRole === 'PENCAKER' ? 'Nama Lengkap User' : selectedRole === 'LPK' ? 'Nama LPK' : 'Nama PT/CV'}
+                                    placeholder="Nama Lengkap User"
                                     required
                                 />
                             </div>
@@ -97,36 +79,6 @@ export default function CreateUserForm() {
                                     <label className="block text-xs font-bold text-gray-700 mb-2">NIK <span className="text-red-500">*</span></label>
                                     <input type="text" name="nik" required className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" placeholder="16 digit NIK" maxLength={16} />
                                 </div>
-                            )}
-
-                            {selectedRole === 'PERUSAHAAN' && (
-                                <>
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-2">NIB <span className="text-red-500">*</span></label>
-                                        <input type="text" name="nib" required className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-2">Telepon HRD <span className="text-red-500">*</span></label>
-                                        <input type="text" name="phone" required className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
-                                    </div>
-                                </>
-                            )}
-
-                            {selectedRole === 'LPK' && (
-                                <>
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-2">Nama PJ Operasional <span className="text-red-500">*</span></label>
-                                        <input type="text" name="operational_pj" required className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-2">Jabatan PJ <span className="text-red-500">*</span></label>
-                                        <input type="text" name="operational_pj_title" required className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-2">No. HP PJ <span className="text-red-500">*</span></label>
-                                        <input type="text" name="operational_pj_phone" required className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
-                                    </div>
-                                </>
                             )}
 
                             {/* Credentials */}
@@ -233,84 +185,7 @@ export default function CreateUserForm() {
                             </div>
                         )}
 
-                        {/* PERUSAHAAN OPTIONAL */}
-                        {selectedRole === 'PERUSAHAAN' && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-700 mb-2">Sektor Usaha</label>
-                                    <input type="text" name="sector" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-700 mb-2">Email Resmi (Official)</label>
-                                    <input type="email" name="email_official" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-700 mb-2">Nama Pimpinan / Direktur</label>
-                                    <input type="text" name="director_name" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-700 mb-2">Nama PIC Pemagangan</label>
-                                    <input type="text" name="pic_name" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-700 mb-2">No. HP PIC</label>
-                                    <input type="text" name="pic_phone" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
-                                </div>
-                                <div className="md:col-span-2">
-                                    <label className="block text-xs font-bold text-gray-700 mb-2">Alamat Kantor</label>
-                                    <textarea name="address_office" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" rows={3} />
-                                </div>
-                            </div>
-                        )}
 
-                        {/* LPK OPTIONAL */}
-                        {(selectedRole === 'LPK') && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-700 mb-2">NIPS</label>
-                                    <input type="text" name="nips" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-700 mb-2">Tipe LPK</label>
-                                    <select name="lpk_type" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white">
-                                        <option value="Swasta">Swasta</option>
-                                        <option value="Pemerintah">Pemerintah</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-700 mb-2">No. Izin / Tanda Daftar</label>
-                                    <input type="text" name="license_number" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-700 mb-2">Tanggal Izin</label>
-                                    <input type="date" name="license_date" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-700 mb-2">Fax</label>
-                                    <input type="text" name="fax" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-700 mb-2">Email Resmi LPK</label>
-                                    <input type="email" name="email_official" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-700 mb-2">Nama Kepala / Direktur</label>
-                                    <input type="text" name="director_name" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-700 mb-2">No. HP Direktur</label>
-                                    <input type="text" name="director_phone" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
-                                </div>
-                                <div className="md:col-span-2">
-                                    <label className="block text-xs font-bold text-gray-700 mb-2">Alamat Kantor</label>
-                                    <textarea name="address_office" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" rows={3} />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-700 mb-2">Telepon LPK</label>
-                                    <input type="text" name="phone" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </div>
 

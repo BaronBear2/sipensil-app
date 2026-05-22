@@ -68,18 +68,66 @@ export async function applyTraining(formData: FormData) {
   // Jika belum -> PENDING (Masuk antrian Admin Dashboard)
   const initialStatus = isVerified ? 'DITERIMA' : 'PENDING'
 
-  // Masukkan data
-  const { error: insertError } = await supabase
-    .from('training_registrations')
-    .insert({
-      user_id: user.id,
-      training_id: trainingId,
-      status: initialStatus
-    })
+  const age = parseInt(formData.get('age') as string || '0')
+  const is_unemployed = formData.get('is_unemployed') === 'true'
+  const has_sim_a = formData.get('has_sim_a') === 'true'
+  const ktp_address = formData.get('ktp_address') as string
+  const ijazah_url = formData.get('ijazah_url') as string
+  const ktp_url = formData.get('ktp_url') as string
+  const class_id = formData.get('class_id') as string
+  const additional_documents = JSON.parse(formData.get('additional_documents_json') as string || '{}')
 
-  if (insertError) {
-    if (insertError.code === '23505') return { error: 'Anda sudah terdaftar.' }
-    return { error: 'Gagal mendaftar: ' + insertError.message }
+  // Cek apakah pernah DITOLAK di pelatihan yang SAMA
+  const { data: rejectedRegistration } = await supabase
+    .from('training_registrations')
+    .select('id, status')
+    .eq('user_id', user.id)
+    .eq('training_id', trainingId)
+    .eq('status', 'DITOLAK')
+    .maybeSingle()
+
+  if (rejectedRegistration) {
+    const { error: updateError } = await supabase
+      .from('training_registrations')
+      .update({
+        status: initialStatus,
+        progress_step: 1, // Reset Step
+        age: age,
+        is_unemployed: is_unemployed,
+        has_sim_a: has_sim_a,
+        ktp_address: ktp_address,
+        ijazah_url: ijazah_url,
+        ktp_url: ktp_url,
+        class_id: class_id || null,
+        additional_documents: additional_documents,
+        admin_notes: null // Clear previous rejection note
+      })
+      .eq('id', rejectedRegistration.id)
+
+    if (updateError) return { error: 'Gagal mendaftar ulang: ' + updateError.message }
+  } else {
+    // Masukkan data baru
+    const { error: insertError } = await supabase
+      .from('training_registrations')
+      .insert({
+        user_id: user.id,
+        training_id: trainingId,
+        status: initialStatus,
+        progress_step: 1, // Default Step 1
+        age: age,
+        is_unemployed: is_unemployed,
+        has_sim_a: has_sim_a,
+        ktp_address: ktp_address,
+        ijazah_url: ijazah_url,
+        ktp_url: ktp_url,
+        class_id: class_id || null,
+        additional_documents: additional_documents
+      })
+
+    if (insertError) {
+      if (insertError.code === '23505') return { error: 'Anda sudah terdaftar.' }
+      return { error: 'Gagal mendaftar: ' + insertError.message }
+    }
   }
 
   // Update jumlah filled kuota HANYA jika langsung diterima

@@ -4,6 +4,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
+import { sendWelcomeEmail } from '@/utils/notifications'
 
 // 1. LOGIN ACTION
 export async function login(formData: FormData) {
@@ -137,6 +138,10 @@ export async function signup(formData: FormData) {
   // Depending on config, if it returns success we assume it's OK.
   // But if the user says "It bugs out", it implies silent failure.
   // We'll trust standard error handling for now but ensure the LPK mapping is fixed.
+
+  // Send Custom Welcome Email
+  // Fire and forget (don't await so it doesn't block the redirect)
+  sendWelcomeEmail(email, fullName, role).catch(e => console.error('Welcome email failed:', e))
 
   revalidatePath('/', 'layout')
   redirect('/auth/login?message=Check email to continue sign in process')

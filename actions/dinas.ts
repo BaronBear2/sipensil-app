@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import path from 'path'
 import fs from 'fs/promises'
+import { sendWhatsApp } from '@/utils/notifications'
 
 // Helper for Image Upload (Local Mock -> public/uploads)
 // In production, use Supabase Storage. Here we demonstrate functionality.
@@ -62,27 +63,182 @@ export async function verifyProfileAction(formData: FormData) {
 
   if (error) return { error: error.message }
 
+  let autoFailTriggered = false
+
   // 2. Update Status Pelatihan Specific Row (Reliable)
   const regId = formData.get('regId') as string
   if (regId) {
     const statusUpdate = action === 'approve' ? 'DITERIMA' : 'DITOLAK'
+    
+    // Fetch training_id and details for notifications
+    const { data: regData } = await supabase.from('training_registrations').select('training_id, user_id, blk_trainings(title)').eq('id', regId).single()
+
     const { error: regError } = await supabase
       .from('training_registrations')
       .update({
         status: statusUpdate,
+        progress_step: action === 'approve' ? 2 : 1,
         admin_notes: action === 'reject' ? reason : null // Fix: Save the reason!
       })
       .eq('id', regId)
 
     if (regError) return { error: "Failed to update registration: " + regError.message }
+
+    if (action === 'approve' && regData?.training_id) {
+      await supabase.rpc('increment_quota', { row_id: regData.training_id })
+      
+      // Check Quota Logic
+      const { data: trainingData } = await supabase.from('blk_trainings').select('quota').eq('id', regData.training_id).single()
+      if (trainingData && trainingData.quota > 0) {
+        const { count } = await supabase.from('training_registrations').select('*', { count: 'exact', head: true }).eq('training_id', regData.training_id).in('status', ['DITERIMA', 'LULUS', 'SELESAI'])
+        if (count && count >= trainingData.quota) {
+          const { error: bulkRejectError } = await supabase.from('training_registrations').update({ status: 'DITOLAK', admin_notes: 'Mohon maaf, kuota angkatan telah terpenuhi.' }).eq('training_id', regData.training_id).eq('status', 'PENDING')
+          if (!bulkRejectError) autoFailTriggered = true
+        }
+      }
+
+      // Send WhatsApp Notification
+      if (regData?.user_id) {
+        const { data: profile } = await supabase.from('profile_pencaker').select('phone').eq('user_id', regData.user_id).single()
+        if (profile?.phone) {
+          const title = regData.blk_trainings?.title || 'Pelatihan'
+          const message = `Selamat! Pendaftaran Anda untuk pelatihan "${title}" telah Lulus Administrasi (Tahap 1). Silakan masuk ke dashboard SIPENSIL untuk melihat jadwal seleksi/ujian.`
+          sendWhatsApp(profile.phone, message).catch(e => console.error('WA notification failed:', e))
+        }
+      }
+    }
   } else {
     // Fallback if no regId provided (backward compatibility or error)
     console.error("No regId provided for training update")
   }
 
   revalidatePath('/dashboard/dinas/verifikasi-pencaker')
-  revalidatePath('/dashboard/dinas')
-  return { success: true }
+  revalidatePath('/dashboard/dinas', 'layout')
+  return { success: true, autoFailTriggered }
+}
+
+// 1.5 VERIFIKASI TRAINING REGISTRATION (PER CLASS) - PHASE 5
+export async function verifyTrainingRegistrationAction(formData: FormData) {
+  const supabase = await createClient()
+
+  // Cek Admin
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("Unauthorized")
+
+  const regId = formData.get('regId') as string
+  const action = formData.get('action') as string
+  const trainingId = formData.get('trainingId') as string
+  const reason = formData.get('reason') as string
+
+  let autoFailTriggered = false
+
+  if (action === 'reject' || action === 'tidak_lulus') {
+    const { error } = await supabase
+      .from('training_registrations')
+      .update({
+        status: 'DITOLAK',
+        admin_notes: reason || 'Ditolak oleh admin.'
+      })
+      .eq('id', regId)
+
+    if (error) return { error: error.message }
+    console.log('Mock API Notification Triggered for user:', regId, 'status: DITOLAK')
+  } else if (action === 'approve_admin') {
+    // Lolos Administrasi (Step 1 -> 2)
+    const { error } = await supabase
+      .from('training_registrations')
+      .update({
+        status: 'DITERIMA',
+        progress_step: 2,
+        admin_notes: null
+      })
+      .eq('id', regId)
+
+    if (error) return { error: error.message }
+    console.log('Mock API Notification Triggered for user:', regId, 'new_step: 2')
+
+    // Increment quota in blk_trainings
+    await supabase.rpc('increment_quota', { row_id: trainingId })
+
+    // Check Quota Logic for Step 2 if you want to limit early
+    const { data: trainingData } = await supabase.from('blk_trainings').select('quota, title').eq('id', trainingId).single()
+    if (trainingData && trainingData.quota > 0) {
+      const { count } = await supabase.from('training_registrations').select('*', { count: 'exact', head: true }).eq('training_id', trainingId).in('status', ['DITERIMA', 'LULUS', 'SELESAI'])
+      if (count && count >= trainingData.quota) {
+        const { error: bulkRejectError } = await supabase.from('training_registrations').update({ status: 'DITOLAK', admin_notes: 'Mohon maaf, kuota angkatan telah terpenuhi.' }).eq('training_id', trainingId).eq('status', 'PENDING')
+        if (!bulkRejectError) autoFailTriggered = true
+      }
+    }
+
+    // Send WhatsApp Notification
+    const { data: regData } = await supabase.from('training_registrations').select('user_id').eq('id', regId).single()
+    if (regData?.user_id) {
+      const { data: profile } = await supabase.from('profile_pencaker').select('phone').eq('user_id', regData.user_id).single()
+      if (profile?.phone) {
+        const title = trainingData?.title || 'Pelatihan'
+        const message = `Selamat! Pendaftaran Anda untuk pelatihan "${title}" telah Lulus Administrasi (Tahap 1). Silakan masuk ke dashboard SIPENSIL untuk melihat jadwal seleksi/ujian.`
+        sendWhatsApp(profile.phone, message).catch(e => console.error('WA notification failed:', e))
+      }
+    }
+  } else if (action === 'approve_seleksi') {
+    // Lolos Seleksi (Step 2 -> 4, skip 3 because placement is same batch)
+    const { error } = await supabase
+      .from('training_registrations')
+      .update({
+        progress_step: 4,
+        admin_notes: null
+      })
+      .eq('id', regId)
+
+    if (error) return { error: error.message }
+    console.log('Mock API Notification Triggered for user:', regId, 'new_step: 4')
+  } else if (action === 'lulus') {
+    // Lulus Penilaian Akhir (Step 6 -> 7)
+    const { error } = await supabase
+      .from('training_registrations')
+      .update({
+        status: 'LULUS',
+        progress_step: 7,
+        admin_notes: null
+      })
+      .eq('id', regId)
+
+    if (error) return { error: error.message }
+    console.log('Mock API Notification Triggered for user:', regId, 'new_step: 7', 'status: LULUS')
+  }
+
+  revalidatePath(`/dashboard/dinas/pelatihan/${trainingId}`)
+  return { success: true, autoFailTriggered }
+}
+
+export async function uploadTrainingPdfAction(formData: FormData) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const trainingId = formData.get('trainingId') as string
+    const phase = formData.get('phase') as string // 'admin' | 'selection' | 'final'
+    const file = formData.get('file') as File
+
+    if (!file || file.size === 0) return { error: "No file provided" }
+
+    const buffer = Buffer.from(await file.arrayBuffer())
+    const filename = `${Date.now()}-${file.name.replace(/\s/g, '-')}`
+    const { data, error } = await supabase.storage.from('documents').upload(`trainings/${trainingId}/${phase}/${filename}`, buffer)
+
+    if (error) return { error: error.message }
+
+    const { data: urlData } = supabase.storage.from('documents').getPublicUrl(`trainings/${trainingId}/${phase}/${filename}`)
+    const publicUrl = urlData.publicUrl
+
+    // Update blk_trainings
+    const column = phase === 'admin' ? 'admin_passed_pdf' : phase === 'selection' ? 'selection_passed_pdf' : 'final_passed_pdf'
+    const { error: dbError } = await supabase.from('blk_trainings').update({ [column]: publicUrl }).eq('id', trainingId)
+
+    if (dbError) return { error: dbError.message }
+
+    revalidatePath(`/dashboard/dinas/pelatihan/${trainingId}`)
+    return { success: true, url: publicUrl }
 }
 
 // --- 2. VERIFIKASI IM JAPAN ---
@@ -110,7 +266,7 @@ export async function verifyImJapanAction(formData: FormData) {
     const { error } = await adminClient.from('im_japan_registrations').update({ status: 'REJECTED', admin_notes: reason }).eq('id', regId)
     if (error) console.error("REJECT ERROR:", error)
   }
-  revalidatePath('/dashboard/dinas')
+  revalidatePath('/dashboard/dinas', 'layout')
   revalidatePath('/dashboard/dinas/im-japan')
 }
 
@@ -172,7 +328,7 @@ export async function verifyMagangPermitAction(formData: FormData) {
   } else {
     await supabase.from('magang_permits').update({ status: 'REJECTED', rejection_reason: reason }).eq('id', permitId)
   }
-  revalidatePath('/dashboard/dinas')
+  revalidatePath('/dashboard/dinas', 'layout')
   return { success: true }
 }
 
@@ -198,7 +354,12 @@ export async function createTrainingAction(formData: FormData) {
   const registration_end = formData.get('registration_end') ? formData.get('registration_end') : null
   const training_start_date = formData.get('training_start_date') ? formData.get('training_start_date') : null
   const training_end_date = formData.get('training_end_date') ? formData.get('training_end_date') : null
+  const training_start_time = formData.get('training_start_time') ? formData.get('training_start_time') : null
+  const training_end_time = formData.get('training_end_time') ? formData.get('training_end_time') : null
 
+
+  const whatsapp_group_link = formData.get('whatsapp_group_link') as string
+  const additional_documents = JSON.parse(formData.get('additional_documents_json') as string || '[]')
 
   // Image Handing
   const imageFile = formData.get('image') as File
@@ -207,13 +368,54 @@ export async function createTrainingAction(formData: FormData) {
     image_url = await uploadImage(imageFile)
   }
 
-  const { error } = await supabase.from('blk_trainings').insert({
+  const { data, error } = await supabase.from('blk_trainings').insert({
     title, provider, category, description, quota, min_age, max_age, certification, requirements, status: 'OPEN', image_url,
-    registration_start, registration_end, training_start_date, training_end_date
-  })
+    registration_start, registration_end, training_start_date, training_end_date, training_start_time, training_end_time, whatsapp_group_link, additional_documents
+  }).select('id').single()
 
-  if (error) return { error: error.message }
-  revalidatePath('/dashboard/dinas')
+  if (error || !data) return { error: error?.message || "Failed to create training" }
+
+  const trainingId = data.id
+
+  // 2. Insert Selections
+  try {
+    const selections = JSON.parse(formData.get('selections_json') as string || '[]')
+    const validSelections = selections.filter((s: any) => s.selection_date && s.selection_time)
+    if (validSelections.length > 0) {
+      const selectionsData = validSelections.map((s: any) => ({
+        training_id: trainingId,
+        name: s.name || null,
+        selection_date: s.selection_date,
+        selection_time: s.selection_time,
+        location_address: s.location_address || null
+      }))
+      const { error: selError } = await supabase.from('training_selections').insert(selectionsData)
+      if (selError) return { error: "Gagal menyimpan jadwal seleksi: " + selError.message }
+    }
+  } catch (e: any) {
+    return { error: "Gagal memproses jadwal seleksi: " + e.message }
+  }
+
+  // 4. Insert Exams
+  try {
+    const exams = JSON.parse(formData.get('exams_json') as string || '[]')
+    const validExams = exams.filter((e: any) => e.exam_date && e.exam_time)
+    if (validExams.length > 0) {
+      const examsData = validExams.map((e: any) => ({
+        training_id: trainingId,
+        name: e.name || 'Ujian Kompetensi',
+        exam_date: e.exam_date,
+        exam_time: e.exam_time,
+        address: e.address || null
+      }))
+      const { error: examError } = await supabase.from('training_exams').insert(examsData)
+      if (examError) return { error: "Gagal menyimpan jadwal ujian: " + examError.message }
+    }
+  } catch (e: any) {
+    return { error: "Gagal memproses jadwal ujian: " + e.message }
+  }
+
+  revalidatePath('/dashboard/dinas', 'layout')
   return { success: true }
 }
 
@@ -231,6 +433,8 @@ export async function updateTrainingAction(formData: FormData) {
   const registration_end = formData.get('registration_end') ? formData.get('registration_end') : null
   const training_start_date = formData.get('training_start_date') ? formData.get('training_start_date') : null
   const training_end_date = formData.get('training_end_date') ? formData.get('training_end_date') : null
+  const training_start_time = formData.get('training_start_time') ? formData.get('training_start_time') : null
+  const training_end_time = formData.get('training_end_time') ? formData.get('training_end_time') : null
 
   // Image Handling
   const imageFile = formData.get('image') as File
@@ -241,6 +445,8 @@ export async function updateTrainingAction(formData: FormData) {
   }
 
   // 1. Update Data
+  const additional_documents = JSON.parse(formData.get('additional_documents_json') as string || '[]')
+  
   const { error } = await supabase.from('blk_trainings').update({
     title, min_age, max_age,
     provider: formData.get('provider'),
@@ -249,11 +455,55 @@ export async function updateTrainingAction(formData: FormData) {
     quota: parseInt(formData.get('quota') as string),
     certification: formData.get('certification'),
     requirements: (formData.get('requirements') as string)?.split('\n').filter(r => r.trim() !== '') || [],
-    registration_start, registration_end, training_start_date, training_end_date,
+    registration_start, registration_end, training_start_date, training_end_date, training_start_time, training_end_time,
+    whatsapp_group_link: formData.get('whatsapp_group_link') as string,
+    additional_documents,
     ...imageUpdate
   }).eq('id', id)
 
   if (error) return { error: error.message }
+
+  // 1.5 Replace Selections, Exams
+  // Delete existing ones
+  await supabase.from('training_selections').delete().eq('training_id', id)
+  await supabase.from('training_exams').delete().eq('training_id', id)
+
+  // Insert new ones
+  try {
+    const selections = JSON.parse(formData.get('selections_json') as string || '[]')
+    const validSelections = selections.filter((s: any) => s.selection_date && s.selection_time)
+    if (validSelections.length > 0) {
+      const selectionsData = validSelections.map((s: any) => ({
+        training_id: id,
+        name: s.name || null,
+        selection_date: s.selection_date,
+        selection_time: s.selection_time,
+        location_address: s.location_address || null
+      }))
+      const { error: selError } = await supabase.from('training_selections').insert(selectionsData)
+      if (selError) return { error: "Gagal menyimpan jadwal seleksi: " + selError.message }
+    }
+  } catch (e: any) {
+    return { error: "Gagal memproses jadwal seleksi: " + e.message }
+  }
+
+  try {
+    const exams = JSON.parse(formData.get('exams_json') as string || '[]')
+    const validExams = exams.filter((e: any) => e.exam_date && e.exam_time)
+    if (validExams.length > 0) {
+      const examsData = validExams.map((e: any) => ({
+        training_id: id,
+        name: e.name || 'Ujian Kompetensi',
+        exam_date: e.exam_date,
+        exam_time: e.exam_time,
+        address: e.address || null
+      }))
+      const { error: examError } = await supabase.from('training_exams').insert(examsData)
+      if (examError) return { error: "Gagal menyimpan jadwal ujian: " + examError.message }
+    }
+  } catch (e: any) {
+    return { error: "Gagal memproses jadwal ujian: " + e.message }
+  }
 
   // 2. AUTO-KICK LOGIC
   const { data: participants } = await supabase.from('training_registrations').select('*, profiles(*)').eq('training_id', id).eq('status', 'DITERIMA')
@@ -275,7 +525,7 @@ export async function updateTrainingAction(formData: FormData) {
     }
   }
 
-  revalidatePath('/dashboard/dinas')
+  revalidatePath('/dashboard/dinas', 'layout')
   return { success: true }
 }
 
@@ -302,7 +552,7 @@ export async function deleteTrainingAction(formData: FormData) {
     return { error: error.message }
   }
 
-  revalidatePath('/dashboard/dinas')
+  revalidatePath('/dashboard/dinas', 'layout')
   return { success: true }
 }
 
@@ -322,7 +572,7 @@ export async function archiveTrainingAction(formData: FormData) {
     .eq('training_id', id)
     .eq('status', 'DITERIMA')
 
-  revalidatePath('/dashboard/dinas')
+  revalidatePath('/dashboard/dinas', 'layout')
   revalidatePath('/dashboard/dinas/pelatihan')
   revalidatePath('/dashboard/dinas/pelatihan/riwayat')
   return { success: true }
@@ -341,7 +591,7 @@ export async function unarchiveTrainingAction(formData: FormData) {
   // This is because we don't know if they truly finished or not.
   // The admin can manually manage participants if needed.
 
-  revalidatePath('/dashboard/dinas')
+  revalidatePath('/dashboard/dinas', 'layout')
   revalidatePath('/dashboard/dinas/pelatihan')
   revalidatePath('/dashboard/dinas/pelatihan/riwayat')
   return { success: true }
@@ -369,7 +619,7 @@ export async function kickParticipantAction(formData: FormData) {
       message: `Admin telah mengeluarkan Anda dari pelatihan "${reg.blk_trainings?.title}". Alasan: ${reason}`
     })
   }
-  revalidatePath('/dashboard/dinas')
+  revalidatePath('/dashboard/dinas', 'layout')
 }
 
 // --- 7. MANAJEMEN USER (ADMIN EDIT) ---
@@ -468,7 +718,7 @@ export async function adminUpdateUserAction(formData: FormData) {
     if (detailError) return { error: detailError.message }
   }
 
-  revalidatePath('/dashboard/dinas')
+  revalidatePath('/dashboard/dinas', 'layout')
   revalidatePath(`/dashboard/dinas/users`)
   return { success: true }
 }
@@ -479,7 +729,7 @@ export async function deleteRegistrationHistoryAction(formData: FormData) {
   const regId = formData.get('regId') as string
 
   await supabase.from('training_registrations').delete().eq('id', regId) // Hard delete for cleanup
-  revalidatePath('/dashboard/dinas')
+  revalidatePath('/dashboard/dinas', 'layout')
 }
 
 export async function deleteImJapanHistoryAction(formData: FormData) {
@@ -487,7 +737,7 @@ export async function deleteImJapanHistoryAction(formData: FormData) {
   const regId = formData.get('regId') as string
 
   await supabase.from('im_japan_registrations').delete().eq('id', regId)
-  revalidatePath('/dashboard/dinas')
+  revalidatePath('/dashboard/dinas', 'layout')
 }
 
 // Helper for Document Upload
@@ -565,7 +815,7 @@ export async function deleteLpkReportAction(formData: FormData) {
   const supabase = await createAdminClient()
   const id = formData.get('id') as string
   await supabase.from('lpk_reports').delete().eq('id', id)
-  revalidatePath('/dashboard/dinas')
+  revalidatePath('/dashboard/dinas', 'layout')
 }
 
 // Data LPK CRUD
@@ -781,7 +1031,7 @@ export async function deleteMagangPermitAction(formData: FormData) {
   const supabase = await createAdminClient()
   const id = formData.get('id') as string
   await supabase.from('magang_permits').delete().eq('id', id)
-  revalidatePath('/dashboard/dinas')
+  revalidatePath('/dashboard/dinas', 'layout')
 }
 
 export async function deletePencatatanBatchAction(formData: FormData) {
@@ -940,8 +1190,12 @@ export async function deleteUserAction(formData: FormData) {
 // --- 12. MAINTENANCE / CRON SIMULATION ---
 export async function autoUpdateTrainingStatusAction() {
   const supabase = await createAdminClient()
-  // Use Date string YYYY-MM-DD for comparison
-  const today = new Date().toISOString().split('T')[0]
+  const todayDate = new Date()
+  const today = todayDate.toISOString().split('T')[0]
+
+  const sevenDaysAgoDate = new Date()
+  sevenDaysAgoDate.setDate(todayDate.getDate() - 7)
+  const sevenDaysAgo = sevenDaysAgoDate.toISOString().split('T')[0]
 
   // 1. Close Registration
   // Update status 'OPEN' -> 'CLOSED' if registration_end < today
@@ -952,13 +1206,13 @@ export async function autoUpdateTrainingStatusAction() {
     .lt('registration_end', today)
 
   // 2. Complete Training (Archive/Legacy)
-  // Update training status 'OPEN' OR 'CLOSED' -> 'FINISHED' if training_end_date < today
-  // This effectively removes them from Catalog (which typically shows OPEN/CLOSED) and moves them to Legacy View.
+  // Update training status 'OPEN' OR 'CLOSED' -> 'FINISHED' if training_end_date < 7 days ago
+  // This effectively removes them from Catalog and moves them to Legacy View.
   await supabase
     .from('blk_trainings')
     .update({ status: 'FINISHED' })
     .in('status', ['OPEN', 'CLOSED'])
-    .lt('training_end_date', today)
+    .lt('training_end_date', sevenDaysAgo)
 
   // 3. Complete Registrations (SELESAI)
   // Find trainings that have ENDED (status FINISHED or training_end_date passed)
@@ -976,3 +1230,23 @@ export async function autoUpdateTrainingStatusAction() {
       .in('training_id', ids)
   }
 }
+
+export async function bulkRejectPendingAction(trainingId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("Unauthorized")
+
+  const { error } = await supabase
+    .from('training_registrations')
+    .update({ 
+      status: 'DITOLAK', 
+      admin_notes: 'Mohon maaf, kuota angkatan telah terpenuhi.' 
+    })
+    .eq('training_id', trainingId)
+    .eq('status', 'PENDING')
+
+  if (error) return { error: error.message }
+  revalidatePath(`/dashboard/dinas/pelatihan/${trainingId}`)
+  return { success: true }
+}
+

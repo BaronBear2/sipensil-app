@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle, XCircle } from 'lucide-react'
 import { verifyProfileAction } from '@/actions/dinas'
-import StatusModal from '@/components/ui/StatusModal'
+import { SwalAlert } from '@/utils/swal'
 
 export default function VerificationActionPanelV2({ user, status }: { user: any, status: string }) {
     const router = useRouter()
@@ -13,9 +13,6 @@ export default function VerificationActionPanelV2({ user, status }: { user: any,
     const [isConfirmMode, setIsConfirmMode] = useState(false)
     const [rejectReason, setRejectReason] = useState('')
     const [loading, setLoading] = useState(false)
-    const [statusModal, setStatusModal] = useState<{
-        isOpen: boolean, type: 'success' | 'error', message: string, title?: string
-    }>({ isOpen: false, type: 'success', message: '' })
 
     const executeVerify = async (action: 'approve' | 'reject') => {
         setLoading(true)
@@ -35,32 +32,35 @@ export default function VerificationActionPanelV2({ user, status }: { user: any,
         setLoading(false)
 
         if (res?.error) {
-            setStatusModal({
-                isOpen: true,
-                type: 'error',
+            SwalAlert.fire({
+                icon: 'error',
                 title: 'Gagal',
-                message: res.error
+                text: res.error
             })
             return
         }
 
-        // Success
-        setStatusModal({
-            isOpen: true,
-            type: 'success',
-            title: action === 'approve' ? 'Verifikasi Berhasil' : 'Pencaker Ditolak',
-            message: action === 'approve'
-                ? 'Data pencaker berhasil diverifikasi. Status pendaftaran diperbarui menjadi DITERIMA.'
-                : 'Pendaftaran pencaker telah ditolak.'
-        })
+        if (res?.autoFailTriggered) {
+            await SwalAlert.fire({
+                icon: 'info',
+                title: 'Verifikasi Telah Berhasil',
+                text: 'Kuota telah terpenuhi. Sistem otomatis menggagalkan sisa pendaftar. Silakan unggah dokumen list pencaker yang sudah lulus.'
+            })
+            // We set a local storage flag or url param to trigger the upload box on the next page
+            router.push(`/dashboard/dinas/pelatihan/${user.training_id}?trigger_upload=true`)
+        } else {
+            // Success
+            await SwalAlert.fire({
+                icon: 'success',
+                title: action === 'approve' ? 'Verifikasi Berhasil' : 'Pencaker Ditolak',
+                text: action === 'approve'
+                    ? 'Data pencaker berhasil diverifikasi. Status pendaftaran diperbarui menjadi DITERIMA.'
+                    : 'Pendaftaran pencaker telah ditolak.'
+            })
+            // Request: Redirect to previous page (list)
+            router.push(`/dashboard/dinas/pelatihan/${user.training_id}`)
+        }
 
-        // Close logic handles redirect
-    }
-
-    const handleCloseModal = () => {
-        setStatusModal(prev => ({ ...prev, isOpen: false }))
-        // Request: Redirect to previous page (list)
-        router.push('/dashboard/dinas/verifikasi-pencaker')
         router.refresh()
     }
 
@@ -76,13 +76,6 @@ export default function VerificationActionPanelV2({ user, status }: { user: any,
 
     return (
         <div className="bg-white rounded-xl shadow-sm border p-6">
-            <StatusModal
-                isOpen={statusModal.isOpen}
-                onClose={handleCloseModal}
-                type={statusModal.type}
-                title={statusModal.title}
-                message={statusModal.message}
-            />
 
             <h3 className="font-bold text-gray-800 mb-4 border-b pb-2">Aksi Verifikasi</h3>
 

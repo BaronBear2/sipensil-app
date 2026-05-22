@@ -6,11 +6,14 @@ import PelatihanClient from '@/components/pelatihan/PelatihanClient'
 export default async function PelatihanPage() {
     const supabase = await createClient()
 
+    const { data: systemDate } = await supabase.rpc('get_system_date')
+    const today = systemDate || new Date().toISOString().split('T')[0]
     // Fetch Active Trainings
     const { data: trainings } = await supabase
         .from('blk_trainings')
         .select('*')
         .eq('status', 'OPEN') // Only show OPEN trainings
+        .gte('registration_end', today)
         .order('id', { ascending: false })
 
     return (

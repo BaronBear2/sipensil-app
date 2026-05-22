@@ -220,7 +220,7 @@ export default function VerificationTable({ users, viewOnly = false }: { users: 
                                So I will CLEAN UP this component to only handle what it actually renders + Swal for Delete.
                            */}
                            <Link
-                              href={`/dashboard/dinas/verifikasi-pencaker/${u.training_reg_id}`}
+                              href={`/dashboard/dinas/pelatihan/${u.training_id}/verifikasi/${u.training_reg_id}`}
                               className="bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-blue-700 flex items-center justify-center gap-1 mx-auto shadow-sm transition w-fit"
                            >
                               <FileText size={12} /> {viewOnly ? 'Detail' : 'Verifikasi'}

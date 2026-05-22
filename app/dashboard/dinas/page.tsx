@@ -2,6 +2,7 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { AlertCircle, ClipboardList, FileText, Users, Building, ChevronRight, ShieldCheck, PieChart, Activity } from 'lucide-react'
+import QATimeController from '@/components/QATimeController'
 
 // Ensure dynamic rendering
 export const dynamic = 'force-dynamic'
@@ -15,35 +16,36 @@ export default async function DashboardAdmin() {
 
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
 
-  // 2. Fetch Summary Stats (Parallel Fetching)
   const statsQuery = [
     // 1. Verifikasi Profil (Pencaker yg daftar training & pending)
-    supabase.from('training_registrations').select('*', { count: 'exact', head: true }).eq('status', 'PENDING'),
+    supabase.from('training_registrations').select('training_id', { count: 'exact' }).eq('status', 'PENDING'),
 
-    // 2. IM Japan Pending
-    supabase.from('im_japan_registrations').select('*', { count: 'exact', head: true }).eq('status', 'PENDING'),
-
-    // 3. Laporan LPK Pending
-    supabase.from('lpk_reports').select('*', { count: 'exact', head: true }).eq('status', 'SUBMITTED'),
-
-    // 4. Magang Pending
-    supabase.from('magang_agreements').select('*', { count: 'exact', head: true }).eq('status', 'PENDING'),
-
-    // 5. Total User Pencaker
+    // 2. Total User Pencaker
     supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'PENCAKER'),
 
-    // 6. Verifikasi Akun LPK
-    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'LPK').eq('account_status', 'pending')
+    // 3. Pelatihan Terbuka
+    supabase.from('blk_trainings').select('*', { count: 'exact', head: true }).eq('status', 'OPEN'),
   ] as const
 
   const [
-    { count: countProfil },
-    { count: countImJapan },
-    { count: countLpk },
-    { count: countMagang },
+    { data: pendingRegistrations, count: countProfil },
     { count: countPencaker },
-    { count: countLpkAccount }
+    { count: countOpenTrainings }
   ] = await Promise.all(statsQuery)
+
+  // Find the training with the most pending registrations
+  let targetTrainingId = null
+  if (pendingRegistrations && pendingRegistrations.length > 0) {
+    const trainingCounts = pendingRegistrations.reduce((acc: Record<string, number>, curr) => {
+      acc[curr.training_id] = (acc[curr.training_id] || 0) + 1
+      return acc
+    }, {})
+    
+    // Get the key (training_id) with the highest count
+    targetTrainingId = Object.keys(trainingCounts).reduce((a, b) => trainingCounts[a] > trainingCounts[b] ? a : b)
+  }
+
+  const verifikasiHref = targetTrainingId ? `/dashboard/dinas/pelatihan/${targetTrainingId}` : '/dashboard/dinas/pelatihan'
 
   const cards = [
     {
@@ -52,39 +54,7 @@ export default async function DashboardAdmin() {
       label: 'Antrian Validasi',
       icon: AlertCircle,
       color: 'red',
-      href: '/dashboard/dinas/verifikasi-pencaker'
-    },
-    {
-      title: 'Verifikasi LPK',
-      count: countLpkAccount || 0,
-      label: 'Registrasi Baru',
-      icon: Building,
-      color: 'blue',
-      href: '/dashboard/dinas/lpk'
-    },
-    {
-      title: 'Surat Rekomendasi IM-Japan',
-      count: countImJapan || 0,
-      label: 'Pendaftar Baru',
-      icon: Users,
-      color: 'blue',
-      href: '/dashboard/dinas/im-japan'
-    },
-    {
-      title: 'Laporan Semester LPK',
-      count: countLpk || 0,
-      label: 'Laporan Masuk',
-      icon: FileText,
-      color: 'green',
-      href: '/dashboard/dinas/lpk'
-    },
-    {
-      title: 'Pencatatan Magang',
-      count: countMagang || 0,
-      label: 'Permohonan',
-      icon: ClipboardList,
-      color: 'orange',
-      href: '/dashboard/dinas/pemagangan'
+      href: verifikasiHref
     },
     {
       title: 'Total Pencaker',
@@ -93,6 +63,14 @@ export default async function DashboardAdmin() {
       icon: Users,
       color: 'emerald',
       href: '/dashboard/dinas/users'
+    },
+    {
+      title: 'Pelatihan Terbuka',
+      count: countOpenTrainings || 0,
+      label: 'Aktif',
+      icon: Activity,
+      color: 'blue',
+      href: '/dashboard/dinas/pelatihan'
     }
   ]
 
@@ -126,14 +104,19 @@ export default async function DashboardAdmin() {
         {/* MAIN CONTENT CARD GRID - Shifted up */}
         <div className="max-w-7xl mx-auto px-6 -mt-16 relative z-20 pb-12">
 
+          {/* QA TIME TRAVEL CONTROLLER */}
+          <div className="mb-8">
+            <QATimeController />
+          </div>
+
           {/* ALERT OVERVIEW */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 bg-white p-6 rounded-2xl shadow-lg border border-red-50">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8 bg-white p-6 rounded-2xl shadow-lg border border-red-50">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-red-100 text-red-600 rounded-xl">
                 <AlertCircle size={24} />
               </div>
               <div>
-                <h4 className="font-bold text-gray-800 text-lg">{(countProfil || 0) + (countLpkAccount || 0) + (countImJapan || 0)}</h4>
+                <h4 className="font-bold text-gray-800 text-lg">{(countProfil || 0)}</h4>
                 <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Total Pending</p>
               </div>
             </div>
@@ -146,19 +129,10 @@ export default async function DashboardAdmin() {
                 <p className="text-xs text-gray-400 font-bold uppercase tracking-wider"> Pencaker Aktif</p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-green-100 text-green-600 rounded-xl">
-                <PieChart size={24} />
-              </div>
-              <div>
-                <h4 className="font-bold text-gray-800 text-lg">{(countLpk || 0) + (countMagang || 0)}</h4>
-                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Laporan Masuk</p>
-              </div>
-            </div>
           </div>
 
           {/* ACTION CARDS GRID */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6 max-w-6xl">
             {cards.map((card, idx) => (
               <StatCard key={idx} {...card} />
             ))}

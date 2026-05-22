@@ -5,38 +5,7 @@ import { createClient } from '@/utils/supabase/client'
 import { User, School, Factory, ArrowLeft, Lock, Eye, EyeOff } from 'lucide-react'
 
 // --- SUB-COMPONENTS ---
-function RoleSelection({ onSelect }: { onSelect: (role: string) => void }) {
-    return (
-        <div className="p-6">
-            <h2 className="text-xl font-bold text-gray-800 text-center mb-2">Pilih Jenis Akun</h2>
-            <p className="text-sm text-gray-500 text-center mb-6">Siapa Anda?</p>
-
-            <div className="grid gap-4">
-                <button onClick={() => onSelect('pencaker')} className="flex items-center gap-4 p-4 rounded-xl border border-gray-100 hover:border-blue-500 hover:bg-blue-50 transition group text-left">
-                    <div className="bg-blue-100 p-2 rounded-full text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition"><User size={20} /></div>
-                    <div>
-                        <h4 className="font-bold text-gray-800">Pencari Kerja</h4>
-                        <p className="text-xs text-gray-500">Masyarakat umum.</p>
-                    </div>
-                </button>
-                <button onClick={() => onSelect('lpk')} className="flex items-center gap-4 p-4 rounded-xl border border-gray-100 hover:border-green-500 hover:bg-green-50 transition group text-left">
-                    <div className="bg-green-100 p-2 rounded-full text-green-600 group-hover:bg-green-600 group-hover:text-white transition"><School size={20} /></div>
-                    <div>
-                        <h4 className="font-bold text-gray-800">LPK</h4>
-                        <p className="text-xs text-gray-500">Lembaga Pelatihan Kerja.</p>
-                    </div>
-                </button>
-                <button onClick={() => onSelect('perusahaan')} className="flex items-center gap-4 p-4 rounded-xl border border-gray-100 hover:border-orange-500 hover:bg-orange-50 transition group text-left">
-                    <div className="bg-orange-100 p-2 rounded-full text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition"><Factory size={20} /></div>
-                    <div>
-                        <h4 className="font-bold text-gray-800">Perusahaan</h4>
-                        <p className="text-xs text-gray-500">Penyelenggara magang.</p>
-                    </div>
-                </button>
-            </div>
-        </div>
-    )
-}
+// RoleSelection removed since only Pencaker can register
 
 function RegisterFormImpl({ role, onBack, onSuccess }: { role: string, onBack: () => void, onSuccess: () => void }) {
     const supabase = createClient()
@@ -49,12 +18,7 @@ function RegisterFormImpl({ role, onBack, onSuccess }: { role: string, onBack: (
         email: '',
         password: '',
         confirmPassword: '',
-        nib: '',
-        phone: '',
-        operational_pj: '',
-        operational_pj_title: '',
-        operational_pj_phone: '',
-        operational_pj_email: ''
+        phone: ''
     })
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -67,9 +31,9 @@ function RegisterFormImpl({ role, onBack, onSuccess }: { role: string, onBack: (
         setLoading(true)
 
         // VALIDASI PASSWORD COMPLEXITY
-        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{6,}$/
+        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&.])[A-Za-z\d@$!%*#?&.]{6,}$/
         if (!passwordRegex.test(formData.password)) {
-            alert("Password minimal 6 karakter, mengandung huruf, angka, dan simbol (@$!%*#?&).")
+            alert("Password minimal 6 karakter, mengandung huruf, angka, dan simbol (@$!%*#?&.).")
             setLoading(false)
             return
         }
@@ -90,7 +54,7 @@ function RegisterFormImpl({ role, onBack, onSuccess }: { role: string, onBack: (
             }
         }
 
-        const dbRole = role === 'lpk' ? 'LPK' : role === 'perusahaan' ? 'PERUSAHAAN' : 'PENCAKER'
+        const dbRole = 'PENCAKER'
         const metadata: any = {
             full_name: formData.name,
             role: dbRole,
@@ -99,15 +63,6 @@ function RegisterFormImpl({ role, onBack, onSuccess }: { role: string, onBack: (
 
         if (role === 'pencaker') {
             metadata.nik = formData.nik
-        } else if (role === 'lpk') {
-            metadata.company_name = formData.name
-            metadata.operational_pj = formData.operational_pj
-            metadata.operational_pj_title = formData.operational_pj_title
-            metadata.operational_pj_phone = formData.operational_pj_phone
-            metadata.operational_pj_email = formData.email
-        } else if (role === 'perusahaan') {
-            metadata.nib = formData.nib
-            metadata.company_name = formData.name
         }
 
         const { error: authError } = await supabase.auth.signUp({
@@ -126,10 +81,7 @@ function RegisterFormImpl({ role, onBack, onSuccess }: { role: string, onBack: (
 
     return (
         <div className="p-6">
-            <button onClick={onBack} className="flex items-center gap-1 text-sm text-gray-500 hover:text-blue-600 mb-4 font-bold">
-                <ArrowLeft size={14} /> Kembali
-            </button>
-            <h2 className="text-xl font-bold text-gray-800 mb-4 capitalize">Daftar {role === 'lpk' ? 'LPK' : role}</h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-4 capitalize">Daftar Akun Pencaker</h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 {role === 'pencaker' && (
@@ -138,25 +90,10 @@ function RegisterFormImpl({ role, onBack, onSuccess }: { role: string, onBack: (
                         <div><label className="text-xs font-bold block mb-1">Nama Lengkap</label><input required name="name" onChange={handleChange} className="w-full border rounded p-2 text-sm" placeholder="Nama KTP" /></div>
                     </>
                 )}
-                {role === 'lpk' && (
-                    <>
-                        <div><label className="text-xs font-bold block mb-1">Nama LPK</label><input required name="name" onChange={handleChange} className="w-full border rounded p-2 text-sm" /></div>
-                        <div><label className="text-xs font-bold block mb-1">Nama Penanggung Jawab Operasional</label><input required name="operational_pj" onChange={handleChange} className="w-full border rounded p-2 text-sm" /></div>
-                        <div><label className="text-xs font-bold block mb-1">Jabatan Penanggung Jawab</label><input required name="operational_pj_title" onChange={handleChange} className="w-full border rounded p-2 text-sm" /></div>
-                        <div><label className="text-xs font-bold block mb-1">No HP Penanggung Jawab</label><input required name="operational_pj_phone" onChange={handleChange} className="w-full border rounded p-2 text-sm" /></div>
-                    </>
-                )}
-                {role === 'perusahaan' && (
-                    <>
-                        <div><label className="text-xs font-bold block mb-1">Nama Perusahaan</label><input required name="name" onChange={handleChange} className="w-full border rounded p-2 text-sm" /></div>
-                        <div><label className="text-xs font-bold block mb-1">NIB</label><input required name="nib" onChange={handleChange} className="w-full border rounded p-2 text-sm" /></div>
-                        <div><label className="text-xs font-bold block mb-1">Telepon HRD</label><input required name="phone" onChange={handleChange} className="w-full border rounded p-2 text-sm" /></div>
-                    </>
-                )}
 
                 <div className="border-t pt-3 mt-3">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div><label className="text-xs font-bold block mb-1">{role === 'lpk' ? 'Email Penanggung Jawab' : 'Email'}</label><input required name="email" type="email" onChange={handleChange} className="w-full border rounded p-2 text-sm" /></div>
+                        <div><label className="text-xs font-bold block mb-1">Email</label><input required name="email" type="email" onChange={handleChange} className="w-full border rounded p-2 text-sm" /></div>
                         <div>
                             <label className="text-xs font-bold block mb-1">Password</label>
                             <div className="relative">
@@ -188,26 +125,14 @@ function RegisterFormImpl({ role, onBack, onSuccess }: { role: string, onBack: (
 
 // --- MAIN MANAGER ---
 export default function RegisterFormManager({ onLoginClick, onSuccess }: { onLoginClick: () => void, onSuccess: () => void }) {
-    const [step, setStep] = useState<'SELECTION' | 'FORM'>('SELECTION')
-    const [role, setRole] = useState('')
-
-    const handleSelectRole = (r: string) => {
-        setRole(r)
-        setStep('FORM')
-    }
-
-    if (step === 'SELECTION') {
-        return (
-            <>
-                <RoleSelection onSelect={handleSelectRole} />
-                <div className="text-center pb-6 border-t pt-4">
-                    <p className="text-sm text-gray-600">
-                        Sudah punya akun? <button type="button" onClick={onLoginClick} className="text-blue-600 font-bold hover:underline">Masuk</button>
-                    </p>
-                </div>
-            </>
-        )
-    }
-
-    return <RegisterFormImpl role={role} onBack={() => setStep('SELECTION')} onSuccess={onSuccess} />
+    return (
+        <>
+            <RegisterFormImpl role={'pencaker'} onBack={() => {}} onSuccess={onSuccess} />
+            <div className="text-center pb-6 border-t pt-4">
+                <p className="text-sm text-gray-600">
+                    Sudah punya akun? <button type="button" onClick={onLoginClick} className="text-blue-600 font-bold hover:underline">Masuk</button>
+                </p>
+            </div>
+        </>
+    )
 }

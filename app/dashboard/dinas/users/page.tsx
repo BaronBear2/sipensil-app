@@ -21,7 +21,8 @@ export default async function UsersAdminPage({ searchParams }: { searchParams: P
             *,
             profile_pencaker(*),
             profile_perusahaan(*),
-            profile_lpk(*)
+            profile_lpk(*),
+            training_registrations(*, blk_trainings(title, status))
         `, { count: 'exact' })
         .order('created_at', { ascending: false })
         .range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1)

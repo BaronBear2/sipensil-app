@@ -4,8 +4,7 @@ import React, { useState } from 'react'
 import Link from 'next/link';
 import Image from 'next/image';
 import {
-  GraduationCap, Briefcase, FileCheck2, ArrowRight,
-  UserCircle2, Building2, School
+  GraduationCap, ArrowRight, UserCircle2
 } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import AuthModalContent from '@/components/auth/AuthModalContent';
@@ -73,7 +72,7 @@ export default function LandingPage() {
 
             {/* Description */}
             <p className="text-sm sm:text-base md:text-lg text-slate-300 mb-8 max-w-2xl font-light leading-relaxed animate-fade-in-up delay-200">
-              Platform digital terintegrasi untuk mengakses berbagai layanan ketenagakerjaan, mulai dari pelatihan kompetensi, permohonan surat rekomendasi tes IM-Japan, pelaporan periodik 6 bulan, dan pencatatan peserta pemagangan
+              Platform digital terintegrasi untuk layanan pelatihan kompetensi ketenagakerjaan, mulai dari proses pendaftaran hingga ujian sertifikasi kompetensi.
             </p>
 
             {/* CTAs */}
@@ -98,7 +97,7 @@ export default function LandingPage() {
             <p className="text-slate-500">Pilih layanan yang sesuai dengan kebutuhan Anda.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-6 max-w-md mx-auto">
 
             {/* Portal 1: Pencari Kerja */}
             <div className="group bg-white p-8 rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-2 transition-all duration-300 flex flex-col items-center text-center">
@@ -107,7 +106,7 @@ export default function LandingPage() {
               </div>
               <h3 className="text-2xl font-bold text-slate-800 mb-4">Pencari Kerja</h3>
               <p className="text-slate-500 leading-relaxed mb-8">
-                Tingkatkan kompetensi melalui <strong>Pelatihan BLK</strong> dan ikuti program <strong>Pemagangan</strong> (Dalam Negeri/IM Japan) untuk karir yang lebih baik.
+                Tingkatkan kompetensi melalui <strong>Pelatihan BLK</strong> untuk karir yang lebih baik.
               </p>
               <div className="flex flex-col gap-3 w-full mt-auto">
                 <button
@@ -116,47 +115,7 @@ export default function LandingPage() {
                 >
                   <GraduationCap size={18} /> Daftar Pelatihan
                 </button>
-                <div className="text-xs text-slate-400 font-medium">Tersedia: Pendaftaran Pelatihan BLK, Permohonan Surat Tes IM-Japan</div>
-              </div>
-            </div>
-
-            {/* Portal 2: Perusahaan */}
-            <div className="group bg-white p-8 rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:shadow-emerald-500/10 hover:-translate-y-2 transition-all duration-300 flex flex-col items-center text-center">
-              <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center mb-8 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300 group-hover:rotate-3 shadow-inner">
-                <Building2 size={40} />
-              </div>
-              <h3 className="text-2xl font-bold text-slate-800 mb-4">Perusahaan</h3>
-              <p className="text-slate-500 leading-relaxed mb-8">
-                Kelola proses <strong> pencatatan </strong> peserta magang secara digital.
-              </p>
-              <div className="flex flex-col gap-3 w-full mt-auto">
-                <button
-                  onClick={() => openAuth('REGISTER')}
-                  className="w-full py-3 rounded-xl bg-emerald-50 text-emerald-700 font-bold hover:bg-emerald-100 transition flex items-center justify-center gap-2"
-                >
-                  <Briefcase size={18} /> Daftar Perusahaan
-                </button>
-                <div className="text-xs text-slate-400 font-medium">Layanan: Pencatatan Peserta Magang</div>
-              </div>
-            </div>
-
-            {/* Portal 3: LPK */}
-            <div className="group bg-white p-8 rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:shadow-orange-500/10 hover:-translate-y-2 transition-all duration-300 flex flex-col items-center text-center">
-              <div className="w-20 h-20 bg-orange-50 text-orange-600 rounded-3xl flex items-center justify-center mb-8 group-hover:bg-orange-600 group-hover:text-white transition-colors duration-300 group-hover:rotate-3 shadow-inner">
-                <School size={40} />
-              </div>
-              <h3 className="text-2xl font-bold text-slate-800 mb-4">Lembaga Pelatihan (LPK)</h3>
-              <p className="text-slate-500 leading-relaxed mb-8">
-                Kelola data lembaga, sampaikan <strong>Laporan Semester</strong>, dan perbarui profil akreditasi LPK Anda dengan mudah.
-              </p>
-              <div className="flex flex-col gap-3 w-full mt-auto">
-                <button
-                  onClick={() => openAuth('REGISTER')}
-                  className="w-full py-3 rounded-xl bg-orange-50 text-orange-700 font-bold hover:bg-orange-100 transition flex items-center justify-center gap-2"
-                >
-                  <FileCheck2 size={18} /> Portal LPK
-                </button>
-                <div className="text-xs text-slate-400 font-medium">Fitur: Pelaporan Periodik 6 Bulan</div>
+                <div className="text-xs text-slate-400 font-medium">Tersedia: Pendaftaran Pelatihan BLK</div>
               </div>
             </div>
 

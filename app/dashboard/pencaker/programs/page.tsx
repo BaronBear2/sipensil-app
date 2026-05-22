@@ -14,7 +14,14 @@ export default async function BLKProgramsPage() {
     if (!user) redirect('/auth/login')
 
     const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-    const { data: trainings } = await supabase.from('blk_trainings').select('*').in('status', ['OPEN', 'CLOSED']).order('created_at', { ascending: false })
+    const { data: systemDate } = await supabase.rpc('get_system_date')
+    const today = systemDate || new Date().toISOString().split('T')[0]
+    const { data: trainings } = await supabase
+        .from('blk_trainings')
+        .select('*')
+        .eq('status', 'OPEN')
+        .gte('registration_end', today)
+        .order('created_at', { ascending: false })
 
     return (
         <div className="bg-slate-50 font-sans min-h-screen flex flex-col">

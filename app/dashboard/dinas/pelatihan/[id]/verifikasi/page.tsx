@@ -5,13 +5,14 @@ import SearchInput from '@/components/admin/SearchInput'
 
 export const dynamic = 'force-dynamic'
 
-export default async function VerifikasiPencakerPage({ searchParams }: { searchParams: Promise<{ status: string, q: string }> }) {
+export default async function VerifikasiPencakerPage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ status: string, q: string }> }) {
     const supabase = await createClient()
 
-    const params = await searchParams
+    const { id } = await params
+    const sParams = await searchParams
     // Status Filter (Default: PENDING)
-    const status = (params?.status || 'PENDING').toUpperCase()
-    const query = params?.q || ''
+    const status = (sParams?.status || 'PENDING').toUpperCase()
+    const query = sParams?.q || ''
 
     // MAP UI STATUS TO DB STATUS
     // UI: PENDING, VERIFIED, REJECTED
@@ -29,6 +30,7 @@ export default async function VerifikasiPencakerPage({ searchParams }: { searchP
       profiles!inner(*, profile_pencaker(*)),
       blk_trainings(title, registration_end, training_start_date, training_end_date)
     `)
+        .eq('training_id', id)
         .in('status', dbStatuses)
         .order('created_at', { ascending: false })
 
@@ -44,6 +46,7 @@ export default async function VerifikasiPencakerPage({ searchParams }: { searchP
                 id: profile.id, // Ensure ID is from profile
                 created_at: reg.created_at,
                 training_reg_id: reg.id,
+                training_id: reg.training_id,
                 training_title: reg.blk_trainings?.title || 'Generik',
                 registration_end: reg.blk_trainings?.registration_end,
                 training_start_date: reg.blk_trainings?.training_start_date,

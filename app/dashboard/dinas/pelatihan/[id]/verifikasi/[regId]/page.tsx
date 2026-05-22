@@ -3,9 +3,9 @@ import { ArrowLeft, User, MapPin, Calendar, Phone, Briefcase, FileText, CheckCir
 import Link from 'next/link'
 import VerificationActionPanelV2 from '@/components/admin/VerificationActionPanelV2'
 
-export default async function VerificationDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function VerificationDetailPage({ params }: { params: Promise<{ id: string, regId: string }> }) {
     const supabase = await createAdminClient()
-    const { id } = await params // This is 'training_reg_id' based on previous step link
+    const { id, regId } = await params // 'id' is training, 'regId' is registration ID
 
     // Fetch Registration + Profile
     const { data: reg, error } = await supabase
@@ -15,14 +15,14 @@ export default async function VerificationDetailPage({ params }: { params: Promi
             profiles!inner(*, profile_pencaker(*)),
             blk_trainings(*)
         `)
-        .eq('id', id)
+        .eq('id', regId)
         .single()
 
     if (error || !reg) {
         return (
             <div className="p-8 text-center">
                 <p className="text-red-500">Data tidak ditemukan.</p>
-                <Link href="/dashboard/dinas/verifikasi-pencaker" className="text-blue-500 hover:underline">Kembali</Link>
+                <Link href={`/dashboard/dinas/pelatihan/${id}/verifikasi`} className="text-blue-500 hover:underline">Kembali</Link>
             </div>
         )
     }
@@ -36,6 +36,7 @@ export default async function VerificationDetailPage({ params }: { params: Promi
     const userForAction = {
         id: profile.id, // User ID
         training_reg_id: reg.id,
+        training_id: training?.id,
         full_name: profile.full_name,
         email: profile.email
     }
@@ -60,9 +61,8 @@ export default async function VerificationDetailPage({ params }: { params: Promi
 
     return (
         <div className="max-w-5xl mx-auto space-y-6">
-            {/* HEAD */}
             <div className="flex items-center gap-4">
-                <Link href="/dashboard/dinas/verifikasi-pencaker" className="p-2 rounded-full hover:bg-gray-100 transition">
+                <Link href={`/dashboard/dinas/pelatihan/${id}`} className="p-2 rounded-full hover:bg-gray-100 transition">
                     <ArrowLeft size={24} className="text-gray-600" />
                 </Link>
                 <div>
@@ -70,6 +70,8 @@ export default async function VerificationDetailPage({ params }: { params: Promi
                     <p className="text-gray-500 text-sm">Tinjau data dan berkas sebelum menyetujui.</p>
                 </div>
             </div>
+
+            <hr className="border-gray-200" />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
@@ -133,9 +135,10 @@ export default async function VerificationDetailPage({ params }: { params: Promi
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             {[
-                                { label: 'KTP', url: details.ktp_url },
-                                { label: 'Ijazah', url: details.ijazah_url },
-                                { label: 'Pas Foto', url: details.photo_url },
+                                { label: 'KTP', url: reg.ktp_url || details.ktp_url },
+                                { label: 'Ijazah', url: reg.ijazah_url || details.ijazah_url },
+                                { label: 'Pas Foto', url: profile.photo_url || details.photo_url },
+                                ...(reg.additional_documents ? Object.entries(reg.additional_documents).map(([key, value]) => ({ label: key, url: value as string })) : [])
                             ].map((doc, i) => (
                                 <div key={i} className="border rounded-lg p-4 flex flex-col items-center text-center gap-2 hover:bg-gray-50 bg-gray-50/50">
                                     <FileText className="text-gray-400" size={32} />

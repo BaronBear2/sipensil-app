@@ -30,14 +30,6 @@ const MENU_ITEMS: MenuItem[] = [
             { name: 'Pelatihan Saya', href: '/dashboard/pencaker/pelatihan-saya' },
         ]
     },
-    {
-        name: 'IM Japan',
-        icon: Briefcase,
-        children: [
-            { name: 'Buat Permohonan', href: '/dashboard/pencaker/im-japan' },
-            { name: 'Permohonan Saya', href: '/dashboard/pencaker/im-japan/riwayat' },
-        ]
-    },
 ]
 
 export default function PencakerSidebar() {
@@ -57,7 +49,7 @@ export default function PencakerSidebar() {
             {/* Mobile Toggle */}
             <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b flex justify-between items-center px-4 z-50 shadow-sm">
                 <div className="flex items-center gap-3">
-                    <Image src={logoSipensil} alt="Logo Sipensil" className="h-7 w-auto" />
+                    <Image src={logoSipensil} alt="Logo Sipensil" className="h-7 w-auto" priority />
                     <div className="flex flex-col ml-1">
                         <span className="font-bold text-sm text-slate-800 leading-none">SIPENSIL</span>
                         <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">Dinas Ketenagakerjaan</span>
@@ -77,7 +69,7 @@ export default function PencakerSidebar() {
                 <div className="p-6 border-b border-gray-100 shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2">
-                            <Image src={logoSipensil} alt="Logo Sipensil" className="h-8 w-auto rounded-xl" />
+                            <Image src={logoSipensil} alt="Logo Sipensil" className="h-8 w-auto rounded-xl" priority />
                         </div>
                         <div>
                             <h1 className="font-bold text-lg text-gray-800 leading-none">SIPENSIL</h1>

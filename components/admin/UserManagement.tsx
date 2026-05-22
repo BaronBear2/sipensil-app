@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
-import { Search, ChevronLeft, ChevronRight, Edit2, UserCheck, User, Building, Store, Phone, Users, Trash2, X, AlertTriangle, CheckCircle, Plus } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, Edit2, UserCheck, User, Building, Store, Phone, Users, Trash2, X, AlertTriangle, CheckCircle, Plus, Eye } from 'lucide-react'
 import Link from 'next/link'
 import { useDebouncedCallback } from 'use-debounce'
 import { useState } from 'react'
@@ -22,6 +22,7 @@ export default function UserManagement({ users, currentPage, totalPages, totalCo
 
     // State for Modal
     const [selectedUser, setSelectedUser] = useState<any>(null)
+    const [profileModalUser, setProfileModalUser] = useState<any>(null)
     const [isDeleteOpen, setIsDeleteOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const [modal, setModal] = useState<{ type: 'success' | 'error', title: string, message: string } | null>(null)
@@ -49,8 +50,6 @@ export default function UserManagement({ users, currentPage, totalPages, totalCo
     const getSecondColumnHeader = () => {
         switch (currentRole) {
             case 'PENCAKER': return 'NIK & Kontak';
-            case 'PERUSAHAAN': return 'Perusahaan & NIB';
-            case 'LPK': return 'Nama LPK & Kontak';
             default: return 'Detail Info';
         }
     }
@@ -68,6 +67,7 @@ export default function UserManagement({ users, currentPage, totalPages, totalCo
     }
 
     const closeModal = () => setModal(null)
+    const closeProfileModal = () => setProfileModalUser(null)
 
     // Execute Delete
     const handleDelete = async () => {
@@ -166,22 +166,6 @@ export default function UserManagement({ users, currentPage, totalPages, totalCo
                         <User size={18} />
                         <span>Pencaker</span>
                     </Link>
-                    <Link
-                        href={`${pathname}?role=PERUSAHAAN`}
-                        className={`flex items-center gap-2 px-6 py-3 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${currentRole === 'PERUSAHAAN' ? 'bg-white text-red-600 shadow-md ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-700'
-                            }`}
-                    >
-                        <Store size={18} />
-                        <span>Perusahaan</span>
-                    </Link>
-                    <Link
-                        href={`${pathname}?role=LPK`}
-                        className={`flex items-center gap-2 px-6 py-3 text-sm font-bold rounded-lg transition-all whitespace-nowrap ${currentRole === 'LPK' ? 'bg-white text-red-600 shadow-md ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-700'
-                            }`}
-                    >
-                        <Building size={18} />
-                        <span>LPK</span>
-                    </Link>
                 </div>
 
                 {/* Search & Actions */}
@@ -235,9 +219,7 @@ export default function UserManagement({ users, currentPage, totalPages, totalCo
                                         <td className="px-6 py-4 pl-8">
                                             <div className="flex items-center gap-4">
                                                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-600 flex items-center justify-center flex-shrink-0 shadow-sm border border-white">
-                                                    {currentRole === 'PENCAKER' ? <User size={18} /> :
-                                                        currentRole === 'PERUSAHAAN' ? <Store size={18} /> :
-                                                            <Building size={18} />}
+                                                    {currentRole === 'PENCAKER' ? <User size={18} /> : <User size={18} />}
                                                 </div>
                                                 <div>
                                                     <div className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{u.full_name}</div>
@@ -254,18 +236,6 @@ export default function UserManagement({ users, currentPage, totalPages, totalCo
                                                     <div className="text-xs text-gray-500 flex items-center gap-1">
                                                         <Phone size={10} /> {u.phone || '-'}
                                                     </div>
-                                                </div>
-                                            )}
-                                            {currentRole === 'PERUSAHAAN' && (
-                                                <div className="space-y-1">
-                                                    <div className="font-bold text-gray-700">{u.company_name || '-'}</div>
-                                                    <div className="text-xs text-gray-500">NIB: {u.nib || '-'}</div>
-                                                </div>
-                                            )}
-                                            {currentRole === 'LPK' && (
-                                                <div className="space-y-1">
-                                                    <div className="font-bold text-gray-700">{u.lpk_name || '-'}</div>
-                                                    <div className="text-xs text-gray-500">{u.phone || '-'}</div>
                                                 </div>
                                             )}
                                         </td>
@@ -292,6 +262,13 @@ export default function UserManagement({ users, currentPage, totalPages, totalCo
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-center gap-2">
+                                                <button
+                                                    onClick={() => setProfileModalUser(u)}
+                                                    className="px-3 py-1.5 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 hover:text-gray-800 transition-all text-xs font-bold flex items-center gap-2 border border-gray-200"
+                                                    title="Lihat Profil & Riwayat"
+                                                >
+                                                    <Eye size={12} /> Profil
+                                                </button>
                                                 <Link
                                                     href={`/dashboard/dinas/users/${u.id}/edit`}
                                                     className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 hover:text-blue-700 transition-all text-xs font-bold flex items-center gap-2 border border-blue-200"
@@ -341,7 +318,7 @@ export default function UserManagement({ users, currentPage, totalPages, totalCo
 
             {/* DELETE MODAL */}
             {isDeleteOpen && selectedUser && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-100">
                         <div className="px-6 py-6 text-center">
                             <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -369,6 +346,89 @@ export default function UserManagement({ users, currentPage, totalPages, totalCo
                                 >
                                     {loading ? 'Menghapus...' : 'Hapus User'}
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* PROFILE MODAL */}
+            {profileModalUser && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden transform transition-all scale-100 max-h-[90vh] flex flex-col">
+                        <div className="p-6 border-b flex justify-between items-center bg-gray-50">
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-900">Profil Pengguna</h2>
+                                <p className="text-sm text-gray-500">Detail akun dan riwayat pelatihan</p>
+                            </div>
+                            <button onClick={closeProfileModal} className="p-2 text-gray-400 hover:bg-gray-200 hover:text-gray-600 rounded-full transition">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+                            <div className="flex items-center gap-4 mb-6">
+                                <div className="w-16 h-16 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-2xl font-bold border-2 border-blue-200">
+                                    {profileModalUser.full_name?.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-gray-900">{profileModalUser.full_name}</h3>
+                                    <p className="text-sm text-gray-500">{profileModalUser.email}</p>
+                                    <p className="text-xs text-gray-400 mt-1 uppercase font-bold tracking-wider">{profileModalUser.role}</p>
+                                </div>
+                            </div>
+                            
+                            <h4 className="font-bold text-gray-800 mb-4 border-b pb-2">Riwayat Pelatihan & Status</h4>
+                            <div className="space-y-6">
+                                {!profileModalUser.training_registrations || profileModalUser.training_registrations.length === 0 ? (
+                                    <p className="text-sm text-gray-500 italic bg-gray-50 p-4 rounded-xl border border-dashed border-gray-200 text-center">Belum ada riwayat pendaftaran pelatihan.</p>
+                                ) : (
+                                    profileModalUser.training_registrations.map((reg: any, idx: number) => {
+                                        const STEPS = ['Verifikasi', 'Seleksi', 'Lolos Seleksi', 'Sedang Pelatihan', 'Ujian', 'Evaluasi', 'Lulus']
+                                        const progress = reg.progress_step || 1
+                                        const isRejected = reg.status === 'DITOLAK'
+                                        
+                                        return (
+                                            <div key={idx} className="bg-white border rounded-xl p-5 shadow-sm">
+                                                <div className="flex justify-between items-start mb-4">
+                                                    <div>
+                                                        <h5 className="font-bold text-gray-800">{reg.blk_trainings?.title || 'Pelatihan Tidak Diketahui'}</h5>
+                                                        <p className="text-xs text-gray-500 mt-1">Tanggal Daftar: {new Date(reg.created_at).toLocaleDateString('id-ID')}</p>
+                                                    </div>
+                                                    <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${isRejected ? 'bg-red-100 text-red-700' : (reg.status === 'DITERIMA' || reg.status === 'LULUS') ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                                        {reg.status || 'PENDING'}
+                                                    </span>
+                                                </div>
+
+                                                <div className="relative pt-4">
+                                                    <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-100">
+                                                        <div style={{ width: `${(progress / 7) * 100}%` }} className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center ${isRejected ? 'bg-red-500' : 'bg-blue-500'}`}></div>
+                                                    </div>
+                                                    <div className="flex justify-between text-xs font-bold text-gray-400 mt-2">
+                                                        {STEPS.map((stepName, stepIdx) => {
+                                                            const stepNum = stepIdx + 1
+                                                            let colorClass = 'text-gray-400'
+                                                            if (isRejected && stepNum === progress) colorClass = 'text-red-600'
+                                                            else if (stepNum < progress || (!isRejected && stepNum === progress && reg.status === 'LULUS')) colorClass = 'text-green-600'
+                                                            else if (stepNum === progress && !isRejected) colorClass = 'text-blue-600'
+
+                                                            return (
+                                                                <div key={stepIdx} className={`text-center flex-1 ${colorClass}`}>
+                                                                    <div className="hidden sm:block">{stepName}</div>
+                                                                    <div className="sm:hidden">{stepNum}</div>
+                                                                </div>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                </div>
+                                                {isRejected && reg.admin_notes && (
+                                                    <div className="mt-4 p-3 bg-red-50 text-red-700 text-xs rounded border border-red-100">
+                                                        <span className="font-bold">Alasan Penolakan:</span> {reg.admin_notes}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )
+                                    })
+                                )}
                             </div>
                         </div>
                     </div>

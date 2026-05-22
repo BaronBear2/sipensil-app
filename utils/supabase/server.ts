@@ -32,11 +32,10 @@ export async function createClient() {
 
 export async function createAdminClient() {
   const cookieStore = await cookies()
-  // FALLBACK FOR DEBUGGING
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vdWh6anF1cGVqaW1vcWlid2huIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NTc0MTM5MiwiZXhwIjoyMDgxMzE3MzkyfQ.-8sFOBkZgmFNWRNeDaeFfUb5o1pNd_niLs_lsV78yPQ"
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    console.warn("⚠️ USING HARDCODED FALLBACK KEY because process.env.SUPABASE_SERVICE_ROLE_KEY is missing")
+  if (!key) {
+    console.error("🚨 SUPABASE_SERVICE_ROLE_KEY is missing from environment variables");
   }
 
   // Pure Admin Client - No Cookies

@@ -22,90 +22,9 @@ type MenuItem = {
 
 const MENU_ITEMS: MenuItem[] = [
     { name: 'Dashboard', href: '/dashboard/dinas', icon: Home, theme: 'red' },
-    {
-        name: 'Menu Pencaker',
-        icon: Users,
-        theme: 'blue',
-        children: [
-            {
-                name: 'Pelatihan BLK',
-                // icon: GraduationCap, // Optional sub-icon
-                children: [
-                    { name: 'Pendaftaran Belum Verifikasi', href: '/dashboard/dinas/verifikasi-pencaker?status=pending' },
-                    { name: 'Data Pelatihan BLK', href: '/dashboard/dinas/pelatihan' },
-                    { name: 'Data Pencaker Sedang Pelatihan', href: '/dashboard/dinas/peserta' }, // Filter logic to be added
-                    {
-                        name: 'Riwayat Verifikasi',
-                        children: [
-                            { name: 'Data Pencaker diterima', href: '/dashboard/dinas/verifikasi-pencaker?status=verified' },
-                            { name: 'Data Pencaker ditolak', href: '/dashboard/dinas/verifikasi-pencaker?status=rejected' },
-                        ]
-                    }
-                ]
-            },
-            {
-                name: 'IM-Japan',
-                children: [
-                    { name: 'Permohonan Belum Verifikasi', href: '/dashboard/dinas/im-japan?status=pending' },
-                    { name: 'Konfigurasi Persyaratan Permohonan', href: '/dashboard/dinas/im-japan/requirements' },
-                    { name: 'Data Permohonan', href: '/dashboard/dinas/im-japan?status=approved' }, // Placeholder param
-                    {
-                        name: 'Riwayat Verifikasi',
-                        children: [
-                            { name: 'Data Permohonan diterima', href: '/dashboard/dinas/im-japan?status=approved' },
-                            { name: 'Data Permohonan ditolak', href: '/dashboard/dinas/im-japan?status=rejected' },
-                        ]
-                    }
-                ]
-            },
-            { name: 'Data Akun Pencaker', href: '/dashboard/dinas/users?role=PENCAKER' }
-        ]
-    },
-    {
-        name: 'Menu LPK',
-        icon: Building,
-        theme: 'green',
-        children: [
-            {
-                name: 'Laporan Periodik 6 Bulan',
-                children: [
-                    { name: 'Laporan Belum Verifikasi', href: '/dashboard/dinas/lpk?status=pending' },
-                    { name: 'Data Laporan', href: '/dashboard/dinas/lpk?status=approved' },
-                    {
-                        name: 'Riwayat Verifikasi',
-                        children: [
-                            { name: 'Laporan diterima', href: '/dashboard/dinas/lpk?status=approved' },
-                            { name: 'Laporan ditolak', href: '/dashboard/dinas/lpk?status=rejected' },
-                        ]
-                    }
-                ]
-            },
-            { name: 'Data Akun LPK', href: '/dashboard/dinas/users?role=LPK' }
-        ]
-    },
-    {
-        name: 'Menu Perusahaan',
-        icon: FileText,
-        theme: 'orange',
-        children: [
-            {
-                name: 'Pencatatan Peserta Magang',
-                children: [
-                    { name: 'Pencatatan Belum Verifikasi', href: '/dashboard/dinas/pemagangan?status=pending' },
-                    { name: 'Data Pencatatan', href: '/dashboard/dinas/pemagangan?status=approved' },
-                    {
-                        name: 'Riwayat Verifikasi',
-                        children: [
-                            { name: 'Pencatatan diterima', href: '/dashboard/dinas/pemagangan?status=approved' },
-                            { name: 'Pencatatan ditolak', href: '/dashboard/dinas/pemagangan?status=rejected' },
-                        ]
-                    }
-                ]
-            },
-            { name: 'Data Akun Perusahaan', href: '/dashboard/dinas/users?role=PERUSAHAAN' }
-        ]
-    },
-    { name: 'Manajemen User', href: '/dashboard/dinas/users', icon: Settings, theme: 'red' },
+    { name: 'Menu Pelatihan', href: '/dashboard/dinas/pelatihan', icon: ClipboardList, theme: 'blue' },
+    { name: 'Manajemen User', href: '/dashboard/dinas/users', icon: Users, theme: 'red' },
+    { name: 'Master Data', href: '/dashboard/dinas/master-data', icon: Settings, theme: 'green' },
 ]
 
 // Helpers for Activity Check
@@ -175,7 +94,7 @@ export default function AdminSidebar() {
             {/* MOBILE HEADER (Visible only on small screens) */}
             <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-100 z-50 flex items-center justify-between px-4">
                 <div className="flex items-center gap-3">
-                    <Image src={logoSipensil} alt="Logo Sipensil" className="h-8 w-auto" />
+                    <Image src={logoSipensil} alt="Logo Sipensil" className="h-8 w-auto" priority />
                     <span className="font-bold text-gray-800">SIPENSIL</span>
                 </div>
                 <button
@@ -204,7 +123,7 @@ export default function AdminSidebar() {
                 <div className="p-6 border-b border-gray-100 shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2">
-                            <Image src={logoSipensil} alt="Logo Sipensil" className="h-8 w-auto rounded-xl" />
+                            <Image src={logoSipensil} alt="Logo Sipensil" className="h-8 w-auto rounded-xl" priority />
                         </div>
                         <div>
                             <h1 className="font-bold text-gray-800 leading-none">SIPENSIL</h1>

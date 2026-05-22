@@ -31,6 +31,9 @@ export default function MyTrainingsPage() {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) { router.push('/auth/login'); return }
 
+            // Lazy evaluate time-based progression first
+            await supabase.rpc('update_time_based_progress')
+
             const { data, error } = await supabase
                 .from('training_registrations')
                 .select('*, blk_trainings(*)')
@@ -259,10 +262,14 @@ export default function MyTrainingsPage() {
 
                 {/* Actions */}
                 <div className="flex justify-end flex-wrap gap-2 pt-2">
-                    {/* Only show DETAIL if NOT Rejected (or if user wants to see detail of rejected? Logic says keep it simple) */}
+                    {/* Only show DETAIL if NOT Rejected */}
                     {!isRejected && (
-                        <Link href={`/dashboard/pencaker/training/${reg.blk_trainings?.id}`} className="px-3 py-2 border rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-50 flex items-center gap-2">
-                            <ExternalLink size={14} /> Detail
+                        <Link 
+                            href={`/dashboard/pencaker/pelatihan-saya/${reg.id}`} 
+                            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg hover:shadow-blue-500/10 hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2.5 border border-blue-500/10 cursor-pointer"
+                        >
+                            <ExternalLink size={16} className="animate-pulse" /> 
+                            <span>Lacak Status Pelatihan</span>
                         </Link>
                     )}
 

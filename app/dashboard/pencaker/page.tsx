@@ -5,6 +5,7 @@ import { ShieldCheck, AlertCircle, AlertTriangle, User, ClipboardList, Edit, Clo
 
 import Link from 'next/link'
 import TrainingCard from '@/components/TrainingCard'
+import QATimeController from '@/components/QATimeController'
 
 export const dynamic = 'force-dynamic'
 
@@ -108,6 +109,11 @@ export default async function DashboardPencaker({ searchParams }: { searchParams
         {/* MAIN CONTENT CARD GRID - Shifted up to overlap Hero */}
         <div className="max-w-7xl mx-auto px-6 -mt-16 relative z-20 pb-12">
 
+          {/* QA TIME TRAVEL CONTROLLER */}
+          <div className="mb-8">
+            <QATimeController />
+          </div>
+
           {/* ALERT REJECTION */}
           {profile?.account_status === 'rejected' && (
             <div className="mb-8 p-6 bg-white border-l-4 border-red-500 rounded-r-2xl shadow-lg flex flex-col md:flex-row items-start md:items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -151,7 +157,7 @@ export default async function DashboardPencaker({ searchParams }: { searchParams
           )}
 
           {/* CARDS GRID */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
 
             {/* CARD 1: PELATIHAN SAYA */}
             <Link href="/dashboard/pencaker/pelatihan-saya" className="group rounded-3xl bg-white border border-slate-100 shadow-xl shadow-slate-200/50 p-8 flex flex-col items-center text-center hover:-translate-y-2 transition-all duration-300 relative overflow-hidden h-full">
@@ -195,25 +201,6 @@ export default async function DashboardPencaker({ searchParams }: { searchParams
               <p className="text-slate-500 text-sm leading-relaxed">
                 Jelajahi berbagai program pelatihan kejuruan yang tersedia di UPTD BLK Kabupaten Bekasi.
               </p>
-            </Link>
-
-            {/* CARD 3: Permohonan Surat Rekomendasi */}
-            <Link href="/dashboard/pencaker/im-japan" className="group rounded-3xl bg-white border border-slate-100 shadow-xl shadow-slate-200/50 p-8 flex flex-col items-center text-center hover:-translate-y-2 transition-all duration-300 relative overflow-hidden h-full">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 to-rose-500"></div>
-
-              <div className="w-20 h-20 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-sm">
-                <span className="text-4xl">🇯🇵</span>
-              </div>
-              <h3 className="text-xl font-bold text-slate-800 mb-3 group-hover:text-red-600 transition-colors">IM Japan</h3>
-              <p className="text-slate-500 text-sm leading-relaxed mb-4">
-                Program magang ke Jepang. Ajukan surat rekomendasi tes seleksi disini.
-              </p>
-
-              <object className="w-full relative z-10 pointer-events-none group-hover:pointer-events-auto">
-                <div className="text-red-600 text-xs font-bold flex items-center justify-center gap-1 group-hover:translate-x-1 transition-transform">
-                  Lihat Program <ArrowRight size={14} />
-                </div>
-              </object>
             </Link>
 
           </div>

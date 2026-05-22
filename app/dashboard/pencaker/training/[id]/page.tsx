@@ -121,26 +121,10 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
         setShowConfirm(true)
     }
 
-    const executeApply = async () => { // New function called by Modal
+    const executeApply = async () => {
+        // We now redirect to the Digital Form instead of calling action directly
         setShowConfirm(false)
-        setApplying(true)
-        const formData = new FormData()
-        formData.append('trainingId', training.id)
-
-        const result = await applyTraining(formData)
-
-        setApplying(false)
-        if (result.error) {
-            setStatusModal({ isOpen: true, type: 'error', message: result.error })
-            // V5.4-01: Redirect to Pelatihan Saya if error (likely duplicate) so user can check status
-            setRedirectOnClose('/dashboard/pencaker/pelatihan-saya')
-        } else {
-            // V5.1-03: Redirect to "Pelatihan Saya"
-            setStatusModal({ isOpen: true, type: 'success', message: result.success || 'Pendaftaran Berhasil! Mengalihkan...' })
-            setTimeout(() => {
-                router.push('/dashboard/pencaker/pelatihan-saya')
-            }, 1500)
-        }
+        router.push(`/dashboard/pencaker/training/${training.id}/daftar`)
     }
 
     if (loading) return <div className="p-10 text-center">Memuat...</div>
@@ -185,7 +169,7 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
                             Batal
                         </button>
                         <button onClick={executeApply} className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 text-sm shadow-lg shadow-blue-200">
-                            Ya, Daftar Sekarang
+                            Ya, Lanjut ke Form Pendaftaran
                         </button>
                     </div>
                 </div>
