@@ -7,22 +7,26 @@ import path from 'path'
 import fs from 'fs/promises'
 import { sendWhatsApp } from '@/utils/notifications'
 
-// Helper for Image Upload (Local Mock -> public/uploads)
-// In production, use Supabase Storage. Here we demonstrate functionality.
+// Helper for Image Upload (using Supabase Storage)
 async function uploadImage(file: File): Promise<string | null> {
   if (!file || file.size === 0 || file.name === 'undefined') return null
 
   // Validate Type
   if (!file.type.startsWith('image/')) return null
 
+  const supabase = await createClient()
   const buffer = Buffer.from(await file.arrayBuffer())
   const filename = `${Date.now()}-${file.name.replace(/\s/g, '-')}`
-  const publicPath = path.join(process.cwd(), 'public', 'uploads')
 
   try {
-    await fs.mkdir(publicPath, { recursive: true })
-    await fs.writeFile(path.join(publicPath, filename), buffer)
-    return `/uploads/${filename}`
+    const { data, error } = await supabase.storage.from('documents').upload(`posters/${filename}`, buffer)
+    if (error) {
+      console.error("Upload Failed:", error)
+      return null
+    }
+
+    const { data: urlData } = supabase.storage.from('documents').getPublicUrl(`posters/${filename}`)
+    return urlData.publicUrl
   } catch (error) {
     console.error("Upload Failed:", error)
     return null
