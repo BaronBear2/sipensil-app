@@ -34,8 +34,14 @@ const MENU_ITEMS: MenuItem[] = [
 
 export default function PencakerSidebar() {
     const router = useRouter()
+    const pathname = usePathname()
     const supabase = createClient()
     const [isMobileOpen, setIsMobileOpen] = useState(false)
+
+    // Auto-close menu on route change for mobile devices
+    React.useEffect(() => {
+        setIsMobileOpen(false)
+    }, [pathname])
 
     const handleLogout = async () => {
         await supabase.auth.signOut()

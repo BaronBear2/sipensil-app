@@ -22,6 +22,7 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
     const [loading, setLoading] = useState(true)
     const [applying, setApplying] = useState(false)
     const [showConfirm, setShowConfirm] = useState(false) // Added
+    const [existingReg, setExistingReg] = useState<any>(null) // Added
 
     const [statusModal, setStatusModal] = useState<{
         isOpen: boolean, type: 'success' | 'error', message: string
@@ -46,6 +47,15 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
                 .eq('id', user.id)
                 .single()
             setProfile(p)
+
+            // Fetch if user already registered
+            const { data: reg } = await supabase
+                .from('training_registrations')
+                .select('*')
+                .eq('training_id', trainingId)
+                .eq('user_id', user.id)
+                .maybeSingle()
+            setExistingReg(reg)
 
             setLoading(false)
         }
@@ -322,6 +332,19 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
 
                                     const isClosed = training.status === 'CLOSED' || (regEnd && today > regEnd)
                                     const isUpcoming = regStart && today < regStart
+
+                                    if (existingReg) {
+                                        return (
+                                            <button
+                                                disabled
+                                                className="w-full bg-indigo-100 text-indigo-700 font-bold py-4 rounded-xl shadow-sm transition-all cursor-not-allowed"
+                                            >
+                                                {existingReg.status === 'PENDING' ? 'Sedang Mendaftar (Menunggu Verifikasi)' : 
+                                                 existingReg.status === 'DITERIMA' ? 'Pendaftaran Diterima' : 
+                                                 existingReg.status === 'DITOLAK' ? 'Pendaftaran Ditolak' : 'Sudah Mendaftar'}
+                                            </button>
+                                        )
+                                    }
 
                                     if (isClosed) {
                                         return (
