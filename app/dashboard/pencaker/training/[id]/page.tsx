@@ -23,7 +23,7 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
     const [applying, setApplying] = useState(false)
     const [showConfirm, setShowConfirm] = useState(false) // Added
     const [existingReg, setExistingReg] = useState<any>(null) // Added
-    const [systemDate, setSystemDate] = useState<Date>(new Date()) // Added for QA Time sync
+    const [systemDate, setSystemDate] = useState<string>('') // Added for QA Time sync
 
     const [statusModal, setStatusModal] = useState<{
         isOpen: boolean, type: 'success' | 'error', message: string
@@ -61,7 +61,14 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
             // Fetch System Date for QA Time Travel sync
             const { data: sysDate } = await supabase.rpc('get_system_date')
             if (sysDate) {
-                setSystemDate(new Date(sysDate))
+                setSystemDate(sysDate) // e.g., "2026-06-02"
+            } else {
+                // local fallback
+                const d = new Date()
+                const yyyy = d.getFullYear()
+                const mm = String(d.getMonth() + 1).padStart(2, '0')
+                const dd = String(d.getDate()).padStart(2, '0')
+                setSystemDate(`${yyyy}-${mm}-${dd}`)
             }
 
             setLoading(false)
@@ -330,24 +337,22 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
                                 )}
 
                                 {(() => {
-                                    const today = systemDate
-                                    const regStart = training.registration_start ? new Date(training.registration_start) : null
-                                    const regEnd = training.registration_end ? new Date(training.registration_end) : null
-                                    
-                                    // Fix JS date parsing offsets
-                                    if (regStart && training.registration_start) {
-                                        const parts = training.registration_start.split('-')
-                                        regStart.setFullYear(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
-                                        regStart.setHours(0, 0, 0, 0)
-                                    }
-                                    if (regEnd && training.registration_end) {
-                                        const parts = training.registration_end.split('-')
-                                        regEnd.setFullYear(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
-                                        regEnd.setHours(23, 59, 59, 999)
+                                    // Use local fallback if systemDate hasn't loaded yet
+                                    let todayStr = systemDate
+                                    if (!todayStr) {
+                                        const d = new Date()
+                                        const yyyy = d.getFullYear()
+                                        const mm = String(d.getMonth() + 1).padStart(2, '0')
+                                        const dd = String(d.getDate()).padStart(2, '0')
+                                        todayStr = `${yyyy}-${mm}-${dd}`
                                     }
 
-                                    const isClosed = training.status === 'CLOSED' || (regEnd && today > regEnd)
-                                    const isUpcoming = regStart && today < regStart
+                                    const regStart = training.registration_start // "YYYY-MM-DD"
+                                    const regEnd = training.registration_end     // "YYYY-MM-DD"
+
+                                    // Lexicographical string comparison works perfectly for YYYY-MM-DD
+                                    const isClosed = training.status === 'CLOSED' || (regEnd && todayStr > regEnd)
+                                    const isUpcoming = regStart && todayStr < regStart
 
                                     if (existingReg) {
                                         return (
@@ -394,6 +399,10 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
                                         </button>
                                     )
                                 })()}
+                                
+                                <p className="text-xs text-red-500 mt-2 text-center">
+                                    [DEBUG] sysDate: {systemDate} | regStart: {training.registration_start}
+                                </p>
 
                                 <p className="text-[10px] text-gray-400 text-center mt-4 leading-tight">
                                     Dengan mendaftar, Anda menyetujui syarat & ketentuan yang berlaku di Disnaker.
