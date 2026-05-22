@@ -7,21 +7,27 @@ import Modal from '@/components/ui/Modal'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-export default function TrainingCard({ item, userStatus }: { item: any, userStatus: string }) {
+export default function TrainingCard({ item, userStatus, systemDateStr }: { item: any, userStatus: string, systemDateStr?: string }) {
   const [loading, setLoading] = useState(false)
   const [isWarningOpen, setIsWarningOpen] = useState(false)
   const [isClosedModalOpen, setIsClosedModalOpen] = useState(false)
   const router = useRouter()
 
   // Logic Check Closed
-  const today = new Date()
-  const regStart = item.registration_start ? new Date(item.registration_start) : null
-  const regEnd = item.registration_end ? new Date(item.registration_end) : null
-  if (regEnd) regEnd.setHours(23, 59, 59, 999)
-  if (regStart) regStart.setHours(0, 0, 0, 0)
+  let todayStr = systemDateStr
+  if (!todayStr) {
+      const d = new Date()
+      const yyyy = d.getFullYear()
+      const mm = String(d.getMonth() + 1).padStart(2, '0')
+      const dd = String(d.getDate()).padStart(2, '0')
+      todayStr = `${yyyy}-${mm}-${dd}`
+  }
 
-  const isClosed = item.status === 'CLOSED' || (regEnd && today > regEnd)
-  const isUpcoming = regStart && today < regStart
+  const regStart = item.registration_start // "YYYY-MM-DD"
+  const regEnd = item.registration_end     // "YYYY-MM-DD"
+
+  const isClosed = item.status === 'CLOSED' || (regEnd && todayStr > regEnd)
+  const isUpcoming = regStart && todayStr < regStart
 
   const handleApply = async () => {
     // ... existing apply logic if we had it here ...

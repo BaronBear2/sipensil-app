@@ -61,7 +61,7 @@ export default async function BLKProgramsPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {trainings?.map((item: any) => (
-                        <TrainingCard key={item.id} item={item} userStatus={profile?.account_status || 'unverified'} />
+                        <TrainingCard key={item.id} item={item} userStatus={profile?.account_status || 'unverified'} systemDateStr={today} />
                     ))}
 
                     {(!trainings || trainings.length === 0) && (
