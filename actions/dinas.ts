@@ -101,7 +101,8 @@ export async function verifyProfileAction(formData: FormData) {
       if (regData?.user_id) {
         const { data: profile } = await supabase.from('profile_pencaker').select('phone').eq('user_id', regData.user_id).single()
         if (profile?.phone) {
-          const title = regData.blk_trainings?.title || 'Pelatihan'
+          const blkTraining = regData.blk_trainings as any;
+          const title = blkTraining?.title || (Array.isArray(blkTraining) && blkTraining[0]?.title) || 'Pelatihan'
           const message = `Selamat! Pendaftaran Anda untuk pelatihan "${title}" telah Lulus Administrasi (Tahap 1). Silakan masuk ke dashboard SIPENSIL untuk melihat jadwal seleksi/ujian.`
           sendWhatsApp(profile.phone, message).catch(e => console.error('WA notification failed:', e))
         }
