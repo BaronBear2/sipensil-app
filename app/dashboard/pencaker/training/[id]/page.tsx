@@ -312,13 +312,49 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
                                     </div>
                                 )}
 
-                                <button
-                                    onClick={handleApplyClick}
-                                    disabled={applying}
-                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 transition-all active:scale-95 disabled:bg-gray-300 disabled:shadow-none disabled:cursor-not-allowed"
-                                >
-                                    {applying ? 'Memproses...' : 'Daftar Sekarang'}
-                                </button>
+                                {(() => {
+                                    const today = new Date()
+                                    const regStart = training.registration_start ? new Date(training.registration_start) : null
+                                    const regEnd = training.registration_end ? new Date(training.registration_end) : null
+                                    
+                                    if (regStart) regStart.setHours(0, 0, 0, 0)
+                                    if (regEnd) regEnd.setHours(23, 59, 59, 999)
+
+                                    const isClosed = training.status === 'CLOSED' || (regEnd && today > regEnd)
+                                    const isUpcoming = regStart && today < regStart
+
+                                    if (isClosed) {
+                                        return (
+                                            <button
+                                                disabled
+                                                className="w-full bg-red-100 text-red-600 font-bold py-4 rounded-xl shadow-sm transition-all cursor-not-allowed"
+                                            >
+                                                Pendaftaran Telah Ditutup
+                                            </button>
+                                        )
+                                    }
+
+                                    if (isUpcoming) {
+                                        return (
+                                            <button
+                                                disabled
+                                                className="w-full bg-yellow-100 text-yellow-700 font-bold py-4 rounded-xl shadow-sm transition-all cursor-not-allowed"
+                                            >
+                                                Pendaftaran Belum Dibuka
+                                            </button>
+                                        )
+                                    }
+
+                                    return (
+                                        <button
+                                            onClick={handleApplyClick}
+                                            disabled={applying}
+                                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 transition-all active:scale-95 disabled:bg-gray-300 disabled:shadow-none disabled:cursor-not-allowed"
+                                        >
+                                            {applying ? 'Memproses...' : 'Daftar Sekarang'}
+                                        </button>
+                                    )
+                                })()}
 
                                 <p className="text-[10px] text-gray-400 text-center mt-4 leading-tight">
                                     Dengan mendaftar, Anda menyetujui syarat & ketentuan yang berlaku di Disnaker.

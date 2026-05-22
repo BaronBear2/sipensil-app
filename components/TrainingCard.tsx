@@ -15,19 +15,23 @@ export default function TrainingCard({ item, userStatus }: { item: any, userStat
 
   // Logic Check Closed
   const today = new Date()
+  const regStart = item.registration_start ? new Date(item.registration_start) : null
   const regEnd = item.registration_end ? new Date(item.registration_end) : null
   if (regEnd) regEnd.setHours(23, 59, 59, 999)
+  if (regStart) regStart.setHours(0, 0, 0, 0)
 
   const isClosed = item.status === 'CLOSED' || (regEnd && today > regEnd)
+  const isUpcoming = regStart && today < regStart
 
   const handleApply = async () => {
     // ... existing apply logic if we had it here ...
   }
 
   const handleCardClick = (e: React.MouseEvent) => {
-    if (isClosed) {
+    if (isClosed || isUpcoming) {
       e.preventDefault()
-      setIsClosedModalOpen(true)
+      if (isClosed) setIsClosedModalOpen(true)
+      // For isUpcoming we might not need a modal if we just disable the button, but good to prevent default.
     }
   }
 
@@ -43,6 +47,11 @@ export default function TrainingCard({ item, userStatus }: { item: any, userStat
           <div className="absolute top-2 right-2 bg-white/90 backdrop-blur px-2 py-1 rounded text-xs font-bold text-blue-600 shadow-sm">
             {item.category || 'Umum'}
           </div>
+          {isUpcoming && !isClosed && (
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px]">
+              <span className="bg-yellow-500 text-white px-3 py-1 rounded font-bold text-sm transform -rotate-6 shadow-lg border border-yellow-400">BELUM DIBUKA</span>
+            </div>
+          )}
           {isClosed && (
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px]">
               <span className="bg-red-600 text-white px-3 py-1 rounded font-bold text-sm transform -rotate-6 shadow-lg border border-red-400">PENDAFTARAN TUTUP</span>
@@ -57,7 +66,14 @@ export default function TrainingCard({ item, userStatus }: { item: any, userStat
           <p className="text-sm text-gray-600 mb-4 line-clamp-3">{item.description}</p>
 
           <div className="mt-auto pt-4 border-t border-dashed">
-            {isClosed ? (
+            {isUpcoming ? (
+              <button
+                disabled
+                className="block text-center w-full text-sm font-bold text-gray-500 bg-gray-100 px-4 py-2 rounded-lg cursor-not-allowed"
+              >
+                Pendaftaran Belum Dibuka
+              </button>
+            ) : isClosed ? (
               <button
                 onClick={() => setIsClosedModalOpen(true)}
                 className="block text-center w-full text-sm font-bold text-gray-500 bg-gray-100 px-4 py-2 rounded-lg cursor-not-allowed hover:bg-gray-200"

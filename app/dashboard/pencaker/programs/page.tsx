@@ -21,6 +21,7 @@ export default async function BLKProgramsPage() {
         .select('*')
         .eq('status', 'OPEN')
         .gte('registration_end', today)
+        .or(`registration_start.lte.${today},registration_start.is.null`)
         .order('created_at', { ascending: false })
 
     return (
