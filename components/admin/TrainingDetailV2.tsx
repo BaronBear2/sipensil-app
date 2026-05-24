@@ -21,12 +21,7 @@ export default function TrainingDetailV2({ training, registrations }: { training
 
     useEffect(() => {
         if (searchParams.get('trigger_upload') === 'true') {
-            document.getElementById('quota-upload-pdf-input')?.click()
-
-            // Clean up the URL
-            const url = new URL(window.location.href)
-            url.searchParams.delete('trigger_upload')
-            window.history.replaceState({}, '', url.toString())
+            router.push(`/dashboard/dinas/pelatihan/${training.id}/pengumuman`)
         }
     }, [searchParams])
 
@@ -40,9 +35,9 @@ export default function TrainingDetailV2({ training, registrations }: { training
                         await SwalAlert.fire({
                             icon: 'info',
                             title: 'Verifikasi Telah Berhasil',
-                            text: 'Kuota telah terpenuhi. Sistem otomatis menggagalkan sisa pendaftar. Silakan upload dokumen list pencaker yang sudah lulus.'
+                            text: 'Kuota telah terpenuhi. Sistem otomatis menggagalkan sisa pendaftar. Silakan kelola pengumuman di halaman Manajemen Pengumuman.'
                         })
-                        document.getElementById('quota-upload-pdf-input')?.click()
+                        router.push(`/dashboard/dinas/pelatihan/${training.id}/pengumuman`)
                     }
                 } catch (e) {
                     console.error("Failed to auto reject", e)
@@ -96,9 +91,9 @@ export default function TrainingDetailV2({ training, registrations }: { training
                     await SwalAlert.fire({
                         icon: 'info',
                         title: 'Verifikasi Telah Berhasil',
-                        text: 'Kuota telah terpenuhi. Sistem otomatis menggagalkan sisa pendaftar. Silakan unggah dokumen list pencaker yang sudah lulus.'
+                        text: 'Kuota telah terpenuhi. Sistem otomatis menggagalkan sisa pendaftar. Silakan kelola pengumuman di halaman Manajemen Pengumuman.'
                     })
-                    document.getElementById('upload-pdf-input')?.click()
+                    router.push(`/dashboard/dinas/pelatihan/${training.id}/pengumuman`)
                 }
                 router.refresh()
             }
@@ -243,26 +238,9 @@ export default function TrainingDetailV2({ training, registrations }: { training
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                     <h3 className="font-bold text-gray-700">Daftar Peserta - {activeTab === 'administrasi' ? 'Administrasi' : activeTab === 'seleksi' ? 'Tahap Seleksi (Tidak Gagal = Lulus)' : activeTab === 'penilaian' ? 'Uji Kompetensi (Tidak Gagal = Kompeten)' : activeTab === 'semua_peserta' ? 'Peserta Aktif' : 'Semua Pendaftar'}</h3>
-                    <div className="flex items-center gap-3">
-                        {currentPhasePdfUrl && (
-                            <a href={currentPhasePdfUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-blue-600 hover:underline">
-                                Lihat File Saat Ini
-                            </a>
-                        )}
-                        {activeTab !== 'semua_peserta' && activeTab !== 'riwayat_peserta' && (
-                            <label className="cursor-pointer bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold py-2 px-4 rounded-lg flex items-center gap-2 text-sm transition">
-                                <Upload size={16} /> {uploading ? 'Mengunggah...' : 'Upload File'}
-                                <input
-                                    id="upload-pdf-input"
-                                    type="file"
-                                    accept="application/pdf,image/jpeg,image/png"
-                                    className="hidden"
-                                    onChange={(e) => handleUploadPdf(e, currentPhase)}
-                                    disabled={uploading}
-                                />
-                            </label>
-                        )}
-                    </div>
+                        <Link href={`/dashboard/dinas/pelatihan/${training.id}/pengumuman`} className="bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold py-2 px-4 rounded-lg flex items-center gap-2 text-sm transition">
+                            Kelola Pengumuman
+                        </Link>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
@@ -360,14 +338,6 @@ export default function TrainingDetailV2({ training, registrations }: { training
                     </table>
                 </div>
             </div>
-            <input
-                id="quota-upload-pdf-input"
-                type="file"
-                accept="application/pdf,image/jpeg,image/png"
-                className="hidden"
-                onChange={(e) => handleUploadPdf(e, 'admin')}
-                disabled={uploading}
-            />
         </div>
     )
 }

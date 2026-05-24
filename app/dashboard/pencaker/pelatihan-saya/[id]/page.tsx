@@ -72,30 +72,19 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
         {
             num: 1,
             title: 'Verifikasi Administrasi',
-            desc: 'Menunggu admin mengecek kesesuaian dokumen pendaftaran Anda.',
+            desc: `Menunggu admin mengecek dokumen Anda. Pengumuman dijadwalkan pada: ${formatDate(training?.tanggal_pengumuman_kelulusan_administrasi)}.`,
             content: null
         },
         {
             num: 2,
             title: 'Lulus Administrasi',
-            desc: 'Selamat! Anda lulus verifikasi administrasi awal.',
-            content: training.admin_passed_pdf ? (
-                <div className="mt-3 bg-white border border-gray-200 shadow-sm rounded-xl p-4">
-                    <h4 className="font-bold text-gray-800 text-sm mb-2">Pengumuman Hasil Administrasi</h4>
-                    <p className="text-xs text-gray-500 mb-3">Lihat daftar peserta yang lulus ke tahap selanjutnya.</p>
-                    {training.admin_passed_pdf.match(/\.(jpeg|jpg|gif|png)$/i) ? (
-                        <img src={training.admin_passed_pdf} alt="Pengumuman Administrasi" className="w-full max-w-md rounded-lg border shadow-sm mb-3" />
-                    ) : null}
-                    <a href={training.admin_passed_pdf} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg font-bold transition">
-                        <FileText size={16} /> Buka File Pengumuman
-                    </a>
-                </div>
-            ) : null
+            desc: 'Selamat! Anda lulus verifikasi administrasi awal. Silakan cek halaman Pengumuman untuk detailnya.',
+            content: null
         },
         {
             num: 3,
             title: 'Info Seleksi & Koordinasi',
-            desc: 'Tahap seleksi dan penggabungan grup WhatsApp untuk koordinasi awal.',
+            desc: `Tahap seleksi dan penggabungan grup WhatsApp. Hasil seleksi akan diumumkan pada: ${formatDate(training?.tanggal_pengumuman_kelulusan_seleksi_awal)}.`,
             content: (
                 <div className="mt-3 space-y-4">
                     {training.whatsapp_group_link && (
@@ -138,19 +127,8 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
         {
             num: 4,
             title: 'Lulus Seleksi',
-            desc: 'Selamat! Anda lulus seleksi.',
-            content: training.selection_passed_pdf ? (
-                <div className="mt-3 bg-white border border-gray-200 shadow-sm rounded-xl p-4">
-                    <h4 className="font-bold text-gray-800 text-sm mb-2">Pengumuman Hasil Seleksi</h4>
-                    <p className="text-xs text-gray-500 mb-3">Lihat daftar peserta yang lulus ke tahap pelatihan.</p>
-                    {training.selection_passed_pdf.match(/\.(jpeg|jpg|gif|png)$/i) ? (
-                        <img src={training.selection_passed_pdf} alt="Pengumuman Seleksi" className="w-full max-w-md rounded-lg border shadow-sm mb-3" />
-                    ) : null}
-                    <a href={training.selection_passed_pdf} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg font-bold transition">
-                        <FileText size={16} /> Buka File Pengumuman
-                    </a>
-                </div>
-            ) : null
+            desc: 'Selamat! Anda lulus seleksi. Silakan cek halaman Pengumuman untuk daftar lengkapnya.',
+            content: null
         },
         {
             num: 5,
@@ -213,7 +191,7 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
         {
             num: 6,
             title: 'Uji Kompetensi',
-            desc: 'Jadwal ujian sertifikasi / evaluasi akhir pelatihan.',
+            desc: `Jadwal ujian sertifikasi. Hasil kelulusan akan diumumkan pada: ${formatDate(training?.tanggal_pengumuman_hasil_uji_kompetensi)}.`,
             content: exam ? (
                 <div className="mt-3 bg-white border border-gray-200 shadow-sm rounded-xl p-4">
                     <h4 className="font-bold text-gray-800 text-sm mb-3">{exam.name || 'Uji Kompetensi'}</h4>
@@ -254,19 +232,6 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
                             </div>
                         </div>
                     ) : null}
-                    
-                    {training.final_passed_pdf && (
-                        <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
-                            <h4 className="font-bold text-gray-800 text-sm mb-2">Pengumuman Kelulusan Akhir</h4>
-                            <p className="text-xs text-gray-500 mb-3">Lihat daftar peserta yang lulus secara resmi.</p>
-                            {training.final_passed_pdf.match(/\.(jpeg|jpg|gif|png)$/i) ? (
-                                <img src={training.final_passed_pdf} alt="Pengumuman" className="w-full max-w-md rounded-lg border shadow-sm mb-3" />
-                            ) : null}
-                            <a href={training.final_passed_pdf} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg font-bold transition">
-                                <FileText size={16} /> Buka File Pengumuman
-                            </a>
-                        </div>
-                    )}
                 </div>
             )
         },
@@ -318,12 +283,20 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
             <div className="max-w-4xl mx-auto px-4 py-8">
                 
                 {/* Hero Training Card */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-10">
-                    <span className="text-xs font-bold bg-blue-100 text-blue-700 px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block">Program Pelatihan</span>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">{training.title}</h2>
-                    <p className="text-gray-500 flex items-center gap-2 text-sm font-medium">
-                        <MapPin size={16} className="text-gray-400" /> {training.provider || 'UPTD BLK Kabupaten Bekasi'}
-                    </p>
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-10 relative">
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <span className="text-xs font-bold bg-blue-100 text-blue-700 px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block">Program Pelatihan</span>
+                            <h2 className="text-2xl font-bold text-gray-900 mb-2">{training.title}</h2>
+                            <p className="text-gray-500 flex items-center gap-2 text-sm font-medium">
+                                <MapPin size={16} className="text-gray-400" /> {training.provider || 'UPTD BLK Kabupaten Bekasi'}
+                            </p>
+                        </div>
+                        <Link href={`/dashboard/pencaker/pelatihan-saya/${id}/pengumuman`} className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition flex items-center gap-2 transform hover:-translate-y-0.5">
+                            <FileText size={18} />
+                            Lihat Pengumuman
+                        </Link>
+                    </div>
                     
                     {isRejected && (
                         <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl flex gap-3 items-start">

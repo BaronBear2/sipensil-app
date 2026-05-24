@@ -7,6 +7,18 @@ import path from 'path'
 import fs from 'fs/promises'
 import { sendWhatsApp } from '@/utils/notifications'
 
+
+async function verifyAdminRole() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("Unauthorized")
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const role = profile?.role?.toLowerCase()
+  if (role !== 'admin' && role !== 'admin_dinas' && role !== 'dinas') {
+    throw new Error("Unauthorized: Admin access required")
+  }
+}
+
 // Helper for Image Upload (using Supabase Storage)
 async function uploadImage(file: File): Promise<string | null> {
   if (!file || file.size === 0 || file.name === 'undefined') return null
@@ -36,6 +48,7 @@ async function uploadImage(file: File): Promise<string | null> {
 // --- 1. VERIFIKASI PROFILE (Pencaker Gate) ---
 // 1. VERIFIKASI AKUN PENCAKER (GATE PELATIHAN)
 export async function verifyProfileAction(formData: FormData) {
+  await verifyAdminRole();
   const supabase = await createClient()
 
   // Cek Admin
@@ -89,7 +102,8 @@ export async function verifyProfileAction(formData: FormData) {
     if (regError) return { error: "Failed to update registration: " + regError.message }
 
     if (action === 'approve' && regData?.training_id) {
-      await supabase.rpc('increment_quota', { row_id: regData.training_id })
+      // Handled automatically by Postgres DB Trigger `sync_training_quota`
+      // await supabase.rpc('increment_quota', { row_id: regData.training_id })
       
       // Check Quota Logic
       const { data: trainingData } = await supabase.from('blk_trainings').select('quota').eq('id', regData.training_id).single()
@@ -124,6 +138,7 @@ export async function verifyProfileAction(formData: FormData) {
 
 // 1.5 VERIFIKASI TRAINING REGISTRATION (PER CLASS) - PHASE 5
 export async function verifyTrainingRegistrationAction(formData: FormData) {
+  await verifyAdminRole();
   const supabase = await createClient()
 
   // Cek Admin
@@ -163,7 +178,8 @@ export async function verifyTrainingRegistrationAction(formData: FormData) {
     console.log('Mock API Notification Triggered for user:', regId, 'new_step: 2')
 
     // Increment quota in blk_trainings
-    await supabase.rpc('increment_quota', { row_id: trainingId })
+    // Handled automatically by Postgres DB Trigger `sync_training_quota`
+    // await supabase.rpc('increment_quota', { row_id: trainingId })
 
     // Check Quota Logic for Step 2 if you want to limit early
     const { data: trainingData } = await supabase.from('blk_trainings').select('quota, title').eq('id', trainingId).single()
@@ -217,6 +233,7 @@ export async function verifyTrainingRegistrationAction(formData: FormData) {
 }
 
 export async function uploadTrainingPdfAction(formData: FormData) {
+  await verifyAdminRole();
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Unauthorized")
@@ -248,6 +265,7 @@ export async function uploadTrainingPdfAction(formData: FormData) {
 
 // --- 2. VERIFIKASI IM JAPAN ---
 export async function verifyImJapanAction(formData: FormData) {
+  await verifyAdminRole();
   // 1. Verify Perms with User Client
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -277,6 +295,7 @@ export async function verifyImJapanAction(formData: FormData) {
 
 // --- 3. VERIFIKASI LAPORAN LPK ---
 export async function verifyLpkReportAction(formData: FormData) {
+  await verifyAdminRole();
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("Unauthorized")
@@ -319,6 +338,7 @@ export async function verifyLpkReportAction(formData: FormData) {
 
 // --- 4. VERIFIKASI MAGANG PERMIT ---
 export async function verifyMagangPermitAction(formData: FormData) {
+  await verifyAdminRole();
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("Unauthorized")
@@ -340,6 +360,7 @@ export async function verifyMagangPermitAction(formData: FormData) {
 // --- 5. MANAJEMEN PELATIHAN (CRUD) ---
 
 export async function createTrainingAction(formData: FormData) {
+  await verifyAdminRole();
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("Unauthorized")
@@ -361,6 +382,9 @@ export async function createTrainingAction(formData: FormData) {
   const training_end_date = formData.get('training_end_date') ? formData.get('training_end_date') : null
   const training_start_time = formData.get('training_start_time') ? formData.get('training_start_time') : null
   const training_end_time = formData.get('training_end_time') ? formData.get('training_end_time') : null
+  const tanggal_pengumuman_kelulusan_administrasi = formData.get('tanggal_pengumuman_kelulusan_administrasi') ? formData.get('tanggal_pengumuman_kelulusan_administrasi') : null
+  const tanggal_pengumuman_kelulusan_seleksi_awal = formData.get('tanggal_pengumuman_kelulusan_seleksi_awal') ? formData.get('tanggal_pengumuman_kelulusan_seleksi_awal') : null
+  const tanggal_pengumuman_hasil_uji_kompetensi = formData.get('tanggal_pengumuman_hasil_uji_kompetensi') ? formData.get('tanggal_pengumuman_hasil_uji_kompetensi') : null
 
 
   const whatsapp_group_link = formData.get('whatsapp_group_link') as string
@@ -375,7 +399,8 @@ export async function createTrainingAction(formData: FormData) {
 
   const { data, error } = await supabase.from('blk_trainings').insert({
     title, provider, category, description, quota, min_age, max_age, certification, requirements, status: 'OPEN', image_url,
-    registration_start, registration_end, training_start_date, training_end_date, training_start_time, training_end_time, whatsapp_group_link, additional_documents
+    registration_start, registration_end, training_start_date, training_end_date, training_start_time, training_end_time, whatsapp_group_link, additional_documents,
+    tanggal_pengumuman_kelulusan_administrasi, tanggal_pengumuman_kelulusan_seleksi_awal, tanggal_pengumuman_hasil_uji_kompetensi
   }).select('id').single()
 
   if (error || !data) return { error: error?.message || "Failed to create training" }
@@ -425,6 +450,7 @@ export async function createTrainingAction(formData: FormData) {
 }
 
 export async function updateTrainingAction(formData: FormData) {
+  await verifyAdminRole();
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("Unauthorized")
@@ -440,6 +466,9 @@ export async function updateTrainingAction(formData: FormData) {
   const training_end_date = formData.get('training_end_date') ? formData.get('training_end_date') : null
   const training_start_time = formData.get('training_start_time') ? formData.get('training_start_time') : null
   const training_end_time = formData.get('training_end_time') ? formData.get('training_end_time') : null
+  const tanggal_pengumuman_kelulusan_administrasi = formData.get('tanggal_pengumuman_kelulusan_administrasi') ? formData.get('tanggal_pengumuman_kelulusan_administrasi') : null
+  const tanggal_pengumuman_kelulusan_seleksi_awal = formData.get('tanggal_pengumuman_kelulusan_seleksi_awal') ? formData.get('tanggal_pengumuman_kelulusan_seleksi_awal') : null
+  const tanggal_pengumuman_hasil_uji_kompetensi = formData.get('tanggal_pengumuman_hasil_uji_kompetensi') ? formData.get('tanggal_pengumuman_hasil_uji_kompetensi') : null
 
   // Image Handling
   const imageFile = formData.get('image') as File
@@ -461,6 +490,7 @@ export async function updateTrainingAction(formData: FormData) {
     certification: formData.get('certification'),
     requirements: (formData.get('requirements') as string)?.split('\n').filter(r => r.trim() !== '') || [],
     registration_start, registration_end, training_start_date, training_end_date, training_start_time, training_end_time,
+    tanggal_pengumuman_kelulusan_administrasi, tanggal_pengumuman_kelulusan_seleksi_awal, tanggal_pengumuman_hasil_uji_kompetensi,
     whatsapp_group_link: formData.get('whatsapp_group_link') as string,
     additional_documents,
     ...imageUpdate
@@ -535,6 +565,7 @@ export async function updateTrainingAction(formData: FormData) {
 }
 
 export async function deleteTrainingAction(formData: FormData) {
+  await verifyAdminRole();
   const supabase = await createClient()
   const id = formData.get('id') as string
 
@@ -562,6 +593,7 @@ export async function deleteTrainingAction(formData: FormData) {
 }
 
 export async function archiveTrainingAction(formData: FormData) {
+  await verifyAdminRole();
   const supabase = await createClient()
   const id = formData.get('id') as string
 
@@ -584,6 +616,7 @@ export async function archiveTrainingAction(formData: FormData) {
 }
 
 export async function unarchiveTrainingAction(formData: FormData) {
+  await verifyAdminRole();
   const supabase = await createClient()
   const id = formData.get('id') as string
 
@@ -605,6 +638,7 @@ export async function unarchiveTrainingAction(formData: FormData) {
 
 // --- 6. MANAJEMEN PESERTA (KICK) ---
 export async function kickParticipantAction(formData: FormData) {
+  await verifyAdminRole();
   const supabase = await createClient()
   const regId = formData.get('regId') as string
   const reason = formData.get('reason') as string
@@ -629,6 +663,7 @@ export async function kickParticipantAction(formData: FormData) {
 
 // --- 7. MANAJEMEN USER (ADMIN EDIT) ---
 export async function adminUpdateUserAction(formData: FormData) {
+  await verifyAdminRole();
   const supabase = await createAdminClient()
   const userId = formData.get('userId') as string
   let targetRole = formData.get('role') as string // 'PENCAKER', 'PERUSAHAAN', 'LPK' ('ADMIN_LPK')
@@ -730,6 +765,7 @@ export async function adminUpdateUserAction(formData: FormData) {
 
 // --- 8. CLEANUP (DELETE HISTORY) ---
 export async function deleteRegistrationHistoryAction(formData: FormData) {
+  await verifyAdminRole();
   const supabase = await createClient()
   const regId = formData.get('regId') as string
 
@@ -738,6 +774,7 @@ export async function deleteRegistrationHistoryAction(formData: FormData) {
 }
 
 export async function deleteImJapanHistoryAction(formData: FormData) {
+  await verifyAdminRole();
   const supabase = await createClient()
   const regId = formData.get('regId') as string
 
@@ -750,12 +787,14 @@ async function uploadDocument(file: File): Promise<string | null> {
   if (!file || file.size === 0 || file.name === 'undefined') return null
 
   // Validate Type (PDF, DOC, DOCX, Images)
-  // Allow broadly for now
   const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png']
-  // if (!allowedTypes.includes(file.type)) return null 
+  if (!allowedTypes.includes(file.type)) return null 
 
   const buffer = Buffer.from(await file.arrayBuffer())
-  const filename = `${Date.now()}-${file.name.replace(/\s/g, '-')}`
+  
+  // Prevent Path Traversal by removing all slashes and restricted characters
+  const safeOriginalName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '')
+  const filename = `${Date.now()}-${safeOriginalName}`
   const publicPath = path.join(process.cwd(), 'public', 'uploads', 'documents')
 
   try {
@@ -770,6 +809,7 @@ async function uploadDocument(file: File): Promise<string | null> {
 
 // --- 9. IM JAPAN REQUIREMENTS CRUD ---
 export async function createImJapanRequirementAction(formData: FormData) {
+  await verifyAdminRole();
   const supabase = await createAdminClient()
   const title = formData.get('title') as string
   const description = formData.get('description') as string
@@ -789,6 +829,7 @@ export async function createImJapanRequirementAction(formData: FormData) {
 }
 
 export async function updateImJapanRequirementAction(formData: FormData) {
+  await verifyAdminRole();
   const supabase = await createAdminClient()
   const id = formData.get('id') as string
   const title = formData.get('title') as string
@@ -809,6 +850,7 @@ export async function updateImJapanRequirementAction(formData: FormData) {
 }
 
 export async function deleteImJapanRequirementAction(formData: FormData) {
+  await verifyAdminRole();
   const supabase = await createAdminClient()
   const id = formData.get('id') as string
   await supabase.from('im_japan_requirements').delete().eq('id', id)
@@ -817,6 +859,7 @@ export async function deleteImJapanRequirementAction(formData: FormData) {
 
 // --- 10. LPK ACTIONS ---
 export async function deleteLpkReportAction(formData: FormData) {
+  await verifyAdminRole();
   const supabase = await createAdminClient()
   const id = formData.get('id') as string
   await supabase.from('lpk_reports').delete().eq('id', id)
@@ -825,6 +868,7 @@ export async function deleteLpkReportAction(formData: FormData) {
 
 // Data LPK CRUD
 export async function createLpkAction(formData: FormData) {
+  await verifyAdminRole();
   const supabase = await createAdminClient()
   const email = formData.get('email') as string
   const password = formData.get('password') as string
@@ -868,6 +912,7 @@ export async function createLpkAction(formData: FormData) {
 }
 
 export async function updateLpkAction(formData: FormData) {
+  await verifyAdminRole();
   const supabase = await createAdminClient()
   const userId = formData.get('userId') as string
   const name = formData.get('name') as string
@@ -882,6 +927,7 @@ export async function updateLpkAction(formData: FormData) {
 }
 
 export async function deleteLpkAction(formData: FormData) {
+  await verifyAdminRole();
   const supabase = await createAdminClient()
   const userId = formData.get('userId') as string
 
@@ -896,6 +942,7 @@ export async function deleteLpkAction(formData: FormData) {
 // --- 11. ADMIN USER MANAGEMENT ---
 
 export async function adminCreateUserAction(formData: FormData) {
+  await verifyAdminRole();
   const supabase = await createAdminClient()
 
   // Common Fields
@@ -1033,6 +1080,7 @@ export async function adminCreateUserAction(formData: FormData) {
 
 // --- 12. PERUSAHAAN ACTIONS ---
 export async function deleteMagangPermitAction(formData: FormData) {
+  await verifyAdminRole();
   const supabase = await createAdminClient()
   const id = formData.get('id') as string
   await supabase.from('magang_permits').delete().eq('id', id)
@@ -1040,6 +1088,7 @@ export async function deleteMagangPermitAction(formData: FormData) {
 }
 
 export async function deletePencatatanBatchAction(formData: FormData) {
+  await verifyAdminRole();
   const supabase = await createAdminClient()
   const id = formData.get('id') as string
   await supabase.from('pencatatan_batches').delete().eq('id', id)
@@ -1047,6 +1096,7 @@ export async function deletePencatatanBatchAction(formData: FormData) {
 }
 
 export async function verifyPencatatanBatchAction(formData: FormData) {
+  await verifyAdminRole();
   const supabase = await createAdminClient()
   const id = formData.get('permitId') as string
   const action = formData.get('action') as string
@@ -1077,6 +1127,7 @@ export async function verifyPencatatanBatchAction(formData: FormData) {
 
 // Data Perusahaan CRUD
 export async function createPerusahaanAction(formData: FormData) {
+  await verifyAdminRole();
   const supabase = await createAdminClient()
   const email = formData.get('email') as string
   const password = formData.get('password') as string
@@ -1119,6 +1170,7 @@ export async function createPerusahaanAction(formData: FormData) {
 }
 
 export async function updatePerusahaanAction(formData: FormData) {
+  await verifyAdminRole();
   const supabase = await createAdminClient()
   const userId = formData.get('userId') as string
   const name = formData.get('name') as string
@@ -1133,6 +1185,7 @@ export async function updatePerusahaanAction(formData: FormData) {
 }
 
 export async function deletePerusahaanAction(formData: FormData) {
+  await verifyAdminRole();
   const supabase = await createAdminClient()
   const userId = formData.get('userId') as string
 
@@ -1144,6 +1197,7 @@ export async function deletePerusahaanAction(formData: FormData) {
 }
 
 export async function deleteUserAction(formData: FormData) {
+  await verifyAdminRole();
   // 1. Verify Caller Identity & Role (Security Check)
   const supabase = await createClient() // Standard client (RLS)
   const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -1194,6 +1248,7 @@ export async function deleteUserAction(formData: FormData) {
 // --- 12. MAINTENANCE / CRON SIMULATION ---
 // --- 12. MAINTENANCE / CRON SIMULATION ---
 export async function autoUpdateTrainingStatusAction() {
+  await verifyAdminRole();
   const supabase = await createAdminClient()
   const todayDate = new Date()
   const today = todayDate.toISOString().split('T')[0]
@@ -1237,6 +1292,7 @@ export async function autoUpdateTrainingStatusAction() {
 }
 
 export async function bulkRejectPendingAction(trainingId: string) {
+  await verifyAdminRole();
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("Unauthorized")

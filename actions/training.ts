@@ -131,8 +131,9 @@ export async function applyTraining(formData: FormData) {
   }
 
   // Update jumlah filled kuota HANYA jika langsung diterima
+  // (Now handled automatically by Postgres Database Trigger `sync_training_quota`)
   if (initialStatus === 'DITERIMA') {
-    await supabase.rpc('increment_quota', { row_id: trainingId })
+    // await supabase.rpc('increment_quota', { row_id: trainingId })
   }
 
   revalidatePath('/dashboard/pencaker')

@@ -12,6 +12,13 @@ export async function qaUpdateProgressStep(formData: FormData) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Unauthorized' }
 
+    // Role check to prevent Pencakers from graduating themselves
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    const role = profile?.role?.toLowerCase()
+    if (role !== 'admin' && role !== 'admin_dinas' && role !== 'dinas') {
+        return { error: 'Unauthorized: Admin access required' }
+    }
+
     const regId = formData.get('regId') as string
     const step = parseInt(formData.get('step') as string)
 
@@ -55,6 +62,16 @@ export async function getSystemTime() {
 }
 
 export async function setSystemTime(timeStr: string | null) {
+    const supabaseUser = await createClient()
+    const { data: { user } } = await supabaseUser.auth.getUser()
+    if (!user) return { error: 'Unauthorized' }
+
+    const { data: profile } = await supabaseUser.from('profiles').select('role').eq('id', user.id).single()
+    const role = profile?.role?.toLowerCase()
+    if (role !== 'admin' && role !== 'admin_dinas' && role !== 'dinas') {
+        return { error: 'Unauthorized: Admin access required' }
+    }
+
     const supabase = await createAdminClient()
 
     const { error } = await supabase
