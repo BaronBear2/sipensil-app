@@ -112,7 +112,6 @@ export async function triggerManualCronAction(formData: FormData) {
     let processedAny = false
 
     const checks = [
-        { type: 'administrasi', dateField: 'tanggal_pengumuman_kelulusan_administrasi', currentStep: 1, nextStep: 2 },
         { type: 'seleksi_awal', dateField: 'tanggal_pengumuman_kelulusan_seleksi_awal', currentStep: 3, nextStep: 4 }, // Based on step mapping
         { type: 'uji_kompetensi', dateField: 'tanggal_pengumuman_hasil_uji_kompetensi', currentStep: 6, nextStep: 7 }
     ]

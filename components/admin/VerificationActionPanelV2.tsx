@@ -64,12 +64,45 @@ export default function VerificationActionPanelV2({ user, status }: { user: any,
         router.refresh()
     }
 
+    const executeRevert = async () => {
+        const confirm = await SwalConfirm.fire({
+            title: 'Batalkan Penolakan?',
+            text: 'Ini akan mengembalikan status peserta ke tahap sebelum ditolak.',
+            confirmButtonText: 'Ya, Batalkan'
+        })
+        if (!confirm.isConfirmed) return
+
+        setLoading(true)
+        const formData = new FormData()
+        formData.append('regId', user.training_reg_id)
+
+        const { revertTrainingRegistrationAction } = await import('@/actions/dinas')
+        const res = await revertTrainingRegistrationAction(formData)
+        setLoading(false)
+
+        if (res?.error) {
+            SwalAlert.fire({ icon: 'error', title: 'Gagal', text: res.error })
+        } else {
+            SwalAlert.fire({ icon: 'success', title: 'Berhasil', text: 'Status peserta telah dikembalikan.' })
+            router.refresh()
+        }
+    }
+
     if (status !== 'PENDING') {
         return (
             <div className={`p-6 rounded-xl border ${status === 'DITERIMA' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-                <h3 className={`font-bold text-center ${status === 'DITERIMA' ? 'text-green-800' : 'text-red-800'}`}>
+                <h3 className={`font-bold text-center ${status === 'DITERIMA' ? 'text-green-800' : 'text-red-800'} mb-2`}>
                     Sudah {status === 'DITERIMA' ? 'Diverifikasi' : 'Ditolak'}
                 </h3>
+                {status === 'DITOLAK' && (
+                    <button
+                        onClick={executeRevert}
+                        disabled={loading}
+                        className="mt-4 w-full py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50 flex items-center justify-center gap-2 transition"
+                    >
+                        Batalkan Penolakan (Revert)
+                    </button>
+                )}
             </div>
         )
     }

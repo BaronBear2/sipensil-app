@@ -38,7 +38,6 @@ export async function GET(request: Request) {
         let processedCount = 0
 
         const checks = [
-            { type: 'administrasi', dateField: 'tanggal_pengumuman_kelulusan_administrasi' as const, currentStep: 1, nextStep: 2 },
             { type: 'seleksi_awal', dateField: 'tanggal_pengumuman_kelulusan_seleksi_awal' as const, currentStep: 3, nextStep: 4 },
             { type: 'uji_kompetensi', dateField: 'tanggal_pengumuman_hasil_uji_kompetensi' as const, currentStep: 6, nextStep: 7 }
         ]

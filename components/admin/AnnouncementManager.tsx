@@ -72,7 +72,7 @@ export default function AnnouncementManager({ trainingId, announcements, trainin
     const handleTriggerCron = async () => {
         const confirm = await SwalConfirm.fire({
             title: 'Jalankan Proses Kelulusan Otomatis?',
-            text: 'Ini akan meluluskan semua peserta yang masih berstatus PENDING ke tahap selanjutnya dan membuat PDF pengumuman default untuk pelatihan ini.',
+            text: 'Ini akan memproses kelulusan otomatis untuk Seleksi Awal dan Uji Kompetensi. Fitur ini tidak berlaku untuk tahap Administrasi.',
             confirmButtonText: 'Ya, Jalankan'
         })
 

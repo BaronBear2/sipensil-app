@@ -231,6 +231,89 @@ export async function verifyTrainingRegistrationAction(formData: FormData) {
   revalidatePath(`/dashboard/dinas/pelatihan/${trainingId}`)
   return { success: true, autoFailTriggered }
 }
+export async function revertTrainingRegistrationAction(formData: FormData) {
+  await verifyAdminRole();
+  const supabase = await createClient()
+
+  const regId = formData.get('regId') as string
+
+  // Get current state
+  const { data: reg, error: fetchError } = await supabase
+    .from('training_registrations')
+    .select(`
+        status, 
+        progress_step, 
+        updated_at, 
+        training_id,
+        blk_trainings(
+            tanggal_pengumuman_kelulusan_administrasi,
+            tanggal_pengumuman_kelulusan_seleksi_awal,
+            tanggal_pengumuman_hasil_uji_kompetensi
+        )
+    `)
+    .eq('id', regId)
+    .single()
+
+  if (fetchError || !reg) return { error: "Registrasi tidak ditemukan" }
+
+  // Restrict revert only if DITOLAK
+  if (reg.status !== 'DITOLAK') {
+      return { error: "Hanya peserta yang ditolak yang bisa dibatalkan penolakannya." }
+  }
+
+  // Time Constraint Check 1: 24 Hours
+  if (reg.updated_at) {
+    const updatedAt = new Date(reg.updated_at)
+    const now = new Date()
+    const diffHours = (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60)
+    if (diffHours > 24) {
+      return { error: "Batas waktu untuk membatalkan penolakan (24 jam) telah habis." }
+    }
+  }
+
+  // Time Constraint Check 2: Announcement Date (Bulk Update Date)
+  const training = Array.isArray(reg.blk_trainings) ? reg.blk_trainings[0] : reg.blk_trainings
+  if (training) {
+    const now = new Date()
+    const formatter = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' })
+    const parts = formatter.formatToParts(now)
+    const y = parts.find(p => p.type === 'year')?.value
+    const m = parts.find(p => p.type === 'month')?.value
+    const d = parts.find(p => p.type === 'day')?.value
+    const todayStr = `${y}-${m}-${d}`
+
+    let announcementDateStr = null
+    if (reg.progress_step === 1) {
+      announcementDateStr = training.tanggal_pengumuman_kelulusan_administrasi
+    } else if (reg.progress_step === 3 || reg.progress_step === 4) {
+      announcementDateStr = training.tanggal_pengumuman_kelulusan_seleksi_awal
+    } else if (reg.progress_step >= 6) {
+      announcementDateStr = training.tanggal_pengumuman_hasil_uji_kompetensi
+    }
+
+    if (announcementDateStr) {
+      const scheduledDateStr = new Date(announcementDateStr).toISOString().split('T')[0]
+      if (todayStr >= scheduledDateStr) {
+         return { error: "Gagal membatalkan penolakan: Masa pengumuman untuk tahap ini telah dimulai atau berlalu." }
+      }
+    }
+  }
+
+  // Determine original status based on step
+  const originalStatus = reg.progress_step > 1 ? 'DITERIMA' : 'PENDING'
+
+  const { error } = await supabase.from('training_registrations').update({
+      status: originalStatus,
+      admin_notes: null
+  }).eq('id', regId)
+
+  if (error) return { error: error.message }
+
+  // Revalidate paths
+  revalidatePath(`/dashboard/dinas/pelatihan/${reg.training_id}`)
+  revalidatePath('/dashboard/dinas', 'layout')
+  return { success: true }
+}
 
 export async function uploadTrainingPdfAction(formData: FormData) {
   await verifyAdminRole();
