@@ -5,7 +5,7 @@ import { ShieldCheck, AlertCircle, AlertTriangle, User, ClipboardList, Edit, Clo
 
 import Link from 'next/link'
 import TrainingCard from '@/components/TrainingCard'
-import QATimeController from '@/components/QATimeController'
+
 
 export const dynamic = 'force-dynamic'
 
@@ -108,11 +108,6 @@ export default async function DashboardPencaker({ searchParams }: { searchParams
 
         {/* MAIN CONTENT CARD GRID - Shifted up to overlap Hero */}
         <div className="max-w-7xl mx-auto px-6 -mt-16 relative z-20 pb-12">
-
-          {/* QA TIME TRAVEL CONTROLLER */}
-          <div className="mb-8">
-            <QATimeController />
-          </div>
 
           {/* ALERT REJECTION */}
           {profile?.account_status === 'rejected' && (

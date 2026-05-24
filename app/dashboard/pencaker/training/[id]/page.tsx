@@ -400,9 +400,6 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
                                     )
                                 })()}
                                 
-                                <p className="text-xs text-red-500 mt-2 text-center">
-                                    [DEBUG] sysDate: {systemDate} | regStart: {training.registration_start}
-                                </p>
 
                                 <p className="text-[10px] text-gray-400 text-center mt-4 leading-tight">
                                     Dengan mendaftar, Anda menyetujui syarat & ketentuan yang berlaku di Disnaker.

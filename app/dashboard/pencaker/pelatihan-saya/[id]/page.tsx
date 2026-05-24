@@ -2,7 +2,6 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, CheckCircle2, Circle, CheckCircle, ExternalLink, MapPin, Calendar, Clock, AlertCircle, FileText, Info, XCircle } from 'lucide-react'
-import QADebugPanel from '@/components/pencaker/QADebugPanel'
 
 export default async function PelatihanSayaDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const supabase = await createClient()
@@ -399,8 +398,6 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
                 </div>
             </div>
 
-            {/* QA Panel */}
-            <QADebugPanel regId={id} currentStep={currentStep} />
         </div>
     )
 }
