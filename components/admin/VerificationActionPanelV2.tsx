@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle, XCircle } from 'lucide-react'
 import { verifyProfileAction } from '@/actions/dinas'
-import { SwalAlert } from '@/utils/swal'
+import { SwalAlert, SwalConfirm } from '@/utils/swal'
 
 export default function VerificationActionPanelV2({ user, status }: { user: any, status: string }) {
     const router = useRouter()
