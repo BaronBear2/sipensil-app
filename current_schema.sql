@@ -317,6 +317,9 @@ CREATE TABLE public.training_registrations (
   class_id uuid,
   exam_id uuid,
   additional_documents jsonb DEFAULT '{}'::jsonb,
+  tanggal_verifikasi_pendaftaran timestamp with time zone,
+  tanggal_pengumuman_seleksi timestamp with time zone,
+  tanggal_pengumuman_kompetensi timestamp with time zone,
   CONSTRAINT training_registrations_pkey PRIMARY KEY (id),
   CONSTRAINT training_registrations_training_id_fkey FOREIGN KEY (training_id) REFERENCES public.blk_trainings(id),
   CONSTRAINT training_registrations_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
@@ -332,6 +335,7 @@ CREATE TABLE public.training_selections (
   location_address text,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
+  name text,
   CONSTRAINT training_selections_pkey PRIMARY KEY (id),
   CONSTRAINT training_selections_training_id_fkey FOREIGN KEY (training_id) REFERENCES public.blk_trainings(id)
 );

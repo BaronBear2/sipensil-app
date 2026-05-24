@@ -30,7 +30,7 @@ export async function applyTraining(formData: FormData) {
     .from('training_registrations')
     .select('status')
     .eq('user_id', user.id)
-    .not('status', 'in', '("SELESAI","DITOLAK","REJECTED","DIBATALKAN")')
+    .not('status', 'in', '("SELESAI","DITOLAK","REJECTED","DIBATALKAN","LULUS")')
     .maybeSingle()
 
   if (activeTraining) {

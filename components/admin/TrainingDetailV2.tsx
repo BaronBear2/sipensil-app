@@ -22,7 +22,7 @@ export default function TrainingDetailV2({ training, registrations }: { training
     useEffect(() => {
         if (searchParams.get('trigger_upload') === 'true') {
             document.getElementById('quota-upload-pdf-input')?.click()
-            
+
             // Clean up the URL
             const url = new URL(window.location.href)
             url.searchParams.delete('trigger_upload')
@@ -242,7 +242,7 @@ export default function TrainingDetailV2({ training, registrations }: { training
             {/* Participants Table */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                    <h3 className="font-bold text-gray-700">Daftar Peserta - {activeTab === 'administrasi' ? 'Administrasi' : activeTab === 'seleksi' ? 'Tahap Seleksi (Tidak Gagal = Lulus)' : activeTab === 'penilaian' ? 'Uji Kompetensi (Tidak Gagal = Lulus)' : activeTab === 'semua_peserta' ? 'Peserta Aktif' : 'Semua Pendaftar'}</h3>
+                    <h3 className="font-bold text-gray-700">Daftar Peserta - {activeTab === 'administrasi' ? 'Administrasi' : activeTab === 'seleksi' ? 'Tahap Seleksi (Tidak Gagal = Lulus)' : activeTab === 'penilaian' ? 'Uji Kompetensi (Tidak Gagal = Kompeten)' : activeTab === 'semua_peserta' ? 'Peserta Aktif' : 'Semua Pendaftar'}</h3>
                     <div className="flex items-center gap-3">
                         {currentPhasePdfUrl && (
                             <a href={currentPhasePdfUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-blue-600 hover:underline">
