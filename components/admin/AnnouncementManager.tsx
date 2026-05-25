@@ -101,7 +101,6 @@ export default function AnnouncementManager({ trainingId, announcements, trainin
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <div>
                     <h2 className="text-xl font-bold text-gray-800">Daftar Pengumuman</h2>
-                    <p className="text-xs text-gray-500 mt-1">Tombol "Luluskan Semua" di bawah ini berfungsi sebagai fail-safe manual jika sistem otomatis (cron job) gagal.</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                     <button onClick={() => handleTriggerCron('seleksi_awal')} disabled={isTriggering} className="bg-green-100 text-green-700 px-4 py-2 rounded-lg font-bold hover:bg-green-200 transition flex items-center gap-2 text-sm">

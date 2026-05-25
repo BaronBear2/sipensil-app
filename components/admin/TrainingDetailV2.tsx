@@ -5,7 +5,9 @@ import { CheckCircle, XCircle, Users, Eye, AlertCircle } from 'lucide-react'
 import { verifyTrainingRegistrationAction, uploadTrainingPdfAction, bulkRejectPendingAction } from '@/actions/dinas'
 import { SwalAlert, SwalConfirm, SwalToast } from '@/utils/swal'
 import Link from 'next/link'
-import { Upload } from 'lucide-react'
+import { Upload, Download } from 'lucide-react'
+import JSZip from 'jszip'
+import { saveAs } from 'file-saver'
 
 import { useRouter, useSearchParams } from 'next/navigation'
 
@@ -134,6 +136,101 @@ export default function TrainingDetailV2({ training, registrations }: { training
         }
     }
 
+    const handleDownloadAllFiles = async () => {
+        if (!filteredRegistrations.length) {
+            SwalAlert.fire({ icon: 'info', title: 'Kosong', text: 'Tidak ada peserta untuk didownload' })
+            return
+        }
+        
+        const zip = new JSZip()
+        const rootFolder = zip.folder(training.title || 'Pelatihan')
+
+        SwalToast.fire({ icon: 'info', title: 'Sedang menyiapkan unduhan...' })
+        
+        let fileCount = 0;
+
+        for (const reg of filteredRegistrations) {
+            const profile = reg.profiles || {}
+            const details = Array.isArray(profile.profile_pencaker) ? profile.profile_pencaker[0] : (profile.profile_pencaker || {})
+            const name = profile.full_name || 'Tanpa Nama'
+            const userFolder = rootFolder?.folder(name)
+
+            const files = [
+                { name: 'KTP.pdf', url: reg.ktp_url || details.ktp_url },
+                { name: 'Ijazah.pdf', url: reg.ijazah_url || details.ijazah_url },
+                { name: 'Foto.jpg', url: profile.photo_url || details.photo_url },
+                ...(reg.additional_documents ? Object.entries(reg.additional_documents).map(([key, value]) => ({ name: `${key}.pdf`, url: value as string })) : [])
+            ]
+
+            for (const f of files) {
+                if (f.url) {
+                    try {
+                        const response = await fetch(f.url)
+                        if (response.ok) {
+                            const blob = await response.blob()
+                            userFolder?.file(f.name, blob)
+                            fileCount++;
+                        }
+                    } catch (e) {
+                        console.error('Failed to download', f.url)
+                    }
+                }
+            }
+        }
+
+        if (fileCount === 0) {
+            SwalAlert.fire({ icon: 'warning', title: 'Kosong', text: 'Tidak ada berkas yang bisa didownload.' })
+            return
+        }
+
+        const content = await zip.generateAsync({ type: 'blob' })
+        saveAs(content, `${training.title || 'Berkas_Pencaker'}.zip`)
+        SwalToast.fire({ icon: 'success', title: 'Unduhan Selesai' })
+    }
+
+    const handleDownloadSingle = async (reg: any) => {
+        const profile = reg.profiles || {}
+        const details = Array.isArray(profile.profile_pencaker) ? profile.profile_pencaker[0] : (profile.profile_pencaker || {})
+        const name = profile.full_name || 'Tanpa Nama'
+
+        const zip = new JSZip()
+        const userFolder = zip.folder(name)
+
+        SwalToast.fire({ icon: 'info', title: 'Sedang menyiapkan unduhan...' })
+
+        let fileCount = 0;
+        const files = [
+            { name: 'KTP.pdf', url: reg.ktp_url || details.ktp_url },
+            { name: 'Ijazah.pdf', url: reg.ijazah_url || details.ijazah_url },
+            { name: 'Foto.jpg', url: profile.photo_url || details.photo_url },
+            ...(reg.additional_documents ? Object.entries(reg.additional_documents).map(([key, value]) => ({ name: `${key}.pdf`, url: value as string })) : [])
+        ]
+
+        for (const f of files) {
+            if (f.url) {
+                try {
+                    const response = await fetch(f.url)
+                    if (response.ok) {
+                        const blob = await response.blob()
+                        userFolder?.file(f.name, blob)
+                        fileCount++;
+                    }
+                } catch (e) {
+                    console.error('Failed to download', f.url)
+                }
+            }
+        }
+
+        if (fileCount === 0) {
+            SwalAlert.fire({ icon: 'warning', title: 'Kosong', text: 'Tidak ada berkas yang bisa didownload.' })
+            return
+        }
+
+        const content = await zip.generateAsync({ type: 'blob' })
+        saveAs(content, `${name}_Berkas.zip`)
+        SwalToast.fire({ icon: 'success', title: 'Unduhan Selesai' })
+    }
+
     // Helper for rendering 7-step tracker visually
     const renderStepBadge = (step: number, status: string) => {
         if (status === 'DITOLAK') return <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold">Gagal/Ditolak</span>
@@ -146,7 +243,7 @@ export default function TrainingDetailV2({ training, registrations }: { training
         return <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">{label}</span>
     }
 
-    let filteredRegistrations = []
+    let filteredRegistrations: any[] = []
     let currentPhasePdfUrl = null
     let currentPhase = 'admin'
 
@@ -235,9 +332,16 @@ export default function TrainingDetailV2({ training, registrations }: { training
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                     <h3 className="font-bold text-gray-700">Daftar Peserta - {activeTab === 'administrasi' ? 'Administrasi' : activeTab === 'seleksi' ? 'Tahap Seleksi (Tidak Gagal = Lulus)' : activeTab === 'penilaian' ? 'Uji Kompetensi (Tidak Gagal = Kompeten)' : activeTab === 'semua_peserta' ? 'Peserta Aktif' : 'Semua Pendaftar'}</h3>
+                    <div className="flex gap-2">
+                        {activeTab === 'semua_peserta' && (
+                            <button onClick={handleDownloadAllFiles} className="bg-green-100 hover:bg-green-200 text-green-700 font-bold py-2 px-4 rounded-lg flex items-center gap-2 text-sm transition">
+                                <Download size={16} /> Download Berkas Pencaker
+                            </button>
+                        )}
                         <Link href={`/dashboard/dinas/pelatihan/${training.id}/pengumuman`} className="bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold py-2 px-4 rounded-lg flex items-center gap-2 text-sm transition">
                             Kelola Pengumuman
                         </Link>
+                    </div>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
@@ -279,6 +383,13 @@ export default function TrainingDetailV2({ training, registrations }: { training
                                         </td>
                                         <td className="p-4 text-right">
                                             <div className="flex justify-end gap-2">
+                                                <button
+                                                    onClick={() => handleDownloadSingle(reg)}
+                                                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                                                    title="Download Berkas"
+                                                >
+                                                    <Download size={18} />
+                                                </button>
 
 
                                                 {reg.status !== 'DITOLAK' && activeTab === 'administrasi' && reg.progress_step === 1 && (

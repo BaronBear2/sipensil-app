@@ -17,7 +17,7 @@ export default async function TrainingDetailPage({ params }: { params: Promise<{
     // Fetch Registrations
     const { data: registrationsData, error } = await supabase
         .from('training_registrations')
-        .select('*, profiles(full_name, profile_pencaker(phone))')
+        .select('*, profiles(full_name, photo_url, profile_pencaker(phone, ktp_url, ijazah_url, photo_url))')
         .eq('training_id', id)
         .order('created_at', { ascending: true }) // First come first serve roughly
     

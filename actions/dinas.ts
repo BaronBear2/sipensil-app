@@ -561,6 +561,45 @@ export async function updateTrainingAction(formData: FormData) {
     if (url) imageUpdate = { image_url: url }
   }
 
+  // --- ROLLBACK LOGIC START ---
+  const { data: currentTraining } = await supabase.from('blk_trainings')
+    .select('tanggal_pengumuman_kelulusan_seleksi_awal, tanggal_pengumuman_hasil_uji_kompetensi')
+    .eq('id', id).single()
+  
+  let targetRollbackStep: number | null = null;
+  if (currentTraining) {
+    const now = new Date()
+    const formatter = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' })
+    const parts = formatter.formatToParts(now)
+    const y = parts.find(p => p.type === 'year')?.value
+    const m = parts.find(p => p.type === 'month')?.value
+    const d = parts.find(p => p.type === 'day')?.value
+    const todayStr = `${y}-${m}-${d}`
+
+    const oldSeleksi = currentTraining.tanggal_pengumuman_kelulusan_seleksi_awal
+    const newSeleksi = tanggal_pengumuman_kelulusan_seleksi_awal as string
+    if (oldSeleksi && newSeleksi) {
+      const oldSeleksiStr = new Date(oldSeleksi).toISOString().split('T')[0]
+      const newSeleksiStr = new Date(newSeleksi).toISOString().split('T')[0]
+      if (oldSeleksiStr <= todayStr && newSeleksiStr > todayStr) {
+        targetRollbackStep = 2
+      }
+    }
+
+    if (targetRollbackStep === null) {
+      const oldUji = currentTraining.tanggal_pengumuman_hasil_uji_kompetensi
+      const newUji = tanggal_pengumuman_hasil_uji_kompetensi as string
+      if (oldUji && newUji) {
+        const oldUjiStr = new Date(oldUji).toISOString().split('T')[0]
+        const newUjiStr = new Date(newUji).toISOString().split('T')[0]
+        if (oldUjiStr <= todayStr && newUjiStr > todayStr) {
+          targetRollbackStep = 3
+        }
+      }
+    }
+  }
+  // --- ROLLBACK LOGIC END ---
+
   // 1. Update Data
   const additional_documents = JSON.parse(formData.get('additional_documents_json') as string || '[]')
   
@@ -580,6 +619,18 @@ export async function updateTrainingAction(formData: FormData) {
   }).eq('id', id)
 
   if (error) return { error: error.message }
+
+  // --- EXECUTE ROLLBACK ---
+  if (targetRollbackStep !== null) {
+    const { error: rollbackError } = await supabase.from('training_registrations')
+      .update({ progress_step: targetRollbackStep })
+      .eq('training_id', id)
+      .gt('progress_step', targetRollbackStep)
+      .neq('status', 'LULUS')
+      .neq('status', 'DITOLAK')
+
+    if (rollbackError) console.error("Rollback step error:", rollbackError)
+  }
 
   // 1.5 Replace Selections, Exams
   // Delete existing ones

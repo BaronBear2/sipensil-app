@@ -42,7 +42,6 @@ export default async function AdminPengumumanPage({ params }: { params: Promise<
                 <Bell className="text-blue-600 shrink-0 mt-1" />
                 <div>
                     <h3 className="font-bold text-blue-800">Jadwal Pengumuman</h3>
-                    <p className="text-sm text-blue-700 mt-1">Sistem akan mempublikasikan pengumuman default dan meluluskan peserta pada tanggal berikut jika Anda tidak mengunggah pengumuman khusus.</p>
                     <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm text-sm">
                             <span className="block text-gray-500 font-bold mb-1">Administrasi</span>
