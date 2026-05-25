@@ -71,15 +71,23 @@ export default function TrainingCard({ item, userStatus, systemDateStr }: { item
           </p>
           <p className="text-sm text-gray-600 mb-4 line-clamp-3">{item.description}</p>
 
-          <div className="mt-auto pt-4 border-t border-dashed">
-            {isUpcoming ? (
-              <button
-                disabled
-                className="block text-center w-full text-sm font-bold text-gray-500 bg-gray-100 px-4 py-2 rounded-lg cursor-not-allowed"
-              >
-                Pendaftaran Belum Dibuka
-              </button>
-            ) : isClosed ? (
+          <div className="mt-auto">
+            <div className="mb-4 bg-blue-50/50 p-3 rounded-lg border border-blue-100/50">
+              <p className="text-xs font-bold text-slate-700 mb-1">Jadwal Pendaftaran:</p>
+              <p className="text-xs text-slate-600">
+                {item.registration_start ? new Date(item.registration_start).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'} s/d {item.registration_end ? new Date(item.registration_end).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}
+              </p>
+            </div>
+
+            <div className="pt-4 border-t border-dashed">
+              {isUpcoming ? (
+                <button
+                  disabled
+                  className="block text-center w-full text-sm font-bold text-gray-500 bg-gray-100 px-4 py-2 rounded-lg cursor-not-allowed"
+                >
+                  BELUM DIBUKA
+                </button>
+              ) : isClosed ? (
               <button
                 onClick={() => setIsClosedModalOpen(true)}
                 className="block text-center w-full text-sm font-bold text-gray-500 bg-gray-100 px-4 py-2 rounded-lg cursor-not-allowed hover:bg-gray-200"
@@ -94,6 +102,7 @@ export default function TrainingCard({ item, userStatus, systemDateStr }: { item
                 Lihat Detail & Daftar
               </Link>
             )}
+            </div>
           </div>
         </div>
       </div>

@@ -127,7 +127,7 @@ export default function TrainingForm({ initialData, actionFn, isEdit = false, ca
     // --- SELECTIONS LOGIC ---
     const addSelection = (typeName: string) => {
         const loc = locations.find(l => l.name === formData.provider)
-        setSelections([...selections, { name: typeName, selection_date: '', selection_time: '', location_address: loc?.address || '' }])
+        setSelections([...selections, { name: typeName, selection_date: '', selection_time: '', location_address: loc?.address || 'UPTD BLK Kabupaten Bekasi' }])
     }
 
     const removeSelection = (index: number) => {
@@ -161,7 +161,7 @@ export default function TrainingForm({ initialData, actionFn, isEdit = false, ca
     // --- FAIL SAFE VALIDATIONS ---
     const validateDates = () => {
         const currentYear = new Date().getFullYear()
-        
+
         const regStart = new Date(formData.registration_start)
         const regEnd = new Date(formData.registration_end)
         const trainStart = new Date(formData.training_start_date)
@@ -296,7 +296,7 @@ export default function TrainingForm({ initialData, actionFn, isEdit = false, ca
                             <div className="mb-2 flex flex-wrap gap-2">
                                 {notes.map((note, idx) => (
                                     <label key={idx} className="flex items-center gap-1.5 text-xs bg-gray-50 px-2 py-1 border rounded cursor-pointer hover:bg-gray-100 transition">
-                                        <input type="checkbox" className="rounded text-blue-600 focus:ring-blue-500" 
+                                        <input type="checkbox" className="rounded text-blue-600 focus:ring-blue-500"
                                             checked={formData.description.includes(`- ${note.text}`)}
                                             onChange={(e) => toggleTextareaItem('description', note.text, e.target.checked)}
                                         />
@@ -315,7 +315,7 @@ export default function TrainingForm({ initialData, actionFn, isEdit = false, ca
                             <div className="mb-2 flex flex-wrap gap-2">
                                 {requirements.map((req, idx) => (
                                     <label key={idx} className="flex items-center gap-1.5 text-xs bg-gray-50 px-2 py-1 border rounded cursor-pointer hover:bg-gray-100 transition">
-                                        <input type="checkbox" className="rounded text-blue-600 focus:ring-blue-500" 
+                                        <input type="checkbox" className="rounded text-blue-600 focus:ring-blue-500"
                                             checked={formData.requirements.includes(`- ${req.text}`)}
                                             onChange={(e) => toggleTextareaItem('requirements', req.text, e.target.checked)}
                                         />
@@ -333,7 +333,7 @@ export default function TrainingForm({ initialData, actionFn, isEdit = false, ca
                         </div>
                         <p className="text-xs text-gray-500 mb-3">Secara default KTP, Ijazah, dan Pas Foto sudah ada. Tambahkan berkas lain yang wajib diupload oleh pencaker (contoh: Kartu Keluarga, Surat Sehat).</p>
                         <div className="flex gap-2 mb-3">
-                            <input type="text" value={newDoc} onChange={(e) => setNewDoc(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter') { e.preventDefault(); addAdditionalDoc(); } }} className="border p-2 rounded text-sm flex-1" placeholder="Nama Berkas (ex: Kartu Keluarga)" />
+                            <input type="text" value={newDoc} onChange={(e) => setNewDoc(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addAdditionalDoc(); } }} className="border p-2 rounded text-sm flex-1" placeholder="Nama Berkas (ex: Kartu Keluarga)" />
                             <button type="button" onClick={addAdditionalDoc} className="bg-blue-600 text-white px-3 py-2 rounded text-sm font-bold hover:bg-blue-700">Tambah</button>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -417,7 +417,7 @@ export default function TrainingForm({ initialData, actionFn, isEdit = false, ca
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Foto / Poster</label>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">Foto / Poster Pelatihan</label>
                         <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center text-center hover:bg-gray-50 transition relative">
                             {previewImage ? (
                                 <img src={previewImage} alt="Preview" className="h-40 object-cover rounded mb-2" />
@@ -437,7 +437,7 @@ export default function TrainingForm({ initialData, actionFn, isEdit = false, ca
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-bold text-gray-800">Jadwal Seleksi Awal</h2>
                 </div>
-                
+
                 {/* Standardized Selection Checkboxes -> Buttons to Add Multiple */}
                 <div className="flex flex-wrap gap-2 mb-6">
                     {SELECTION_TYPES.map((type) => {
@@ -460,16 +460,16 @@ export default function TrainingForm({ initialData, actionFn, isEdit = false, ca
                     {selections.map((sel, index) => {
                         const colors = SELECTION_COLORS[sel.name] || { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', ring: 'focus:ring-blue-500', borderL: 'border-l-blue-500' }
                         return (
-                        <div key={index} className={`p-4 border rounded-xl bg-gray-50 relative border-l-4 ${colors.borderL}`}>
-                            <button type="button" onClick={() => removeSelection(index)} className="absolute top-4 right-4 text-red-500 hover:text-red-700"><Trash2 size={18} /></button>
-                            <h4 className={`font-bold text-sm ${colors.text} mb-3 pr-8`}>{sel.name || 'Jadwal Seleksi'}</h4>
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                <div><label className="block text-xs font-bold mb-1">Nama Seleksi</label><input type="text" value={sel.name || ''} onChange={(e) => updateSelection(index, 'name', e.target.value)} className="w-full border p-2 rounded text-sm bg-white" placeholder="Nama Seleksi" required /></div>
-                                <div><label className="block text-xs font-bold mb-1">Tgl Seleksi</label><input type="date" value={sel.selection_date} onChange={(e) => updateSelection(index, 'selection_date', e.target.value)} className="w-full border p-2 rounded text-sm bg-white" required /></div>
-                                <div><label className="block text-xs font-bold mb-1">Waktu Seleksi</label><input type="time" value={sel.selection_time} onChange={(e) => updateSelection(index, 'selection_time', e.target.value)} className="w-full border p-2 rounded text-sm bg-white" required /></div>
-                                <div><label className="block text-xs font-bold mb-1">Lokasi Seleksi</label><input type="text" value={sel.location_address} onChange={(e) => updateSelection(index, 'location_address', e.target.value)} className="w-full border p-2 rounded text-sm bg-white" placeholder="Ruang Aula BLK" required /></div>
+                            <div key={index} className={`p-4 border rounded-xl bg-gray-50 relative border-l-4 ${colors.borderL}`}>
+                                <button type="button" onClick={() => removeSelection(index)} className="absolute top-4 right-4 text-red-500 hover:text-red-700"><Trash2 size={18} /></button>
+                                <h4 className={`font-bold text-sm ${colors.text} mb-3 pr-8`}>{sel.name || 'Jadwal Seleksi'}</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                    <div><label className="block text-xs font-bold mb-1">Nama Seleksi</label><input type="text" value={sel.name || ''} onChange={(e) => updateSelection(index, 'name', e.target.value)} className="w-full border p-2 rounded text-sm bg-white" placeholder="Nama Seleksi" required /></div>
+                                    <div><label className="block text-xs font-bold mb-1">Tgl Seleksi</label><input type="date" value={sel.selection_date} onChange={(e) => updateSelection(index, 'selection_date', e.target.value)} className="w-full border p-2 rounded text-sm bg-white" required /></div>
+                                    <div><label className="block text-xs font-bold mb-1">Waktu Seleksi</label><input type="time" value={sel.selection_time} onChange={(e) => updateSelection(index, 'selection_time', e.target.value)} className="w-full border p-2 rounded text-sm bg-white" required /></div>
+                                    <div><label className="block text-xs font-bold mb-1">Lokasi Seleksi</label><input type="text" value={sel.location_address} onChange={(e) => updateSelection(index, 'location_address', e.target.value)} className="w-full border p-2 rounded text-sm bg-white" placeholder="Ruang Aula BLK" required /></div>
+                                </div>
                             </div>
-                        </div>
                         )
                     })}
                     {selections.length === 0 && <p className="text-sm text-gray-500 italic">Tambahkan jenis seleksi di atas untuk mengatur jadwal.</p>}
