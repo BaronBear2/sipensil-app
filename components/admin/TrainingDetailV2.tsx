@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { CheckCircle, XCircle, Users, Eye, AlertCircle } from 'lucide-react'
+import { CheckCircle, XCircle, Users, Eye, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { verifyTrainingRegistrationAction, uploadTrainingPdfAction, bulkRejectPendingAction } from '@/actions/dinas'
 import { SwalAlert, SwalConfirm, SwalToast } from '@/utils/swal'
 import Link from 'next/link'
@@ -18,6 +18,44 @@ export default function TrainingDetailV2({ training, registrations }: { training
     const [activeTab, setActiveTab] = useState<'administrasi' | 'seleksi' | 'penilaian' | 'semua_peserta' | 'riwayat_peserta'>('administrasi')
 
     const accCount = registrations.filter(r => r.status !== 'PENDING' && r.status !== 'DITOLAK').length
+
+    const formatDate = (dateString: string | null) => {
+        if (!dateString) return '-'
+        return new Date(dateString).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+    }
+
+    let globalStep = 1
+    if (accCount >= training.quota) globalStep = 2
+
+    const todayStr = new Date().toISOString().split('T')[0]
+    const seleksiDate = training?.tanggal_pengumuman_kelulusan_seleksi_awal ? new Date(training.tanggal_pengumuman_kelulusan_seleksi_awal).toISOString().split('T')[0] : null
+    const ujiDate = training?.tanggal_pengumuman_hasil_uji_kompetensi ? new Date(training.tanggal_pengumuman_hasil_uji_kompetensi).toISOString().split('T')[0] : null
+
+    if (globalStep === 2 && seleksiDate && todayStr >= seleksiDate) globalStep = 3
+    if (globalStep === 3 && ujiDate && todayStr >= ujiDate) globalStep = 4
+
+    const steps = [
+        {
+            num: 1,
+            title: 'Administrasi',
+            desc: `Verifikasi berkas. Pengumuman: ${formatDate(training?.tanggal_pengumuman_kelulusan_administrasi)}`,
+        },
+        {
+            num: 2,
+            title: 'Seleksi',
+            desc: `Hasil diumumkan: ${formatDate(training?.tanggal_pengumuman_kelulusan_seleksi_awal)}`,
+        },
+        {
+            num: 3,
+            title: 'Jadwal Pelatihan',
+            desc: `Hasil kelulusan: ${formatDate(training?.tanggal_pengumuman_hasil_uji_kompetensi)}`,
+        },
+        {
+            num: 4,
+            title: 'Selesai',
+            desc: 'Pelatihan dan Uji Kompetensi telah selesai.',
+        }
+    ]
 
     const searchParams = useSearchParams()
 
@@ -82,7 +120,8 @@ export default function TrainingDetailV2({ training, registrations }: { training
                             title: 'Verifikasi Berhasil',
                             text: 'Kuota telah terpenuhi. Sistem otomatis menggagalkan sisa pendaftar. Silakan unggah dokumen list pencaker yang sudah lulus.'
                         })
-                        router.push(`/dashboard/dinas/pelatihan/${training.id}/pengumuman`)
+                        // Comply with explicit instruction to stay on the list page
+                        router.refresh()
                     }
                 } catch (e) {
                     console.error("Failed to auto reject", e)
@@ -137,7 +176,13 @@ export default function TrainingDetailV2({ training, registrations }: { training
                         title: 'Verifikasi Berhasil',
                         text: 'Kuota telah terpenuhi. Sistem otomatis menggagalkan sisa pendaftar. Silakan unggah dokumen list pencaker yang sudah lulus.'
                     })
-                    router.push(`/dashboard/dinas/pelatihan/${training.id}/pengumuman`)
+                    // Get the user_id of the currently verified registration to construct the anchor
+                    const targetReg = registrations.find(r => r.id === regId)
+                    if (targetReg) {
+                        router.push(`/dashboard/dinas/pelatihan/${training.id}#peserta-${targetReg.user_id}`)
+                    } else {
+                        router.refresh()
+                    }
                 } else {
                     router.refresh()
                 }
@@ -335,6 +380,32 @@ export default function TrainingDetailV2({ training, registrations }: { training
                         <div className="bg-blue-600 h-2.5 rounded-full transition-all duration-500" style={{ width: `${Math.min((accCount / (training.quota || 1)) * 100, 100)}%` }}></div>
                     </div>
                 </div>
+            </div>
+
+            {/* HORIZONTAL STEPPER FOR TRAINING STATUS */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hidden md:block">
+                 <h3 className="text-sm font-bold text-gray-700 mb-6">Status Tahapan Pelatihan Secara Keseluruhan</h3>
+                 <div className="flex justify-between relative px-8">
+                      <div className="absolute top-5 left-16 right-16 h-0.5 bg-gray-200 z-0"></div>
+                      {steps.map(step => {
+                          const isCompleted = globalStep > step.num || training.status === 'FINISHED'
+                          const isCurrent = globalStep === step.num && training.status !== 'FINISHED'
+                          
+                          let circleColor = 'bg-gray-100 border-gray-300 text-gray-400'
+                          if (isCompleted) circleColor = 'bg-green-500 border-green-500 text-white'
+                          else if (isCurrent) circleColor = 'bg-blue-600 border-blue-600 text-white ring-4 ring-blue-50'
+
+                          return (
+                              <div key={step.num} className="flex flex-col items-center text-center w-1/4 relative">
+                                  <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold text-sm transition-all duration-300 z-10 bg-white ${circleColor}`}>
+                                      {isCompleted ? <CheckCircle2 size={16} /> : step.num}
+                                  </div>
+                                  <h4 className={`font-bold text-sm mt-3 ${isCurrent ? 'text-blue-700' : isCompleted ? 'text-gray-900' : 'text-gray-500'}`}>{step.title}</h4>
+                                  <p className="text-xs text-gray-400 mt-1 max-w-[140px]">{step.desc}</p>
+                              </div>
+                          )
+                      })}
+                 </div>
             </div>
 
             {/* Tabs Navigation */}
