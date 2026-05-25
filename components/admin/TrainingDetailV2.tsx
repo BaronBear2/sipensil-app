@@ -25,7 +25,50 @@ export default function TrainingDetailV2({ training, registrations }: { training
         if (searchParams.get('trigger_upload') === 'true') {
             router.push(`/dashboard/dinas/pelatihan/${training.id}/pengumuman`)
         }
-    }, [searchParams])
+    }, [searchParams, router, training.id])
+
+    // Handle hash scrolling for deep linking to a specific participant
+    useEffect(() => {
+        const hash = window.location.hash
+        if (hash) {
+            const userId = hash.replace('#peserta-', '')
+            
+            // Find the participant to determine which tab they belong to
+            const targetReg = registrations.find(r => r.user_id === userId)
+            
+            if (targetReg) {
+                // Determine the correct tab
+                let targetTab: 'administrasi' | 'seleksi' | 'penilaian' | 'riwayat_peserta' = 'administrasi'
+                if (targetReg.status === 'DITOLAK') {
+                    targetTab = 'riwayat_peserta'
+                } else if (targetReg.progress_step === 1) {
+                    targetTab = 'administrasi'
+                } else if (targetReg.progress_step === 2) {
+                    targetTab = 'seleksi'
+                } else if (targetReg.progress_step >= 3) {
+                    targetTab = 'penilaian'
+                }
+
+                // Switch to the correct tab if not already active
+                if (activeTab !== targetTab) {
+                    setActiveTab(targetTab)
+                }
+
+                // Scroll after a short delay to allow tab switch rendering
+                setTimeout(() => {
+                    const element = document.getElementById(`peserta-${userId}`)
+                    if (element) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                        element.classList.add('bg-blue-50')
+                        setTimeout(() => element.classList.remove('bg-blue-50'), 2000)
+                        
+                        // Clear the hash without reloading so it doesn't trap the user when they switch tabs later
+                        window.history.replaceState(null, '', window.location.pathname + window.location.search)
+                    }
+                }, 200) // Slightly longer delay to ensure DOM updates after tab switch
+            }
+        }
+    }, [registrations, activeTab])
 
     useEffect(() => {
         const checkQuotaAndPending = async () => {
@@ -35,9 +78,9 @@ export default function TrainingDetailV2({ training, registrations }: { training
                     const res = await bulkRejectPendingAction(training.id)
                     if (!res?.error) {
                         await SwalAlert.fire({
-                            icon: 'info',
-                            title: 'Verifikasi Telah Berhasil',
-                            text: 'Kuota telah terpenuhi. Sistem otomatis menggagalkan sisa pendaftar. Silakan kelola pengumuman di halaman Manajemen Pengumuman.'
+                            icon: 'success',
+                            title: 'Verifikasi Berhasil',
+                            text: 'Kuota telah terpenuhi. Sistem otomatis menggagalkan sisa pendaftar. Silakan unggah dokumen list pencaker yang sudah lulus.'
                         })
                         router.push(`/dashboard/dinas/pelatihan/${training.id}/pengumuman`)
                     }
@@ -88,16 +131,16 @@ export default function TrainingDetailV2({ training, registrations }: { training
             if (res?.error) {
                 SwalAlert.fire({ icon: 'error', title: 'Error', text: res.error })
             } else {
-                SwalToast.fire({ icon: 'success', title: 'Status Berhasil Diubah' })
                 if (res?.autoFailTriggered) {
                     await SwalAlert.fire({
-                        icon: 'info',
-                        title: 'Verifikasi Telah Berhasil',
-                        text: 'Kuota telah terpenuhi. Sistem otomatis menggagalkan sisa pendaftar. Silakan kelola pengumuman di halaman Manajemen Pengumuman.'
+                        icon: 'success',
+                        title: 'Verifikasi Berhasil',
+                        text: 'Kuota telah terpenuhi. Sistem otomatis menggagalkan sisa pendaftar. Silakan unggah dokumen list pencaker yang sudah lulus.'
                     })
                     router.push(`/dashboard/dinas/pelatihan/${training.id}/pengumuman`)
+                } else {
+                    router.refresh()
                 }
-                router.refresh()
             }
         } catch (err) {
             SwalAlert.fire({ icon: 'error', title: 'Error', text: 'Kesalahan sistem' })
@@ -362,7 +405,7 @@ export default function TrainingDetailV2({ training, registrations }: { training
                                 </tr>
                             ) : (
                                 filteredRegistrations.map((reg) => (
-                                    <tr key={reg.id} className="hover:bg-gray-50/50 transition">
+                                    <tr key={reg.id} id={`peserta-${reg.user_id}`} className="hover:bg-gray-50/50 transition">
                                         <td className="p-4">
                                             <div className="font-bold text-gray-800">{reg.profiles?.full_name || 'Tanpa Nama'}</div>
                                             <div className="text-xs text-gray-500 mt-1">Umur: {reg.age} | Bekerja: {reg.is_unemployed ? 'Tidak' : 'Ya'}</div>

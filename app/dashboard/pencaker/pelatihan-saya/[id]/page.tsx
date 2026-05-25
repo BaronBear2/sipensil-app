@@ -43,7 +43,22 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
         )
     }
 
-    const currentStep = reg.progress_step || 1
+    let computedStep = reg.progress_step || 1
+
+    const todayStr = new Date().toISOString().split('T')[0]
+    const trainingData = reg.blk_trainings || {}
+    const seleksiDate = trainingData?.tanggal_pengumuman_kelulusan_seleksi_awal ? new Date(trainingData.tanggal_pengumuman_kelulusan_seleksi_awal).toISOString().split('T')[0] : null
+    const ujiDate = trainingData?.tanggal_pengumuman_hasil_uji_kompetensi ? new Date(trainingData.tanggal_pengumuman_hasil_uji_kompetensi).toISOString().split('T')[0] : null
+
+    // Time-based progression evaluation for the UI
+    if (computedStep === 2 && seleksiDate && todayStr >= seleksiDate) {
+        computedStep = 3
+    }
+    if (computedStep === 3 && ujiDate && todayStr >= ujiDate) {
+        computedStep = 4
+    }
+
+    const currentStep = computedStep
     const status = reg.status
     const training = reg.blk_trainings || {}
     const selection = training.training_selections?.[0]

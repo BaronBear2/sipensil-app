@@ -4,7 +4,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle, XCircle } from 'lucide-react'
-import { verifyProfileAction } from '@/actions/dinas'
+import { verifyTrainingRegistrationAction } from '@/actions/dinas'
 import { SwalAlert, SwalConfirm } from '@/utils/swal'
 
 export default function VerificationActionPanelV2({ user, status }: { user: any, status: string }) {
@@ -22,12 +22,12 @@ export default function VerificationActionPanelV2({ user, status }: { user: any,
         }
 
         const formData = new FormData()
-        formData.append('userId', user.id)
         formData.append('regId', user.training_reg_id)
-        formData.append('action', action)
+        formData.append('action', action === 'approve' ? 'approve_admin' : 'reject')
+        formData.append('trainingId', user.training_id)
         formData.append('reason', finalReason)
 
-        const res = await verifyProfileAction(formData)
+        const res = await verifyTrainingRegistrationAction(formData)
 
         setLoading(false)
 
@@ -42,12 +42,12 @@ export default function VerificationActionPanelV2({ user, status }: { user: any,
 
         if (res?.autoFailTriggered) {
             await SwalAlert.fire({
-                icon: 'info',
-                title: 'Verifikasi Telah Berhasil',
+                icon: 'success',
+                title: 'Verifikasi Berhasil',
                 text: 'Kuota telah terpenuhi. Sistem otomatis menggagalkan sisa pendaftar. Silakan unggah dokumen list pencaker yang sudah lulus.'
             })
-            // We set a local storage flag or url param to trigger the upload box on the next page
-            router.push(`/dashboard/dinas/pelatihan/${user.training_id}?trigger_upload=true`)
+            // Redirect to previous page (list) anchored to participant
+            router.push(`/dashboard/dinas/pelatihan/${user.training_id}#peserta-${user.id}`)
         } else {
             // Success
             await SwalAlert.fire({
@@ -58,10 +58,8 @@ export default function VerificationActionPanelV2({ user, status }: { user: any,
                     : 'Pendaftaran pencaker telah ditolak.'
             })
             // Request: Redirect to previous page (list)
-            router.push(`/dashboard/dinas/pelatihan/${user.training_id}`)
+            router.push(`/dashboard/dinas/pelatihan/${user.training_id}#peserta-${user.id}`)
         }
-
-        router.refresh()
     }
 
     const executeRevert = async () => {
