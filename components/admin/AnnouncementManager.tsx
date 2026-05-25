@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { FileText, Upload, Plus, Trash2, Globe, Lock, Info, CheckCircle2 } from 'lucide-react'
-import { publishAnnouncementAction, deleteAnnouncementAction, triggerManualCronAction } from '@/actions/announcements'
+import { FileText, Upload, Plus, Trash2, Globe, Lock, Info, CheckCircle2, Edit2, Zap } from 'lucide-react'
+import { publishAnnouncementAction, deleteAnnouncementAction, triggerManualCronAction, generateDefaultDraftsAction, updateDraftAction } from '@/actions/announcements'
 import { SwalAlert, SwalConfirm, SwalToast } from '@/utils/swal'
 
 export default function AnnouncementManager({ trainingId, announcements, training }: { trainingId: string, announcements: any[], training: any }) {
@@ -13,6 +13,7 @@ export default function AnnouncementManager({ trainingId, announcements, trainin
 
     // Form state
     const [showForm, setShowForm] = useState(false)
+    const [editId, setEditId] = useState<string | null>(null)
     const [formData, setFormData] = useState({
         type: 'administrasi',
         content: '',
@@ -32,12 +33,20 @@ export default function AnnouncementManager({ trainingId, announcements, trainin
                 fd.append('file', file)
             }
 
-            const res = await publishAnnouncementAction(fd)
+            let res;
+            if (editId) {
+                fd.append('id', editId)
+                res = await updateDraftAction(fd)
+            } else {
+                res = await publishAnnouncementAction(fd)
+            }
+
             if (res?.error) {
                 SwalAlert.fire({ icon: 'error', title: 'Gagal', text: res.error })
             } else {
-                SwalToast.fire({ icon: 'success', title: 'Pengumuman Berhasil Dipublikasikan' })
+                SwalToast.fire({ icon: 'success', title: editId ? 'Draf Berhasil Disimpan' : 'Pengumuman Berhasil Dipublikasikan' })
                 setShowForm(false)
+                setEditId(null)
                 setFormData({ type: 'administrasi', content: '' })
                 setFile(null)
                 router.refresh()
@@ -99,6 +108,27 @@ export default function AnnouncementManager({ trainingId, announcements, trainin
         }
     }
 
+    const handleGenerateDrafts = async () => {
+        setLoading(true)
+        const fd = new FormData()
+        fd.append('trainingId', trainingId)
+        const res = await generateDefaultDraftsAction(fd)
+        setLoading(false)
+        if (res?.error) {
+            SwalAlert.fire({ icon: 'error', title: 'Gagal', text: res.error })
+        } else {
+            SwalToast.fire({ icon: 'success', title: 'Draf Default Berhasil Dibuat' })
+            router.refresh()
+        }
+    }
+
+    const handleEditClick = (ann: any) => {
+        setEditId(ann.id)
+        setFormData({ type: ann.type, content: ann.content || '' })
+        setFile(null)
+        setShowForm(true)
+    }
+
     return (
         <div>
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
@@ -115,7 +145,10 @@ export default function AnnouncementManager({ trainingId, announcements, trainin
                     <button onClick={() => handleTriggerCron('uji_kompetensi')} disabled={isTriggering} className="bg-purple-100 text-purple-700 px-4 py-2 rounded-lg font-bold hover:bg-purple-200 transition flex items-center gap-2 text-sm">
                         {isTriggering ? 'Memproses...' : 'Luluskan (Uji Kompetensi)'}
                     </button>
-                    <button onClick={() => setShowForm(!showForm)} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 transition flex items-center gap-2 text-sm">
+                    <button onClick={handleGenerateDrafts} disabled={loading} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-bold hover:bg-gray-200 transition flex items-center gap-2 text-sm border">
+                        <Zap size={16} /> Buat Draf Default
+                    </button>
+                    <button onClick={() => { setEditId(null); setFormData({ type: 'administrasi', content: '' }); setShowForm(!showForm) }} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 transition flex items-center gap-2 text-sm">
                         <Plus size={16} /> Buat Manual
                     </button>
                 </div>
@@ -127,7 +160,7 @@ export default function AnnouncementManager({ trainingId, announcements, trainin
                     <div className="space-y-4">
                         <div>
                             <label className="block text-sm font-bold text-gray-700 mb-1">Jenis Pengumuman</label>
-                            <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })} className="w-full border p-2.5 rounded-lg text-sm bg-gray-50 focus:bg-white focus:ring-2 outline-none">
+                            <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })} disabled={!!editId} className={`w-full border p-2.5 rounded-lg text-sm bg-gray-50 focus:bg-white focus:ring-2 outline-none ${editId ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                 <option value="administrasi">Kelulusan Administrasi</option>
                                 <option value="seleksi_awal">Kelulusan Seleksi Awal</option>
                                 <option value="uji_kompetensi">Hasil Uji Kompetensi</option>
@@ -144,8 +177,8 @@ export default function AnnouncementManager({ trainingId, announcements, trainin
                             <p className="text-xs text-gray-500 mt-1">Jika tidak diupload, sistem dapat menggunakan dokumen default. Jika diupload, dokumen ini akan menimpa default sistem.</p>
                         </div>
                         <div className="flex justify-end gap-2 pt-2">
-                            <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 border rounded-lg text-sm font-bold text-gray-600 hover:bg-gray-50">Batal</button>
-                            <button type="submit" disabled={loading} className="px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700">{loading ? 'Menyimpan...' : 'Publikasikan'}</button>
+                            <button type="button" onClick={() => { setShowForm(false); setEditId(null) }} className="px-4 py-2 border rounded-lg text-sm font-bold text-gray-600 hover:bg-gray-50">Batal</button>
+                            <button type="submit" disabled={loading} className="px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700">{loading ? 'Menyimpan...' : (editId ? 'Simpan Draf' : 'Publikasikan')}</button>
                         </div>
                     </div>
                 </form>
@@ -169,7 +202,12 @@ export default function AnnouncementManager({ trainingId, announcements, trainin
                                         <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded uppercase tracking-wider">{ann.type.replace('_', ' ')}</span>
                                         <span className="text-xs text-gray-400 ml-3">{new Date(ann.created_at).toLocaleString('id-ID')}</span>
                                     </div>
-                                    <button onClick={() => handleDelete(ann.id)} className="text-red-400 hover:text-red-600 transition"><Trash2 size={16} /></button>
+                                    <div className="flex gap-2">
+                                        {!ann.is_published && (
+                                            <button onClick={() => handleEditClick(ann)} className="text-blue-500 hover:text-blue-700 transition" title="Edit Draf"><Edit2 size={16} /></button>
+                                        )}
+                                        <button onClick={() => handleDelete(ann.id)} className="text-red-400 hover:text-red-600 transition" title="Hapus"><Trash2 size={16} /></button>
+                                    </div>
                                 </div>
                                 
                                 {ann.content && (

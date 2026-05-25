@@ -3,6 +3,94 @@
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
+export async function generateDefaultDraftsAction(formData: FormData) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    // Role check
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    const role = profile?.role?.toLowerCase()
+    if (role !== 'admin' && role !== 'admin_dinas' && role !== 'dinas') {
+        throw new Error("Unauthorized: Admin access required")
+    }
+
+    const trainingId = formData.get('trainingId') as string
+    if (!trainingId) return { error: "Training ID required" }
+
+    try {
+        const types = [
+            {
+                type: 'administrasi',
+                content: 'Pengumuman Kelulusan Seleksi Administrasi\n\nBerdasarkan hasil evaluasi, berikut adalah daftar peserta yang dinyatakan lulus seleksi administrasi dan berhak mengikuti tahap selanjutnya:\n\n'
+            },
+            {
+                type: 'seleksi_awal',
+                content: 'Pengumuman Kelulusan Seleksi Awal (Wawancara)\n\nBerdasarkan hasil evaluasi, berikut adalah daftar peserta yang dinyatakan lulus seleksi awal dan berhak mengikuti tahap selanjutnya:\n\n'
+            },
+            {
+                type: 'uji_kompetensi',
+                content: 'Pengumuman Hasil Uji Kompetensi (Kelulusan Akhir)\n\nBerdasarkan hasil ujian kompetensi, berikut adalah daftar peserta yang dinyatakan lulus:\n\n'
+            }
+        ];
+
+        // Only insert if they don't exist
+        for (const t of types) {
+            const { data: existing } = await supabase.from('training_announcements')
+                .select('id')
+                .eq('training_id', trainingId)
+                .eq('type', t.type)
+                .limit(1)
+
+            if (!existing || existing.length === 0) {
+                await supabase.from('training_announcements').insert({
+                    training_id: trainingId,
+                    type: t.type,
+                    content: t.content,
+                    is_published: false
+                })
+            }
+        }
+
+        revalidatePath(`/dashboard/dinas/pelatihan/${trainingId}/pengumuman`)
+        return { success: true }
+    } catch (e: any) {
+        return { error: e.message }
+    }
+}
+
+export async function updateDraftAction(formData: FormData) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    const role = profile?.role?.toLowerCase()
+    if (role !== 'admin' && role !== 'admin_dinas' && role !== 'dinas') throw new Error("Unauthorized: Admin access required")
+
+    const id = formData.get('id') as string
+    const content = formData.get('content') as string
+    const file = formData.get('file') as File
+    const trainingId = formData.get('trainingId') as string
+    const type = formData.get('type') as string
+
+    if (!id) return { error: "ID required" }
+
+    let document_url = null
+    if (file && file.size > 0) {
+        document_url = await uploadDocument(file, trainingId, type || 'draft')
+    }
+
+    const updateData: any = { content, updated_at: new Date().toISOString() }
+    if (document_url) updateData.document_url = document_url
+
+    const { error } = await supabase.from('training_announcements').update(updateData).eq('id', id)
+    if (error) return { error: error.message }
+
+    revalidatePath(`/dashboard/dinas/pelatihan/${trainingId}/pengumuman`)
+    return { success: true }
+}
+
 async function uploadDocument(file: File, trainingId: string, type: string): Promise<string | null> {
     if (!file || file.size === 0) return null
 
