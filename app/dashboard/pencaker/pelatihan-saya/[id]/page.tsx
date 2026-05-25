@@ -253,8 +253,6 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
                         </div>
                     </div>
                     <div>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1 text-right">No. Registrasi</span>
-                        <span className="text-xs md:text-sm font-mono text-gray-700 bg-gray-100 px-2 py-1 rounded">{reg.id.slice(0,8).toUpperCase()}</span>
                     </div>
                 </div>
             </div>

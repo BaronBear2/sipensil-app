@@ -109,7 +109,6 @@ export default function MyTrainingsPage() {
                         <div class="box">
                             <p><strong>Nama Peserta:</strong> ${reg.full_name || '-'}</p>
                             <p><strong>NIK:</strong> ${reg.nik || '-'}</p>
-                            <p><strong>No. Pendaftaran:</strong> #${reg.id.slice(0, 8).toUpperCase()}</p>
                             <p><strong>Tanggal Daftar:</strong> ${formatDate(reg.created_at)}</p>
                         </div>
 

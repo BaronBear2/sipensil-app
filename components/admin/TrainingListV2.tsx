@@ -91,7 +91,7 @@ export default function TrainingListV2({ trainings, categories = [] }: { trainin
                     <select 
                         value={selectedCategory} 
                         onChange={(e) => setSelectedCategory(e.target.value)}
-                        className="border p-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 text-gray-700 font-medium"
+                        className="border border-gray-200 p-2.5 rounded-xl outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white hover:bg-gray-50 text-gray-700 font-bold text-sm transition-all cursor-pointer shadow-sm"
                     >
                         <option value="ALL">Semua Kategori</option>
                         {categories.map((c, idx) => (
@@ -128,18 +128,18 @@ export default function TrainingListV2({ trainings, categories = [] }: { trainin
                                     {item.title}
                                 </h3>
 
-                                <div className="space-y-2 mb-4 text-sm text-gray-500 flex-1">
-                                    <div className="flex items-center gap-2">
-                                        <MapPin size={14} className="text-blue-500" />
-                                        <span className="truncate">{item.provider}</span>
+                                <div className="space-y-3 mb-5 text-sm text-gray-600 flex-1">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-1.5 bg-red-50 rounded-md"><MapPin size={14} className="text-red-500" /></div>
+                                        <span className="truncate font-medium">{item.provider}</span>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <Users size={14} className="text-blue-500" />
-                                        <span>Kuota: {item.accCount || 0}/{item.quota} di-ACC</span>
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-1.5 bg-red-50 rounded-md"><Users size={14} className="text-red-500" /></div>
+                                        <span className="font-medium">Kuota: <strong className="text-red-600">{item.accCount || 0}</strong>/{item.quota} di-ACC</span>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <Calendar size={14} className="text-blue-500" />
-                                        <span className="text-xs">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-1.5 bg-red-50 rounded-md"><Calendar size={14} className="text-red-500" /></div>
+                                        <span className="text-xs font-medium">
                                             {item.registration_start ? new Date(item.registration_start).toLocaleDateString('id-ID') : '-'} s/d {item.registration_end ? new Date(item.registration_end).toLocaleDateString('id-ID') : '-'}
                                         </span>
                                     </div>
@@ -151,14 +151,14 @@ export default function TrainingListV2({ trainings, categories = [] }: { trainin
                                             Verifikasi Pencaker
                                         </Link>
                                     ) : (
-                                        <Link href={`/dashboard/dinas/pelatihan/${item.id}`} className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2.5 rounded-lg font-bold text-sm hover:bg-blue-700 shadow-md transition">
+                                        <Link href={`/dashboard/dinas/pelatihan/${item.id}`} className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-red-600 to-rose-600 text-white py-3 rounded-xl font-bold text-sm hover:from-red-700 hover:to-rose-700 shadow-md hover:shadow-red-500/30 transition-all transform hover:-translate-y-0.5">
                                             Kelola Pelatihan
                                         </Link>
                                     )}
                                 </div>
 
                                 <div className="pt-4 border-t flex gap-2">
-                                    <Link href={`/dashboard/dinas/pelatihan/${item.id}/edit`} className="flex-1 bg-blue-50 text-blue-600 py-2 rounded-lg font-bold text-sm hover:bg-blue-100 flex items-center justify-center gap-2 transition">
+                                    <Link href={`/dashboard/dinas/pelatihan/${item.id}/edit`} className="flex-1 bg-red-50 text-red-600 py-2.5 rounded-xl font-bold text-sm hover:bg-red-100 flex items-center justify-center gap-2 transition-colors">
                                         <Edit size={16} /> Edit
                                     </Link>
                                     <button

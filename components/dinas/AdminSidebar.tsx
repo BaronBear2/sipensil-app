@@ -22,9 +22,9 @@ type MenuItem = {
 
 const MENU_ITEMS: MenuItem[] = [
     { name: 'Dashboard', href: '/dashboard/dinas', icon: Home, theme: 'red' },
-    { name: 'Menu Pelatihan', href: '/dashboard/dinas/pelatihan', icon: ClipboardList, theme: 'blue' },
+    { name: 'Menu Pelatihan', href: '/dashboard/dinas/pelatihan', icon: ClipboardList, theme: 'red' },
     { name: 'Manajemen User', href: '/dashboard/dinas/users', icon: Users, theme: 'red' },
-    { name: 'Master Data', href: '/dashboard/dinas/master-data', icon: Settings, theme: 'green' },
+    { name: 'Master Data', href: '/dashboard/dinas/master-data', icon: Settings, theme: 'red' },
 ]
 
 // Helpers for Activity Check
