@@ -314,16 +314,22 @@ export default function MyTrainingsPage() {
 
     return (
         <div className="min-h-screen bg-gray-50 font-sans pb-20 animate-fade-in">
-            <div className="max-w-4xl mx-auto px-4 py-8">
-                <div className="flex items-center gap-4 mb-8">
-                    <Link href="/dashboard/pencaker" className="bg-white p-2 rounded-full border border-gray-200 hover:text-blue-600 transition">
-                        <ArrowLeft size={20} />
-                    </Link>
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-800">Pelatihan Saya</h1>
-                        <p className="text-gray-500 text-sm">Kelola pendaftaran dan riwayat pelatihan Anda.</p>
+            {/* Header */}
+            <div className="bg-white border-b sticky top-0 z-30 shadow-sm">
+                <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <Link href="/dashboard/pencaker" className="p-2 rounded-lg hover:bg-gray-100 transition text-gray-600 border border-gray-200 bg-white">
+                            <ArrowLeft size={20} />
+                        </Link>
+                        <div>
+                            <h1 className="text-lg md:text-xl font-bold text-gray-800 leading-tight tracking-tight">Pelatihan Saya</h1>
+                            <p className="text-xs text-gray-500 font-medium">Kelola pendaftaran dan riwayat pelatihan Anda.</p>
+                        </div>
                     </div>
                 </div>
+            </div>
+
+            <div className="max-w-4xl mx-auto px-4 py-8">
 
                 {activeRegistrations.length === 0 && historyRegistrations.length === 0 && rejectedRegistrations.length === 0 ? (
                     <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-gray-300">

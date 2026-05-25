@@ -259,7 +259,7 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
             <div className="bg-white border-b sticky top-0 z-30 shadow-sm">
                 <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <Link href="/dashboard/pencaker/pelatihan-saya" className="p-2 rounded-full hover:bg-gray-100 transition text-gray-600">
+                        <Link href="/dashboard/pencaker/pelatihan-saya" className="p-2 rounded-lg hover:bg-gray-100 transition text-gray-600 border border-gray-200 bg-white">
                             <ArrowLeft size={20} />
                         </Link>
                         <div>

@@ -47,14 +47,34 @@ export async function publishAnnouncementAction(formData: FormData) {
         document_url = await uploadDocument(file, trainingId, type)
     }
 
-    const { error } = await supabase.from('training_announcements').insert({
-        training_id: trainingId,
-        type,
-        content,
-        document_url,
-        is_published: true,
-        published_at: new Date().toISOString()
-    })
+    let error;
+    if (type !== 'informasi_umum') {
+        const { data: existingArr } = await supabase.from('training_announcements')
+            .select('id')
+            .eq('training_id', trainingId)
+            .eq('type', type)
+            .limit(1)
+            
+        const existing = existingArr?.[0]
+
+        if (existing) {
+            const updateData: any = { content, is_published: true, published_at: new Date().toISOString() }
+            if (document_url) updateData.document_url = document_url
+            
+            const { error: updateError } = await supabase.from('training_announcements').update(updateData).eq('id', existing.id)
+            error = updateError;
+        } else {
+            const { error: insertError } = await supabase.from('training_announcements').insert({
+                training_id: trainingId, type, content, document_url, is_published: true, published_at: new Date().toISOString()
+            })
+            error = insertError;
+        }
+    } else {
+        const { error: insertError } = await supabase.from('training_announcements').insert({
+            training_id: trainingId, type, content, document_url, is_published: true, published_at: new Date().toISOString()
+        })
+        error = insertError;
+    }
 
     if (error) return { error: error.message }
 
@@ -116,7 +136,6 @@ export async function triggerManualCronAction(formData: FormData) {
 
     for (const check of checks) {
         if (checkType && check.type !== checkType) continue
-        if (!training[check.dateField]) continue
         
         // Let's just run it if they trigger manually regardless of date.
         // For manual trigger, we assume the admin wants to force it.
@@ -175,20 +194,18 @@ export async function triggerManualCronAction(formData: FormData) {
         if (existingAnnouncements && existingAnnouncements.length > 0) {
             // Update the existing announcement to append the list if not already there, and publish it
             const existing = existingAnnouncements[0]
-            if (!existing.content?.includes("Daftar Peserta Lulus:")) {
-                const newContent = (existing.content || "") + `\n\nPengumuman Sistem Otomatis\n\n${pdfListMsg}`
-                await supabase.from('training_announcements').update({
-                    content: newContent,
-                    is_published: true,
-                    published_at: existing.published_at || new Date().toISOString()
-                }).eq('id', existing.id)
-            } else if (!existing.is_published) {
-                // Just publish it
-                await supabase.from('training_announcements').update({
-                    is_published: true,
-                    published_at: new Date().toISOString()
-                }).eq('id', existing.id)
+            const marker = "Daftar Peserta Lulus:";
+            let baseContent = existing.content || "";
+            if (baseContent.includes(marker)) {
+                baseContent = baseContent.substring(0, baseContent.indexOf(marker)).trimEnd();
             }
+            const newContent = baseContent + `\n\n${pdfListMsg}`;
+
+            await supabase.from('training_announcements').update({
+                content: newContent,
+                is_published: true,
+                published_at: existing.published_at || new Date().toISOString()
+            }).eq('id', existing.id)
         } else {
             await supabase.from('training_announcements').insert({
                 training_id: trainingId,

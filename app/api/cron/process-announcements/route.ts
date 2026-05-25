@@ -120,19 +120,18 @@ export async function GET(request: Request) {
 
                     if (existingAnnouncements && existingAnnouncements.length > 0) {
                         const existing = existingAnnouncements[0]
-                        if (!existing.content?.includes("Daftar Peserta Lulus:")) {
-                            const newContent = (existing.content || "") + `\n\nPengumuman Sistem Otomatis\n\nBerdasarkan hasil evaluasi, berikut adalah pengumuman hasil tahap ini.\n\n${pdfListMsg}`
-                            await supabase.from('training_announcements').update({
-                                content: newContent,
-                                is_published: true,
-                                published_at: existing.published_at || new Date().toISOString()
-                            }).eq('id', existing.id)
-                        } else if (!existing.is_published) {
-                            await supabase.from('training_announcements').update({
-                                is_published: true,
-                                published_at: new Date().toISOString()
-                            }).eq('id', existing.id)
+                        const marker = "Daftar Peserta Lulus:";
+                        let baseContent = existing.content || "";
+                        if (baseContent.includes(marker)) {
+                            baseContent = baseContent.substring(0, baseContent.indexOf(marker)).trimEnd();
                         }
+                        const newContent = baseContent + `\n\n${pdfListMsg}`;
+
+                        await supabase.from('training_announcements').update({
+                            content: newContent,
+                            is_published: true,
+                            published_at: existing.published_at || new Date().toISOString()
+                        }).eq('id', existing.id)
                     } else {
                         await supabase.from('training_announcements').insert({
                             training_id: training.id,

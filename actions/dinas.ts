@@ -494,6 +494,33 @@ export async function createTrainingAction(formData: FormData) {
 
   const trainingId = data.id
 
+  // 1.5 Create Default Announcements (Drafts)
+  try {
+    const defaultAnnouncements = [
+      {
+        training_id: trainingId,
+        type: 'administrasi',
+        content: 'Pengumuman Kelulusan Seleksi Administrasi\n\nBerdasarkan hasil evaluasi, berikut adalah daftar peserta yang dinyatakan lulus seleksi administrasi dan berhak mengikuti tahap selanjutnya:\n\n',
+        is_published: false
+      },
+      {
+        training_id: trainingId,
+        type: 'seleksi_awal',
+        content: 'Pengumuman Kelulusan Seleksi Awal (Wawancara)\n\nBerdasarkan hasil evaluasi, berikut adalah daftar peserta yang dinyatakan lulus seleksi awal dan berhak mengikuti tahap selanjutnya:\n\n',
+        is_published: false
+      },
+      {
+        training_id: trainingId,
+        type: 'uji_kompetensi',
+        content: 'Pengumuman Hasil Uji Kompetensi (Kelulusan Akhir)\n\nBerdasarkan hasil ujian kompetensi, berikut adalah daftar peserta yang dinyatakan lulus:\n\n',
+        is_published: false
+      }
+    ];
+    await supabase.from('training_announcements').insert(defaultAnnouncements);
+  } catch (e: any) {
+    console.error("Gagal membuat draf pengumuman default:", e);
+  }
+
   // 2. Insert Selections
   try {
     const selections = JSON.parse(formData.get('selections_json') as string || '[]')
@@ -718,6 +745,10 @@ export async function deleteTrainingAction(formData: FormData) {
   if (count && count > 0) {
     return { error: `Gagal menghapus: Masih ada ${count} peserta yang terdaftar di pelatihan ini. Harap kosongkan peserta terlebih dahulu.` }
   }
+
+  // 1.5 Delete associated announcements
+  const { error: annError } = await supabase.from('training_announcements').delete().eq('training_id', id)
+  if (annError) return { error: "Gagal menghapus draf pengumuman: " + annError.message }
 
   // 2. Safe Delete
   const { error } = await supabase.from('blk_trainings').delete().eq('id', id)

@@ -109,9 +109,6 @@ export default function AnnouncementManager({ trainingId, announcements, trainin
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    <button onClick={() => handleTriggerCron('administrasi')} disabled={isTriggering} className="bg-yellow-100 text-yellow-700 px-4 py-2 rounded-lg font-bold hover:bg-yellow-200 transition flex items-center gap-2 text-sm">
-                        {isTriggering ? 'Memproses...' : 'Luluskan (Administrasi)'}
-                    </button>
                     <button onClick={() => handleTriggerCron('seleksi_awal')} disabled={isTriggering} className="bg-green-100 text-green-700 px-4 py-2 rounded-lg font-bold hover:bg-green-200 transition flex items-center gap-2 text-sm">
                         {isTriggering ? 'Memproses...' : 'Luluskan (Seleksi)'}
                     </button>
