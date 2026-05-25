@@ -26,7 +26,7 @@ export async function generateDefaultDraftsAction(formData: FormData) {
             },
             {
                 type: 'seleksi_awal',
-                content: 'Pengumuman Kelulusan Seleksi Awal (Wawancara)\n\nBerdasarkan hasil evaluasi, berikut adalah daftar peserta yang dinyatakan lulus seleksi awal dan berhak mengikuti tahap selanjutnya:\n\n'
+                content: 'Pengumuman Kelulusan Seleksi Awal\n\nBerdasarkan hasil evaluasi, berikut adalah daftar peserta yang dinyatakan lulus seleksi awal dan berhak mengikuti tahap selanjutnya:\n\n'
             },
             {
                 type: 'uji_kompetensi',
@@ -103,7 +103,10 @@ async function uploadDocument(file: File, trainingId: string, type: string): Pro
     const filename = `${Date.now()}-${file.name.replace(/\s/g, '-')}`
 
     try {
-        const { error } = await supabase.storage.from('documents').upload(`announcements/${trainingId}/${type}/${filename}`, buffer)
+        const { error } = await supabase.storage.from('documents').upload(`announcements/${trainingId}/${type}/${filename}`, buffer, {
+            contentType: file.type || 'application/pdf',
+            upsert: true
+        })
         if (error) {
             console.error("Upload Failed:", error)
             return null
@@ -297,7 +300,7 @@ export async function triggerManualCronAction(formData: FormData) {
             const { generateParticipantListPDF } = await import('@/utils/pdf');
             const pdfBuffer = await generateParticipantListPDF(training.title || 'Pelatihan', check.type, allPassedUsers || []);
             const filename = `peserta_lulus_${Date.now()}.pdf`;
-            const { error: uploadError } = await supabase.storage.from('documents').upload(`announcements/${trainingId}/${check.type}/${filename}`, pdfBuffer);
+            const { error: uploadError } = await supabase.storage.from('documents').upload(`announcements/${trainingId}/${check.type}/${filename}`, pdfBuffer, { contentType: 'application/pdf', upsert: true });
             if (!uploadError) {
                 const { data: urlData } = supabase.storage.from('documents').getPublicUrl(`announcements/${trainingId}/${check.type}/${filename}`);
                 document_url = urlData.publicUrl;

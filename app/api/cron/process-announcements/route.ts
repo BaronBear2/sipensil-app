@@ -125,7 +125,7 @@ export async function GET(request: Request) {
                         const { generateParticipantListPDF } = await import('@/utils/pdf');
                         const pdfBuffer = await generateParticipantListPDF(training.title || 'Pelatihan', check.type, allPassedUsers || []);
                         const filename = `peserta_lulus_${Date.now()}.pdf`;
-                        const { error: uploadError } = await supabase.storage.from('documents').upload(`announcements/${training.id}/${check.type}/${filename}`, pdfBuffer);
+                        const { error: uploadError } = await supabase.storage.from('documents').upload(`announcements/${training.id}/${check.type}/${filename}`, pdfBuffer, { contentType: 'application/pdf', upsert: true });
                         if (!uploadError) {
                             const { data: urlData } = supabase.storage.from('documents').getPublicUrl(`announcements/${training.id}/${check.type}/${filename}`);
                             document_url = urlData.publicUrl;

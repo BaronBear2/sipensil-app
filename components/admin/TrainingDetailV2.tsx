@@ -197,6 +197,19 @@ export default function TrainingDetailV2({ training, registrations }: { training
     }
 
     const handleTriggerCron = async (type: string) => {
+        let title = 'Jalankan Proses?'
+        if (type === 'seleksi_awal') title = 'Jalankan Kelulusan Seleksi?'
+        if (type === 'uji_kompetensi') title = 'Jalankan Kelulusan Uji Kompetensi?'
+        const text = 'Sistem akan meluluskan massal pencaker di tahap ini dan menerbitkan pengumuman. Apakah Anda yakin?'
+
+        const confirm = await SwalConfirm.fire({
+            title,
+            text,
+            confirmButtonText: 'Ya, Jalankan'
+        })
+
+        if (!confirm.isConfirmed) return;
+
         setIsTriggering(true)
         const fd = new FormData()
         fd.append('trainingId', training.id)
@@ -470,11 +483,6 @@ export default function TrainingDetailV2({ training, registrations }: { training
                 <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                     <h3 className="font-bold text-gray-700">Daftar Peserta - {activeTab === 'administrasi' ? 'Administrasi' : activeTab === 'seleksi' ? 'Tahap Seleksi (Tidak Gagal = Lulus)' : activeTab === 'penilaian' ? 'Uji Kompetensi (Tidak Gagal = Kompeten)' : activeTab === 'semua_peserta' ? 'Peserta Aktif' : 'Semua Pendaftar'}</h3>
                     <div className="flex gap-2 items-center">
-                        {activeTab === 'administrasi' && (
-                            <button onClick={() => handleTriggerCron('administrasi')} disabled={isTriggering} className="bg-yellow-100 hover:bg-yellow-200 text-yellow-700 font-bold py-2 px-4 rounded-lg flex items-center gap-2 text-sm transition">
-                                {isTriggering ? 'Memproses...' : 'Luluskan (Administrasi)'}
-                            </button>
-                        )}
                         {activeTab === 'seleksi' && (
                             <button onClick={() => handleTriggerCron('seleksi_awal')} disabled={isTriggering} className="bg-green-100 hover:bg-green-200 text-green-700 font-bold py-2 px-4 rounded-lg flex items-center gap-2 text-sm transition">
                                 {isTriggering ? 'Memproses...' : 'Luluskan (Seleksi)'}
