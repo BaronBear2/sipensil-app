@@ -391,13 +391,13 @@ export default function TrainingDetailV2({ training, registrations }: { training
                           const isCompleted = globalStep > step.num || training.status === 'FINISHED'
                           const isCurrent = globalStep === step.num && training.status !== 'FINISHED'
                           
-                          let circleColor = 'bg-gray-100 border-gray-300 text-gray-400'
+                          let circleColor = 'bg-white border-gray-300 text-gray-600'
                           if (isCompleted) circleColor = 'bg-green-500 border-green-500 text-white'
                           else if (isCurrent) circleColor = 'bg-blue-600 border-blue-600 text-white ring-4 ring-blue-50'
 
                           return (
                               <div key={step.num} className="flex flex-col items-center text-center w-1/4 relative">
-                                  <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold text-sm transition-all duration-300 z-10 bg-white ${circleColor}`}>
+                                  <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold text-sm transition-all duration-300 z-10 ${circleColor}`}>
                                       {isCompleted ? <CheckCircle2 size={16} /> : step.num}
                                   </div>
                                   <h4 className={`font-bold text-sm mt-3 ${isCurrent ? 'text-blue-700' : isCompleted ? 'text-gray-900' : 'text-gray-500'}`}>{step.title}</h4>

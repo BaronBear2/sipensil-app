@@ -224,8 +224,8 @@ export default async function VerificationDetailPage({ params }: { params: Promi
                                     let isCurrent = currentStep === step.num && !isRejected && !isFinished
                                     let isPending = currentStep < step.num
 
-                                    let statusColor = 'bg-gray-100 border-gray-300 text-gray-400'
-                                    let contentColor = 'text-gray-400'
+                                    let statusColor = 'bg-white border-gray-300 text-gray-600'
+                                    let contentColor = 'text-gray-500'
                                     
                                     if (isCompleted) {
                                         if (isRejected && currentStep === step.num) {

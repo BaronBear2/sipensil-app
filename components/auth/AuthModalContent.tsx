@@ -32,7 +32,7 @@ export default function AuthModalContent({ initialView, onSwitch, onClose }: Aut
             <LoginForm
                 onRegisterClick={() => handleSwitch('REGISTER')}
                 onForgotPasswordClick={() => handleSwitch('FORGOT_PASSWORD')}
-                onSuccess={() => { }} // Redirection is handled by LoginForm
+                onSuccess={() => onClose()} // Close modal immediately before navigation
             />
         )
     }
