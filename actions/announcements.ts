@@ -74,6 +74,8 @@ export async function updateDraftAction(formData: FormData) {
     const trainingId = formData.get('trainingId') as string
     const type = formData.get('type') as string
 
+    const scheduledDate = formData.get('scheduledDate') as string
+
     if (!id) return { error: "ID required" }
 
     let document_url = null
@@ -83,6 +85,8 @@ export async function updateDraftAction(formData: FormData) {
 
     const updateData: any = { content, updated_at: new Date().toISOString() }
     if (document_url) updateData.document_url = document_url
+    if (scheduledDate) updateData.scheduled_date = scheduledDate
+    else updateData.scheduled_date = null
 
     const { error } = await supabase.from('training_announcements').update(updateData).eq('id', id)
     if (error) return { error: error.message }
@@ -130,6 +134,8 @@ export async function publishAnnouncementAction(formData: FormData) {
     const content = formData.get('content') as string
     const file = formData.get('file') as File
 
+    const scheduledDate = formData.get('scheduledDate') as string
+
     let document_url = null
     if (file && file.size > 0) {
         document_url = await uploadDocument(file, trainingId, type)
@@ -148,19 +154,24 @@ export async function publishAnnouncementAction(formData: FormData) {
         if (existing) {
             const updateData: any = { content, is_published: true, published_at: new Date().toISOString() }
             if (document_url) updateData.document_url = document_url
+            if (scheduledDate) updateData.scheduled_date = scheduledDate
             
             const { error: updateError } = await supabase.from('training_announcements').update(updateData).eq('id', existing.id)
             error = updateError;
         } else {
-            const { error: insertError } = await supabase.from('training_announcements').insert({
+            const insertData: any = {
                 training_id: trainingId, type, content, document_url, is_published: true, published_at: new Date().toISOString()
-            })
+            }
+            if (scheduledDate) insertData.scheduled_date = scheduledDate
+            const { error: insertError } = await supabase.from('training_announcements').insert(insertData)
             error = insertError;
         }
     } else {
-        const { error: insertError } = await supabase.from('training_announcements').insert({
+        const insertData: any = {
             training_id: trainingId, type, content, document_url, is_published: true, published_at: new Date().toISOString()
-        })
+        }
+        if (scheduledDate) insertData.scheduled_date = scheduledDate
+        const { error: insertError } = await supabase.from('training_announcements').insert(insertData)
         error = insertError;
     }
 
@@ -279,6 +290,24 @@ export async function triggerManualCronAction(formData: FormData) {
             .eq('training_id', trainingId)
             .eq('type', check.type)
 
+        let document_url = existingAnnouncements?.[0]?.document_url || null;
+
+        // Generate PDF list
+        try {
+            const { generateParticipantListPDF } = await import('@/utils/pdf');
+            const pdfBuffer = await generateParticipantListPDF(training.title || 'Pelatihan', check.type, allPassedUsers || []);
+            const filename = `peserta_lulus_${Date.now()}.pdf`;
+            const { error: uploadError } = await supabase.storage.from('documents').upload(`announcements/${trainingId}/${check.type}/${filename}`, pdfBuffer);
+            if (!uploadError) {
+                const { data: urlData } = supabase.storage.from('documents').getPublicUrl(`announcements/${trainingId}/${check.type}/${filename}`);
+                document_url = urlData.publicUrl;
+            } else {
+                console.error("Failed to upload PDF:", uploadError);
+            }
+        } catch (pdfErr) {
+            console.error("Failed to generate PDF:", pdfErr);
+        }
+
         if (existingAnnouncements && existingAnnouncements.length > 0) {
             // Update the existing announcement to append the list if not already there, and publish it
             const existing = existingAnnouncements[0]
@@ -291,6 +320,7 @@ export async function triggerManualCronAction(formData: FormData) {
 
             await supabase.from('training_announcements').update({
                 content: newContent,
+                document_url: document_url,
                 is_published: true,
                 published_at: existing.published_at || new Date().toISOString()
             }).eq('id', existing.id)
@@ -299,6 +329,7 @@ export async function triggerManualCronAction(formData: FormData) {
                 training_id: trainingId,
                 type: check.type,
                 content: `Pengumuman Sistem Otomatis\n\n${pdfListMsg}`,
+                document_url: document_url,
                 is_published: true,
                 published_at: new Date().toISOString()
             })

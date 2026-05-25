@@ -118,6 +118,24 @@ export async function GET(request: Request) {
                         .eq('training_id', training.id)
                         .eq('type', check.type)
 
+                    let document_url = existingAnnouncements?.[0]?.document_url || null;
+
+                    // Generate PDF list
+                    try {
+                        const { generateParticipantListPDF } = await import('@/utils/pdf');
+                        const pdfBuffer = await generateParticipantListPDF(training.title || 'Pelatihan', check.type, allPassedUsers || []);
+                        const filename = `peserta_lulus_${Date.now()}.pdf`;
+                        const { error: uploadError } = await supabase.storage.from('documents').upload(`announcements/${training.id}/${check.type}/${filename}`, pdfBuffer);
+                        if (!uploadError) {
+                            const { data: urlData } = supabase.storage.from('documents').getPublicUrl(`announcements/${training.id}/${check.type}/${filename}`);
+                            document_url = urlData.publicUrl;
+                        } else {
+                            console.error("Failed to upload PDF:", uploadError);
+                        }
+                    } catch (pdfErr) {
+                        console.error("Failed to generate PDF:", pdfErr);
+                    }
+
                     if (existingAnnouncements && existingAnnouncements.length > 0) {
                         const existing = existingAnnouncements[0]
                         const marker = "Daftar Peserta Lulus:";
@@ -129,6 +147,7 @@ export async function GET(request: Request) {
 
                         await supabase.from('training_announcements').update({
                             content: newContent,
+                            document_url: document_url,
                             is_published: true,
                             published_at: existing.published_at || new Date().toISOString()
                         }).eq('id', existing.id)
@@ -136,7 +155,8 @@ export async function GET(request: Request) {
                         await supabase.from('training_announcements').insert({
                             training_id: training.id,
                             type: check.type,
-                            content: `Pengumuman Sistem Otomatis\n\nBerdasarkan hasil evaluasi, berikut adalah pengumuman hasil tahap ini.\n\n${pdfListMsg}`,
+                            content: `Pengumuman Sistem Otomatis\n\n${pdfListMsg}`,
+                            document_url: document_url,
                             is_published: true,
                             published_at: new Date().toISOString()
                         })
@@ -145,6 +165,17 @@ export async function GET(request: Request) {
                     processedCount++
                 }
             }
+        }
+
+        // Process custom manual announcements with scheduled_date
+        const { error: genericUpdateError } = await supabase.from('training_announcements')
+            .update({ is_published: true, published_at: new Date().toISOString() })
+            .eq('is_published', false)
+            .not('scheduled_date', 'is', null)
+            .lte('scheduled_date', todayOnlyDateStr)
+
+        if (genericUpdateError) {
+            console.error("Cron Error updating generic scheduled announcements:", genericUpdateError)
         }
 
         return NextResponse.json({ success: true, processedCount })

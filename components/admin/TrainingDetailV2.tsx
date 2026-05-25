@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { CheckCircle, XCircle, Users, Eye, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { verifyTrainingRegistrationAction, uploadTrainingPdfAction, bulkRejectPendingAction } from '@/actions/dinas'
+import { triggerManualCronAction } from '@/actions/announcements'
 import { SwalAlert, SwalConfirm, SwalToast } from '@/utils/swal'
 import Link from 'next/link'
 import { Upload, Download } from 'lucide-react'
@@ -15,6 +16,7 @@ export default function TrainingDetailV2({ training, registrations }: { training
     const router = useRouter()
     const [loadingRegId, setLoadingRegId] = useState<string | null>(null)
     const [uploading, setUploading] = useState(false)
+    const [isTriggering, setIsTriggering] = useState(false)
     const [activeTab, setActiveTab] = useState<'administrasi' | 'seleksi' | 'penilaian' | 'semua_peserta' | 'riwayat_peserta'>('administrasi')
 
     const accCount = registrations.filter(r => r.status !== 'PENDING' && r.status !== 'DITOLAK').length
@@ -191,6 +193,27 @@ export default function TrainingDetailV2({ training, registrations }: { training
             SwalAlert.fire({ icon: 'error', title: 'Error', text: 'Kesalahan sistem' })
         } finally {
             setLoadingRegId(null)
+        }
+    }
+
+    const handleTriggerCron = async (type: string) => {
+        setIsTriggering(true)
+        const fd = new FormData()
+        fd.append('trainingId', training.id)
+        fd.append('checkType', type)
+        
+        try {
+            const res = await triggerManualCronAction(fd)
+            if (res?.error) {
+                SwalAlert.fire({ icon: 'error', title: 'Gagal', text: res.error })
+            } else {
+                SwalToast.fire({ icon: 'success', title: 'Proses Manual Berhasil Dijalankan' })
+                router.refresh()
+            }
+        } catch (err) {
+            SwalAlert.fire({ icon: 'error', title: 'Error', text: 'Kesalahan sistem saat memproses manual.' })
+        } finally {
+            setIsTriggering(false)
         }
     }
 
@@ -446,7 +469,22 @@ export default function TrainingDetailV2({ training, registrations }: { training
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                     <h3 className="font-bold text-gray-700">Daftar Peserta - {activeTab === 'administrasi' ? 'Administrasi' : activeTab === 'seleksi' ? 'Tahap Seleksi (Tidak Gagal = Lulus)' : activeTab === 'penilaian' ? 'Uji Kompetensi (Tidak Gagal = Kompeten)' : activeTab === 'semua_peserta' ? 'Peserta Aktif' : 'Semua Pendaftar'}</h3>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
+                        {activeTab === 'administrasi' && (
+                            <button onClick={() => handleTriggerCron('administrasi')} disabled={isTriggering} className="bg-yellow-100 hover:bg-yellow-200 text-yellow-700 font-bold py-2 px-4 rounded-lg flex items-center gap-2 text-sm transition">
+                                {isTriggering ? 'Memproses...' : 'Luluskan (Administrasi)'}
+                            </button>
+                        )}
+                        {activeTab === 'seleksi' && (
+                            <button onClick={() => handleTriggerCron('seleksi_awal')} disabled={isTriggering} className="bg-green-100 hover:bg-green-200 text-green-700 font-bold py-2 px-4 rounded-lg flex items-center gap-2 text-sm transition">
+                                {isTriggering ? 'Memproses...' : 'Luluskan (Seleksi)'}
+                            </button>
+                        )}
+                        {activeTab === 'penilaian' && (
+                            <button onClick={() => handleTriggerCron('uji_kompetensi')} disabled={isTriggering} className="bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold py-2 px-4 rounded-lg flex items-center gap-2 text-sm transition">
+                                {isTriggering ? 'Memproses...' : 'Luluskan (Uji Kompetensi)'}
+                            </button>
+                        )}
                         {activeTab === 'semua_peserta' && (
                             <button onClick={handleDownloadAllFiles} className="bg-green-100 hover:bg-green-200 text-green-700 font-bold py-2 px-4 rounded-lg flex items-center gap-2 text-sm transition">
                                 <Download size={16} /> Download Berkas Pencaker
