@@ -109,6 +109,7 @@ export async function triggerManualCronAction(formData: FormData) {
     let processedAny = false
 
     const checks = [
+        { type: 'administrasi', dateField: 'tanggal_pengumuman_kelulusan_administrasi', currentStep: 1, nextStep: 2 },
         { type: 'seleksi_awal', dateField: 'tanggal_pengumuman_kelulusan_seleksi_awal', currentStep: 2, nextStep: 3 },
         { type: 'uji_kompetensi', dateField: 'tanggal_pengumuman_hasil_uji_kompetensi', currentStep: 3, nextStep: 4 }
     ]
@@ -120,19 +121,13 @@ export async function triggerManualCronAction(formData: FormData) {
         // Let's just run it if they trigger manually regardless of date.
         // For manual trigger, we assume the admin wants to force it.
 
-        // 1. Check if announcement already exists
-        const { count } = await supabase.from('training_announcements')
-            .select('*', { count: 'exact', head: true })
-            .eq('training_id', trainingId)
-            .eq('type', check.type)
+        const allowedStatuses = check.type === 'administrasi' ? ['DITERIMA'] : ['PENDING', 'DITERIMA']
 
-        if (count && count > 0) continue // Skip if already announced
-
-        // 2. Safe Bulk Update: Update all PENDING or DITERIMA users at currentStep to nextStep
+        // 1. Safe Bulk Update: Update users at currentStep to nextStep
         const { data: usersToPass } = await supabase.from('training_registrations')
             .select('id, profiles(full_name)')
             .eq('training_id', trainingId)
-            .in('status', ['PENDING', 'DITERIMA'])
+            .in('status', allowedStatuses)
             .eq('progress_step', check.currentStep)
 
         if (usersToPass && usersToPass.length > 0) {
@@ -143,16 +138,16 @@ export async function triggerManualCronAction(formData: FormData) {
                 .update({ 
                     status: statusToSet, 
                     progress_step: check.nextStep,
-                    admin_notes: 'Lulus Otomatis Sistem'
+                    admin_notes: 'Lulus Otomatis Sistem (Pengumuman)'
                 })
                 .eq('training_id', trainingId)
                 .eq('progress_step', check.currentStep)
-                .in('status', ['PENDING', 'DITERIMA'])
+                .in('status', allowedStatuses)
 
-                if (bulkError) {
-                    console.error("Bulk update error:", bulkError)
-                    continue
-                }
+            if (bulkError) {
+                console.error("Bulk update error:", bulkError)
+                continue
+            }
         }
 
         // Fetch ALL users who passed this stage (both manually verified and auto-passed)
@@ -171,13 +166,38 @@ export async function triggerManualCronAction(formData: FormData) {
             pdfListMsg += "Belum ada peserta yang diluluskan."
         }
 
-        await supabase.from('training_announcements').insert({
-            training_id: trainingId,
-            type: check.type,
-            content: `Pengumuman Sistem Otomatis\n\n${pdfListMsg}`,
-            is_published: true,
-            published_at: new Date().toISOString()
-        })
+        // 2. Check if announcement already exists
+        const { data: existingAnnouncements } = await supabase.from('training_announcements')
+            .select('*')
+            .eq('training_id', trainingId)
+            .eq('type', check.type)
+
+        if (existingAnnouncements && existingAnnouncements.length > 0) {
+            // Update the existing announcement to append the list if not already there, and publish it
+            const existing = existingAnnouncements[0]
+            if (!existing.content?.includes("Daftar Peserta Lulus:")) {
+                const newContent = (existing.content || "") + `\n\nPengumuman Sistem Otomatis\n\n${pdfListMsg}`
+                await supabase.from('training_announcements').update({
+                    content: newContent,
+                    is_published: true,
+                    published_at: existing.published_at || new Date().toISOString()
+                }).eq('id', existing.id)
+            } else if (!existing.is_published) {
+                // Just publish it
+                await supabase.from('training_announcements').update({
+                    is_published: true,
+                    published_at: new Date().toISOString()
+                }).eq('id', existing.id)
+            }
+        } else {
+            await supabase.from('training_announcements').insert({
+                training_id: trainingId,
+                type: check.type,
+                content: `Pengumuman Sistem Otomatis\n\n${pdfListMsg}`,
+                is_published: true,
+                published_at: new Date().toISOString()
+            })
+        }
 
         processedAny = true
     }

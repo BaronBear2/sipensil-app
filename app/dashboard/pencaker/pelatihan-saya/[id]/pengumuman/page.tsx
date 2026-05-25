@@ -10,10 +10,18 @@ export default async function PencakerPengumumanPage({ params }: { params: Promi
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) redirect('/auth/login')
 
+    const { data: reg, error: regError } = await supabase
+        .from('training_registrations')
+        .select('training_id')
+        .eq('id', id)
+        .single()
+
+    if (regError || !reg) redirect('/dashboard/pencaker/pelatihan-saya')
+
     const { data: training, error } = await supabase
         .from('blk_trainings')
         .select('*')
-        .eq('id', id)
+        .eq('id', reg.training_id)
         .single()
 
     if (error || !training) redirect('/dashboard/pencaker/pelatihan-saya')
@@ -22,7 +30,7 @@ export default async function PencakerPengumumanPage({ params }: { params: Promi
     const { data: announcements } = await supabase
         .from('training_announcements')
         .select('*')
-        .eq('training_id', id)
+        .eq('training_id', reg.training_id)
         .eq('is_published', true)
         .order('created_at', { ascending: false })
 

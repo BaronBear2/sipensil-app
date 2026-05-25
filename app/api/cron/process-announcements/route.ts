@@ -27,7 +27,7 @@ export async function GET(request: Request) {
         
         const { data: trainings, error: trainingsError } = await supabase
             .from('blk_trainings')
-            .select('id, title, tanggal_pengumuman_kelulusan_administrasi, tanggal_pengumuman_kelulusan_seleksi_awal, tanggal_pengumuman_hasil_uji_kompetensi')
+            .select('id, title, quota, tanggal_pengumuman_kelulusan_administrasi, tanggal_pengumuman_kelulusan_seleksi_awal, tanggal_pengumuman_hasil_uji_kompetensi')
             .in('status', ['OPEN', 'ONGOING', 'SELECTION']) // Ensure we don't process already FINISHED
 
         if (trainingsError || !trainings) {
@@ -38,6 +38,7 @@ export async function GET(request: Request) {
         let processedCount = 0
 
         const checks = [
+            { type: 'administrasi', dateField: 'tanggal_pengumuman_kelulusan_administrasi' as const, currentStep: 1, nextStep: 2 },
             { type: 'seleksi_awal', dateField: 'tanggal_pengumuman_kelulusan_seleksi_awal' as const, currentStep: 2, nextStep: 3 },
             { type: 'uji_kompetensi', dateField: 'tanggal_pengumuman_hasil_uji_kompetensi' as const, currentStep: 3, nextStep: 4 }
         ]
@@ -53,39 +54,45 @@ export async function GET(request: Request) {
                 if (todayOnlyDateStr === scheduledDateStr) {
                     // It is exactly Hari H. Let's run the auto-announcement logic.
 
-                    // 1. Check if announcement already exists
-                    const { count } = await supabase.from('training_announcements')
-                        .select('*', { count: 'exact', head: true })
-                        .eq('training_id', training.id)
-                        .eq('type', check.type)
-
-                    if (count && count > 0) continue // Skip if already announced manually or by previous cron
-
-                    // 2. Safe Bulk Update: Update all PENDING or DITERIMA users at currentStep to nextStep
-                    const { data: usersToPass } = await supabase.from('training_registrations')
-                        .select('id, profiles(full_name)')
-                        .eq('training_id', training.id)
-                        .in('status', ['PENDING', 'DITERIMA'])
-                        .eq('progress_step', check.currentStep)
-
-                    if (usersToPass && usersToPass.length > 0) {
-                        let statusToSet = 'DITERIMA'
-                        if (check.type === 'administrasi') statusToSet = 'DITERIMA'
-                        if (check.type === 'uji_kompetensi') statusToSet = 'LULUS'
-
-                        const { error: bulkError } = await supabase.from('training_registrations')
-                            .update({ 
-                                status: statusToSet, 
-                                progress_step: check.nextStep,
-                                admin_notes: 'Lulus Otomatis Sistem'
-                            })
+                    if (check.type === 'administrasi') {
+                        // Check if quota is met
+                        const { count: acceptedCount } = await supabase.from('training_registrations')
+                            .select('*', { count: 'exact', head: true })
                             .eq('training_id', training.id)
-                            .eq('progress_step', check.currentStep)
+                            .in('status', ['DITERIMA', 'LULUS', 'SELESAI'])
+                            .gte('progress_step', 2)
+                        
+                        if (acceptedCount === null || acceptedCount < (training.quota || 0)) {
+                            console.log(`[Administrasi Cron] Quota not met for training ${training.id}. Skipping.`)
+                            continue // Skip processing for this training
+                        }
+                        // DO NOT perform bulk update for administrasi.
+                    } else {
+                        // 1. Safe Bulk Update: Update all PENDING or DITERIMA users at currentStep to nextStep
+                        const { data: usersToPass } = await supabase.from('training_registrations')
+                            .select('id, profiles(full_name)')
+                            .eq('training_id', training.id)
                             .in('status', ['PENDING', 'DITERIMA'])
+                            .eq('progress_step', check.currentStep)
 
-                        if (bulkError) {
-                            console.error("Bulk update error in cron:", bulkError)
-                            continue
+                        if (usersToPass && usersToPass.length > 0) {
+                            let statusToSet = 'DITERIMA'
+                            if (check.type === 'uji_kompetensi') statusToSet = 'LULUS'
+
+                            const { error: bulkError } = await supabase.from('training_registrations')
+                                .update({ 
+                                    status: statusToSet, 
+                                    progress_step: check.nextStep,
+                                    admin_notes: 'Lulus Otomatis Sistem (Pengumuman)'
+                                })
+                                .eq('training_id', training.id)
+                                .eq('progress_step', check.currentStep)
+                                .in('status', ['PENDING', 'DITERIMA'])
+
+                            if (bulkError) {
+                                console.error("Bulk update error in cron:", bulkError)
+                                continue
+                            }
                         }
                     }
 
@@ -105,13 +112,36 @@ export async function GET(request: Request) {
                         pdfListMsg += "Belum ada peserta yang diluluskan."
                     }
 
-                    await supabase.from('training_announcements').insert({
-                        training_id: training.id,
-                        type: check.type,
-                        content: `Pengumuman Sistem Otomatis\n\nBerdasarkan hasil evaluasi, berikut adalah pengumuman hasil tahap ini.\n\n${pdfListMsg}`,
-                        is_published: true,
-                        published_at: new Date().toISOString()
-                    })
+                    // 2. Check if announcement already exists
+                    const { data: existingAnnouncements } = await supabase.from('training_announcements')
+                        .select('*')
+                        .eq('training_id', training.id)
+                        .eq('type', check.type)
+
+                    if (existingAnnouncements && existingAnnouncements.length > 0) {
+                        const existing = existingAnnouncements[0]
+                        if (!existing.content?.includes("Daftar Peserta Lulus:")) {
+                            const newContent = (existing.content || "") + `\n\nPengumuman Sistem Otomatis\n\nBerdasarkan hasil evaluasi, berikut adalah pengumuman hasil tahap ini.\n\n${pdfListMsg}`
+                            await supabase.from('training_announcements').update({
+                                content: newContent,
+                                is_published: true,
+                                published_at: existing.published_at || new Date().toISOString()
+                            }).eq('id', existing.id)
+                        } else if (!existing.is_published) {
+                            await supabase.from('training_announcements').update({
+                                is_published: true,
+                                published_at: new Date().toISOString()
+                            }).eq('id', existing.id)
+                        }
+                    } else {
+                        await supabase.from('training_announcements').insert({
+                            training_id: training.id,
+                            type: check.type,
+                            content: `Pengumuman Sistem Otomatis\n\nBerdasarkan hasil evaluasi, berikut adalah pengumuman hasil tahap ini.\n\n${pdfListMsg}`,
+                            is_published: true,
+                            published_at: new Date().toISOString()
+                        })
+                    }
 
                     processedCount++
                 }

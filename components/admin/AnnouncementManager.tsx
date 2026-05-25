@@ -69,8 +69,11 @@ export default function AnnouncementManager({ trainingId, announcements, trainin
         }
     }
 
-    const handleTriggerCron = async (type: 'seleksi_awal' | 'uji_kompetensi') => {
-        const title = type === 'seleksi_awal' ? 'Jalankan Kelulusan Seleksi?' : 'Jalankan Kelulusan Uji Kompetensi?'
+    const handleTriggerCron = async (type: 'administrasi' | 'seleksi_awal' | 'uji_kompetensi') => {
+        let title = 'Jalankan Proses?'
+        if (type === 'administrasi') title = 'Jalankan Kelulusan Administrasi?'
+        if (type === 'seleksi_awal') title = 'Jalankan Kelulusan Seleksi?'
+        if (type === 'uji_kompetensi') title = 'Jalankan Kelulusan Uji Kompetensi?'
         const text = 'Sistem akan meluluskan massal pencaker di tahap ini dan menerbitkan pengumuman. Gunakan fitur ini sebagai fail-safe jika otomatisasi harian gagal.'
 
         const confirm = await SwalConfirm.fire({
@@ -106,11 +109,14 @@ export default function AnnouncementManager({ trainingId, announcements, trainin
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                    <button onClick={() => handleTriggerCron('administrasi')} disabled={isTriggering} className="bg-yellow-100 text-yellow-700 px-4 py-2 rounded-lg font-bold hover:bg-yellow-200 transition flex items-center gap-2 text-sm">
+                        {isTriggering ? 'Memproses...' : 'Luluskan (Administrasi)'}
+                    </button>
                     <button onClick={() => handleTriggerCron('seleksi_awal')} disabled={isTriggering} className="bg-green-100 text-green-700 px-4 py-2 rounded-lg font-bold hover:bg-green-200 transition flex items-center gap-2 text-sm">
-                        {isTriggering ? 'Memproses...' : 'Luluskan Semua (Seleksi)'}
+                        {isTriggering ? 'Memproses...' : 'Luluskan (Seleksi)'}
                     </button>
                     <button onClick={() => handleTriggerCron('uji_kompetensi')} disabled={isTriggering} className="bg-purple-100 text-purple-700 px-4 py-2 rounded-lg font-bold hover:bg-purple-200 transition flex items-center gap-2 text-sm">
-                        {isTriggering ? 'Memproses...' : 'Luluskan Semua (Uji Kompetensi)'}
+                        {isTriggering ? 'Memproses...' : 'Luluskan (Uji Kompetensi)'}
                     </button>
                     <button onClick={() => setShowForm(!showForm)} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 transition flex items-center gap-2 text-sm">
                         <Plus size={16} /> Buat Manual
