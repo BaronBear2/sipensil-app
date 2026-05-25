@@ -138,13 +138,10 @@ export default function TrainingDetailV2({ training, registrations }: { training
     const renderStepBadge = (step: number, status: string) => {
         if (status === 'DITOLAK') return <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold">Gagal/Ditolak</span>
 
-        let label = 'Tahap 1: Verifikasi'
+        let label = 'Tahap 1: Administrasi'
         if (step === 2) label = 'Tahap 2: Seleksi'
-        if (step === 3) label = 'Tahap 3: Lolos Seleksi'
-        if (step === 4) label = 'Tahap 4: Sedang Pelatihan'
-        if (step === 5) label = 'Tahap 5: Ujian'
-        if (step === 6) label = 'Tahap 6: Evaluasi'
-        if (step === 7) label = 'Tahap 7: Lulus'
+        if (step === 3) label = 'Tahap 3: Jadwal Pelatihan & Ujian'
+        if (step === 4) label = 'Tahap 4: Hasil Uji Kompetensi'
 
         return <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">{label}</span>
     }
@@ -162,7 +159,7 @@ export default function TrainingDetailV2({ training, registrations }: { training
         currentPhasePdfUrl = training.selection_passed_pdf
         currentPhase = 'selection'
     } else if (activeTab === 'penilaian') {
-        filteredRegistrations = registrations.filter(r => (r.progress_step >= 6 || r.status === 'LULUS') && r.status !== 'DITOLAK')
+        filteredRegistrations = registrations.filter(r => (r.progress_step >= 3 || r.status === 'LULUS') && r.status !== 'DITOLAK')
         currentPhasePdfUrl = training.final_passed_pdf
         currentPhase = 'final'
     } else if (activeTab === 'semua_peserta') {
@@ -306,7 +303,7 @@ export default function TrainingDetailV2({ training, registrations }: { training
                                                     </>
                                                 )}
 
-                                                {reg.status !== 'DITOLAK' && reg.status !== 'LULUS' && activeTab === 'penilaian' && reg.progress_step >= 6 && (
+                                                {reg.status !== 'DITOLAK' && reg.status !== 'LULUS' && activeTab === 'penilaian' && reg.progress_step >= 3 && (
                                                     <>
                                                         <button
                                                             disabled={loadingRegId === reg.id}

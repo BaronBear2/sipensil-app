@@ -70,19 +70,13 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
     const steps = [
         {
             num: 1,
-            title: 'Verifikasi Administrasi',
+            title: 'Administrasi',
             desc: `Menunggu admin mengecek dokumen Anda. Pengumuman dijadwalkan pada: ${formatDate(training?.tanggal_pengumuman_kelulusan_administrasi)}.`,
             content: null
         },
         {
             num: 2,
-            title: 'Lulus Administrasi',
-            desc: 'Selamat! Anda lulus verifikasi administrasi awal. Silakan cek halaman Pengumuman untuk detailnya.',
-            content: null
-        },
-        {
-            num: 3,
-            title: 'Info Seleksi & Koordinasi',
+            title: 'Seleksi',
             desc: `Tahap seleksi dan penggabungan grup WhatsApp. Hasil seleksi akan diumumkan pada: ${formatDate(training?.tanggal_pengumuman_kelulusan_seleksi_awal)}.`,
             content: (
                 <div className="mt-3 space-y-4">
@@ -124,97 +118,91 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
             )
         },
         {
+            num: 3,
+            title: 'Jadwal Pelatihan',
+            desc: `Jadwal pelatihan dan uji kompetensi. Hasil kelulusan akan diumumkan pada: ${formatDate(training?.tanggal_pengumuman_hasil_uji_kompetensi)}.`,
+            content: (
+                <div className="mt-3 space-y-4">
+                    {cls ? (
+                        <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
+                            <h4 className="font-bold text-gray-800 mb-4">{cls.name || 'Kelas Pelatihan'}</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600">
+                                <div>
+                                    <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Mulai Kelas</span>
+                                    <div className="flex items-center gap-2 font-medium text-gray-700"><Calendar size={14} className="text-teal-500" /> {formatDate(cls.start_date)}</div>
+                                </div>
+                                <div>
+                                    <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Selesai Kelas</span>
+                                    <div className="flex items-center gap-2 font-medium text-gray-700"><Calendar size={14} className="text-orange-500" /> {formatDate(cls.end_date)}</div>
+                                </div>
+                                <div className="sm:col-span-2">
+                                    <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Lokasi & Jam Kumpul</span>
+                                    <div className="flex items-start gap-2 font-medium text-gray-700">
+                                        <MapPin size={14} className="text-blue-500 mt-1 shrink-0" />
+                                        <span>{cls.location_address || '-'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
+                            <h4 className="font-bold text-gray-800 mb-4">Pelatihan Offline</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600">
+                                <div>
+                                    <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Mulai Pelatihan</span>
+                                    <div className="flex items-center gap-2 font-medium text-gray-700">
+                                        <Calendar size={14} className="text-teal-500" /> {formatDate(training?.training_start_date)}
+                                    </div>
+                                </div>
+                                <div>
+                                    <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Selesai Pelatihan</span>
+                                    <div className="flex items-center gap-2 font-medium text-gray-700">
+                                        <Calendar size={14} className="text-orange-500" /> {formatDate(training?.training_end_date)}
+                                    </div>
+                                </div>
+                                <div className="sm:col-span-2">
+                                    <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Jam Pelatihan</span>
+                                    <div className="flex items-center gap-2 font-medium text-gray-700">
+                                        <Clock size={14} className="text-blue-500" /> {training?.training_start_time ? formatTime(training.training_start_time) : '-'} - {training?.training_end_time ? formatTime(training.training_end_time) : '-'} WIB
+                                    </div>
+                                </div>
+                                <div className="sm:col-span-2">
+                                    <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Lokasi Pelatihan</span>
+                                    <div className="flex items-start gap-2 font-medium text-gray-700">
+                                        <MapPin size={14} className="text-blue-500 mt-1 shrink-0" />
+                                        <span>{training?.location || training?.provider || 'Sesuai arahan panitia'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {exam ? (
+                        <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4 mt-4">
+                            <h4 className="font-bold text-gray-800 text-sm mb-3">{exam.name || 'Uji Kompetensi'}</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-600">
+                                <div className="flex items-center gap-2"><Calendar size={16} className="text-purple-500" /> {formatDate(exam.exam_date)}</div>
+                                <div className="flex items-center gap-2"><Clock size={16} className="text-purple-500" /> {formatTime(exam.exam_time)} WIB</div>
+                                <div className="flex items-start gap-2 sm:col-span-2"><MapPin size={16} className="text-purple-500 shrink-0 mt-0.5" /> <span>{exam.address || '-'}</span></div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4 mt-4">
+                            <h4 className="font-bold text-gray-800 text-sm mb-3">Evaluasi Akhir</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-600">
+                                <div className="flex items-center gap-2"><Calendar size={16} className="text-purple-500" /> {formatDate(training?.training_end_date)} (Estimasi)</div>
+                                <div className="flex items-center gap-2"><Clock size={16} className="text-purple-500" /> - </div>
+                                <div className="flex items-start gap-2 sm:col-span-2"><MapPin size={16} className="text-purple-500 shrink-0 mt-0.5" /> <span>{training?.location || training?.provider || '-'}</span></div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )
+        },
+        {
             num: 4,
-            title: 'Lulus Seleksi',
-            desc: 'Selamat! Anda lulus seleksi. Silakan cek halaman Pengumuman untuk daftar lengkapnya.',
-            content: null
-        },
-        {
-            num: 5,
-            title: 'Jadwal & Penempatan Kelas',
-            desc: 'Anda telah ditempatkan pada kelas pelatihan.',
-            content: cls ? (
-                <div className="mt-3 bg-white border border-gray-200 shadow-sm rounded-xl p-4">
-                    <h4 className="font-bold text-gray-800 mb-4">{cls.name || 'Kelas Pelatihan'}</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600">
-                        <div>
-                            <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Mulai Kelas</span>
-                            <div className="flex items-center gap-2 font-medium text-gray-700"><Calendar size={14} className="text-teal-500" /> {formatDate(cls.start_date)}</div>
-                        </div>
-                        <div>
-                            <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Selesai Kelas</span>
-                            <div className="flex items-center gap-2 font-medium text-gray-700"><Calendar size={14} className="text-orange-500" /> {formatDate(cls.end_date)}</div>
-                        </div>
-                        <div className="sm:col-span-2">
-                            <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Lokasi & Jam Kumpul</span>
-                            <div className="flex items-start gap-2 font-medium text-gray-700">
-                                <MapPin size={14} className="text-blue-500 mt-1 shrink-0" />
-                                <span>{cls.location_address || '-'}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            ) : (
-                <div className="mt-3 bg-white border border-gray-200 shadow-sm rounded-xl p-4">
-                    <h4 className="font-bold text-gray-800 mb-4">Pelatihan Offline</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600">
-                        <div>
-                            <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Mulai Pelatihan</span>
-                            <div className="flex items-center gap-2 font-medium text-gray-700">
-                                <Calendar size={14} className="text-teal-500" /> {formatDate(training?.training_start_date)}
-                            </div>
-                        </div>
-                        <div>
-                            <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Selesai Pelatihan</span>
-                            <div className="flex items-center gap-2 font-medium text-gray-700">
-                                <Calendar size={14} className="text-orange-500" /> {formatDate(training?.training_end_date)}
-                            </div>
-                        </div>
-                        <div className="sm:col-span-2">
-                            <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Jam Pelatihan</span>
-                            <div className="flex items-center gap-2 font-medium text-gray-700">
-                                <Clock size={14} className="text-blue-500" /> {training?.training_start_time ? formatTime(training.training_start_time) : '-'} - {training?.training_end_time ? formatTime(training.training_end_time) : '-'} WIB
-                            </div>
-                        </div>
-                        <div className="sm:col-span-2">
-                            <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Lokasi Pelatihan</span>
-                            <div className="flex items-start gap-2 font-medium text-gray-700">
-                                <MapPin size={14} className="text-blue-500 mt-1 shrink-0" />
-                                <span>{training?.location || training?.provider || 'Sesuai arahan panitia'}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )
-        },
-        {
-            num: 6,
-            title: 'Uji Kompetensi',
-            desc: `Jadwal ujian sertifikasi. Hasil kelulusan akan diumumkan pada: ${formatDate(training?.tanggal_pengumuman_hasil_uji_kompetensi)}.`,
-            content: exam ? (
-                <div className="mt-3 bg-white border border-gray-200 shadow-sm rounded-xl p-4">
-                    <h4 className="font-bold text-gray-800 text-sm mb-3">{exam.name || 'Uji Kompetensi'}</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-600">
-                        <div className="flex items-center gap-2"><Calendar size={16} className="text-purple-500" /> {formatDate(exam.exam_date)}</div>
-                        <div className="flex items-center gap-2"><Clock size={16} className="text-purple-500" /> {formatTime(exam.exam_time)} WIB</div>
-                        <div className="flex items-start gap-2 sm:col-span-2"><MapPin size={16} className="text-purple-500 shrink-0 mt-0.5" /> <span>{exam.address || '-'}</span></div>
-                    </div>
-                </div>
-            ) : (
-                <div className="mt-3 bg-white border border-gray-200 shadow-sm rounded-xl p-4">
-                    <h4 className="font-bold text-gray-800 text-sm mb-3">Evaluasi Akhir</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-600">
-                        <div className="flex items-center gap-2"><Calendar size={16} className="text-purple-500" /> {formatDate(training?.training_end_date)} (Estimasi)</div>
-                        <div className="flex items-center gap-2"><Clock size={16} className="text-purple-500" /> - </div>
-                        <div className="flex items-start gap-2 sm:col-span-2"><MapPin size={16} className="text-purple-500 shrink-0 mt-0.5" /> <span>{training?.location || training?.provider || '-'}</span></div>
-                    </div>
-                </div>
-            )
-        },
-        {
-            num: 7,
-            title: 'Evaluasi Nilai',
-            desc: 'Proses penilaian oleh instruktur/penguji.',
+            title: 'Hasil Uji Kompetensi',
+            desc: 'Proses penilaian dan penyelesaian pelatihan.',
             content: (
                 <div className="mt-3 space-y-4">
                     {examResult ? (
@@ -231,17 +219,9 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
                             </div>
                         </div>
                     ) : null}
-                </div>
-            )
-        },
-        {
-            num: 8,
-            title: 'Kelulusan & Sertifikat',
-            desc: 'Penyelesaian pelatihan kompetensi.',
-            content: (
-                <div className="mt-3 space-y-4">
+
                     {status === 'LULUS' ? (
-                        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-5 rounded-xl shadow-lg relative overflow-hidden">
+                        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-5 rounded-xl shadow-lg relative overflow-hidden mt-4">
                             <div className="absolute top-0 right-0 p-4 opacity-10 transform translate-x-1/4 -translate-y-1/4">
                                 <FileText size={100} />
                             </div>
@@ -251,7 +231,7 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
                             </div>
                         </div>
                     ) : (
-                        <div className="text-sm text-gray-500 italic">Selesaikan seluruh tahapan untuk melihat hasil akhir.</div>
+                        <div className="text-sm text-gray-500 italic mt-4">Selesaikan seluruh tahapan untuk melihat hasil akhir.</div>
                     )}
                 </div>
             )
@@ -325,27 +305,6 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
                                 let isCompleted = currentStep > step.num || (currentStep === step.num && (isFinished || isRejected))
                                 let isCurrent = currentStep === step.num && !isRejected && !isFinished
                                 let isPending = currentStep < step.num
-
-                                // Group 2, 3 (Terbuka bersamaan)
-                                if (currentStep >= 2 && currentStep <= 3 && step.num >= 2 && step.num <= 3) {
-                                    isCompleted = false
-                                    isCurrent = true
-                                    isPending = false
-                                }
-
-                                // Group 4, 5, 6 (Terbuka bersamaan)
-                                if (currentStep >= 4 && currentStep <= 6 && step.num >= 4 && step.num <= 6) {
-                                    isCompleted = false
-                                    isCurrent = true
-                                    isPending = false
-                                }
-
-                                // Group 7, 8 (Terbuka bersamaan)
-                                if (currentStep >= 7 && currentStep <= 8 && step.num >= 7 && step.num <= 8) {
-                                    isCompleted = isFinished || (isRejected && currentStep === step.num)
-                                    isCurrent = !isFinished && !isRejected
-                                    isPending = false
-                                }
 
                                 let statusColor = 'bg-gray-100 border-gray-300 text-gray-400' // Pending
                                 let contentColor = 'text-gray-400'

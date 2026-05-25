@@ -90,11 +90,8 @@ export async function deleteAnnouncementAction(formData: FormData) {
 
 export async function triggerManualCronAction(formData: FormData) {
     const trainingId = formData.get('trainingId') as string
-    // In a real application, you'd call your API route here internally or execute the logic directly.
-    // To share logic, we can fetch the absolute URL of the API route (if we know the host) 
-    // or just execute the core logic right here.
+    const checkType = formData.get('checkType') as string
     
-    // Core Logic Ported here for manual trigger
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: "Unauthorized" }
@@ -112,11 +109,12 @@ export async function triggerManualCronAction(formData: FormData) {
     let processedAny = false
 
     const checks = [
-        { type: 'seleksi_awal', dateField: 'tanggal_pengumuman_kelulusan_seleksi_awal', currentStep: 3, nextStep: 4 }, // Based on step mapping
-        { type: 'uji_kompetensi', dateField: 'tanggal_pengumuman_hasil_uji_kompetensi', currentStep: 6, nextStep: 7 }
+        { type: 'seleksi_awal', dateField: 'tanggal_pengumuman_kelulusan_seleksi_awal', currentStep: 2, nextStep: 3 },
+        { type: 'uji_kompetensi', dateField: 'tanggal_pengumuman_hasil_uji_kompetensi', currentStep: 3, nextStep: 4 }
     ]
 
     for (const check of checks) {
+        if (checkType && check.type !== checkType) continue
         if (!training[check.dateField]) continue
         
         // Let's just run it if they trigger manually regardless of date.
@@ -139,9 +137,6 @@ export async function triggerManualCronAction(formData: FormData) {
 
         if (usersToPass && usersToPass.length > 0) {
             let statusToSet = 'DITERIMA'
-            if (check.type === 'administrasi') statusToSet = 'DITERIMA'
-            // For seleksi_awal & uji_kompetensi, status is already DITERIMA, we just bump progress_step. 
-            // Wait, for uji_kompetensi, we might want to set exam_results or status = LULUS.
             if (check.type === 'uji_kompetensi') statusToSet = 'LULUS'
 
             const { error: bulkError } = await supabase.from('training_registrations')

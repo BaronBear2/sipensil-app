@@ -38,8 +38,8 @@ export async function GET(request: Request) {
         let processedCount = 0
 
         const checks = [
-            { type: 'seleksi_awal', dateField: 'tanggal_pengumuman_kelulusan_seleksi_awal' as const, currentStep: 3, nextStep: 4 },
-            { type: 'uji_kompetensi', dateField: 'tanggal_pengumuman_hasil_uji_kompetensi' as const, currentStep: 6, nextStep: 7 }
+            { type: 'seleksi_awal', dateField: 'tanggal_pengumuman_kelulusan_seleksi_awal' as const, currentStep: 2, nextStep: 3 },
+            { type: 'uji_kompetensi', dateField: 'tanggal_pengumuman_hasil_uji_kompetensi' as const, currentStep: 3, nextStep: 4 }
         ]
 
         for (const training of trainings) {
@@ -50,8 +50,8 @@ export async function GET(request: Request) {
                 // Compare string dates lexicographically (YYYY-MM-DD) which is timezone-safe!
                 const scheduledDateStr = new Date(dateStr).toISOString().split('T')[0]
                 
-                if (todayOnlyDateStr >= scheduledDateStr) {
-                    // It is +H or later. Let's run the auto-announcement logic.
+                if (todayOnlyDateStr === scheduledDateStr) {
+                    // It is exactly Hari H. Let's run the auto-announcement logic.
 
                     // 1. Check if announcement already exists
                     const { count } = await supabase.from('training_announcements')

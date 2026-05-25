@@ -31,6 +31,9 @@ CREATE TABLE public.blk_trainings (
   training_start_time time without time zone,
   training_end_time time without time zone,
   additional_documents jsonb DEFAULT '[]'::jsonb,
+  tanggal_pengumuman_kelulusan_administrasi date,
+  tanggal_pengumuman_kelulusan_seleksi_awal date,
+  tanggal_pengumuman_hasil_uji_kompetensi date,
   CONSTRAINT blk_trainings_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.exam_results (
@@ -269,6 +272,19 @@ CREATE TABLE public.qa_system_time (
   id integer NOT NULL DEFAULT 1 CHECK (id = 1),
   overridden_time timestamp with time zone,
   CONSTRAINT qa_system_time_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.training_announcements (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  training_id uuid NOT NULL,
+  type text NOT NULL,
+  document_url text,
+  content text,
+  is_published boolean DEFAULT false,
+  published_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT training_announcements_pkey PRIMARY KEY (id),
+  CONSTRAINT training_announcements_training_id_fkey FOREIGN KEY (training_id) REFERENCES public.blk_trainings(id)
 );
 CREATE TABLE public.training_classes (
   id uuid NOT NULL DEFAULT gen_random_uuid(),

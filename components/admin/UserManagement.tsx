@@ -383,7 +383,7 @@ export default function UserManagement({ users, currentPage, totalPages, totalCo
                                     <p className="text-sm text-gray-500 italic bg-gray-50 p-4 rounded-xl border border-dashed border-gray-200 text-center">Belum ada riwayat pendaftaran pelatihan.</p>
                                 ) : (
                                     profileModalUser.training_registrations.map((reg: any, idx: number) => {
-                                        const STEPS = ['Verifikasi', 'Seleksi', 'Lolos Seleksi', 'Sedang Pelatihan', 'Ujian', 'Evaluasi', 'Lulus']
+                                        const STEPS = ['Administrasi', 'Seleksi', 'Jadwal Pelatihan', 'Hasil Uji Kompetensi']
                                         const progress = reg.progress_step || 1
                                         const isRejected = reg.status === 'DITOLAK'
                                         
@@ -401,7 +401,7 @@ export default function UserManagement({ users, currentPage, totalPages, totalCo
 
                                                 <div className="relative pt-4">
                                                     <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-100">
-                                                        <div style={{ width: `${(progress / 7) * 100}%` }} className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center ${isRejected ? 'bg-red-500' : 'bg-blue-500'}`}></div>
+                                                        <div style={{ width: `${(progress / 4) * 100}%` }} className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center ${isRejected ? 'bg-red-500' : 'bg-blue-500'}`}></div>
                                                     </div>
                                                     <div className="flex justify-between text-xs font-bold text-gray-400 mt-2">
                                                         {STEPS.map((stepName, stepIdx) => {

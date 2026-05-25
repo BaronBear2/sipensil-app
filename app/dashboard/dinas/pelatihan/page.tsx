@@ -18,9 +18,10 @@ export default async function PelatihanAdminPage() {
 
     const processedData = data?.map((t: any) => {
         const accCount = t.training_registrations?.filter((r: any) => r.status !== 'PENDING' && r.status !== 'DITOLAK').length || 0;
+        const totalApplicants = t.training_registrations?.length || 0;
         // Clean up to save payload size if necessary
         delete t.training_registrations;
-        return { ...t, accCount };
+        return { ...t, accCount, totalApplicants };
     }) || []
 
     const { data: categories, error } = await supabase

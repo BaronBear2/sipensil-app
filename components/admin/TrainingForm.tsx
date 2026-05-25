@@ -398,8 +398,8 @@ export default function TrainingForm({ initialData, actionFn, isEdit = false, ca
                     </div>
 
                     <div className="bg-yellow-50 p-6 rounded-xl border border-yellow-100 space-y-4">
-                        <h3 className="font-bold text-yellow-800 text-sm mb-4">Jadwal Pengumuman Otomatis</h3>
-                        <p className="text-xs text-yellow-700 mb-3">Tentukan tanggal kapan pengumuman akan otomatis dipublikasikan ke pencaker.</p>
+                        <h3 className="font-bold text-yellow-800 text-sm mb-4">Jadwal Pengumuman</h3>
+                        <p className="text-xs text-yellow-700 mb-3">Tentukan tanggal kapan pengumuman akan dipublikasikan ke pencaker.</p>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label className="block text-xs font-bold text-gray-600 mb-1">Kelulusan Administrasi</label>

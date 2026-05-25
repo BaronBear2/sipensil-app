@@ -16,6 +16,15 @@ export default function TrainingListV2({ trainings, categories = [] }: { trainin
     )
 
     const handleDeleteClick = async (item: any) => {
+        if (item.totalApplicants > 0) {
+            SwalAlert.fire({ 
+                icon: 'error', 
+                title: 'Tidak Dapat Dihapus', 
+                text: 'Pelatihan tidak dapat dihapus karena sudah ada pencaker yang pernah mendaftar. Silakan gunakan fitur Arsipkan atau Edit.' 
+            })
+            return
+        }
+
         const result = await SwalConfirm.fire({
             title: 'Hapus Pelatihan?',
             text: `Anda akan menghapus pelatihan "${item.title}". Pastikan tidak ada peserta yang terdaftar!`,

@@ -206,7 +206,7 @@ export async function verifyTrainingRegistrationAction(formData: FormData) {
     const { error } = await supabase
       .from('training_registrations')
       .update({
-        progress_step: 4,
+        progress_step: 3,
         admin_notes: null
       })
       .eq('id', regId)
@@ -219,7 +219,7 @@ export async function verifyTrainingRegistrationAction(formData: FormData) {
       .from('training_registrations')
       .update({
         status: 'LULUS',
-        progress_step: 7,
+        progress_step: 4,
         admin_notes: null
       })
       .eq('id', regId)
@@ -285,9 +285,9 @@ export async function revertTrainingRegistrationAction(formData: FormData) {
     let announcementDateStr = null
     if (reg.progress_step === 1) {
       announcementDateStr = training.tanggal_pengumuman_kelulusan_administrasi
-    } else if (reg.progress_step === 3 || reg.progress_step === 4) {
+    } else if (reg.progress_step === 2) {
       announcementDateStr = training.tanggal_pengumuman_kelulusan_seleksi_awal
-    } else if (reg.progress_step >= 6) {
+    } else if (reg.progress_step === 3) {
       announcementDateStr = training.tanggal_pengumuman_hasil_uji_kompetensi
     }
 

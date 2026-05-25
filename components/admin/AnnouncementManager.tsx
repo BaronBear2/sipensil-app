@@ -69,10 +69,13 @@ export default function AnnouncementManager({ trainingId, announcements, trainin
         }
     }
 
-    const handleTriggerCron = async () => {
+    const handleTriggerCron = async (type: 'seleksi_awal' | 'uji_kompetensi') => {
+        const title = type === 'seleksi_awal' ? 'Jalankan Kelulusan Seleksi?' : 'Jalankan Kelulusan Uji Kompetensi?'
+        const text = 'Sistem akan meluluskan massal pencaker di tahap ini dan menerbitkan pengumuman. Gunakan fitur ini sebagai fail-safe jika otomatisasi harian gagal.'
+
         const confirm = await SwalConfirm.fire({
-            title: 'Jalankan Proses Kelulusan Otomatis?',
-            text: 'Ini akan memproses kelulusan otomatis untuk Seleksi Awal dan Uji Kompetensi. Fitur ini tidak berlaku untuk tahap Administrasi.',
+            title,
+            text,
             confirmButtonText: 'Ya, Jalankan'
         })
 
@@ -80,13 +83,14 @@ export default function AnnouncementManager({ trainingId, announcements, trainin
             setIsTriggering(true)
             const fd = new FormData()
             fd.append('trainingId', trainingId)
+            fd.append('checkType', type)
             const res = await triggerManualCronAction(fd)
             setIsTriggering(false)
 
             if (res?.error) {
                 SwalAlert.fire({ icon: 'error', title: 'Gagal', text: res.error })
             } else {
-                SwalToast.fire({ icon: 'success', title: 'Proses Otomatis Berhasil Dijalankan' })
+                SwalToast.fire({ icon: 'success', title: 'Proses Manual Berhasil Dijalankan' })
                 router.refresh()
             }
         }
@@ -94,14 +98,20 @@ export default function AnnouncementManager({ trainingId, announcements, trainin
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-800">Daftar Pengumuman</h2>
-                <div className="flex gap-2">
-                    <button onClick={handleTriggerCron} disabled={isTriggering} className="bg-green-100 text-green-700 px-4 py-2 rounded-lg font-bold hover:bg-green-200 transition flex items-center gap-2 text-sm">
-                        {isTriggering ? 'Memproses...' : 'Jalankan Auto-Lulus (Sistem)'}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <div>
+                    <h2 className="text-xl font-bold text-gray-800">Daftar Pengumuman</h2>
+                    <p className="text-xs text-gray-500 mt-1">Tombol "Luluskan Semua" di bawah ini berfungsi sebagai fail-safe manual jika sistem otomatis (cron job) gagal.</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    <button onClick={() => handleTriggerCron('seleksi_awal')} disabled={isTriggering} className="bg-green-100 text-green-700 px-4 py-2 rounded-lg font-bold hover:bg-green-200 transition flex items-center gap-2 text-sm">
+                        {isTriggering ? 'Memproses...' : 'Luluskan Semua (Seleksi)'}
+                    </button>
+                    <button onClick={() => handleTriggerCron('uji_kompetensi')} disabled={isTriggering} className="bg-purple-100 text-purple-700 px-4 py-2 rounded-lg font-bold hover:bg-purple-200 transition flex items-center gap-2 text-sm">
+                        {isTriggering ? 'Memproses...' : 'Luluskan Semua (Uji Kompetensi)'}
                     </button>
                     <button onClick={() => setShowForm(!showForm)} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 transition flex items-center gap-2 text-sm">
-                        <Plus size={16} /> Buat Pengumuman Manual
+                        <Plus size={16} /> Buat Manual
                     </button>
                 </div>
             </div>
