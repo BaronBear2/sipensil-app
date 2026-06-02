@@ -45,20 +45,9 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
     }
 
     let computedStep = reg.progress_step || 1
-
-    const systemDate = await getSystemTime()
-    const todayStr = systemDate || new Date().toISOString().split('T')[0]
-    const trainingData = reg.blk_trainings || {}
-    const adminDate = trainingData?.tanggal_pengumuman_kelulusan_administrasi ? new Date(trainingData.tanggal_pengumuman_kelulusan_administrasi).toISOString().split('T')[0] : null
-    const seleksiDate = trainingData?.tanggal_pengumuman_kelulusan_seleksi_awal ? new Date(trainingData.tanggal_pengumuman_kelulusan_seleksi_awal).toISOString().split('T')[0] : null
-    const ujiDate = trainingData?.tanggal_pengumuman_hasil_uji_kompetensi ? new Date(trainingData.tanggal_pengumuman_hasil_uji_kompetensi).toISOString().split('T')[0] : null
-
-    // Time-based progression evaluation for the UI
-    if (computedStep === 1 && adminDate && todayStr >= adminDate) {
-        computedStep = 2
-    } else if (computedStep === 2 && seleksiDate && todayStr >= seleksiDate) {
-        computedStep = 3
-    } else if (computedStep === 3 && ujiDate && todayStr >= ujiDate) {
+    
+    // If the user is LULUS or SELESAI, they are definitely at step 4
+    if (reg.status === 'LULUS' || reg.status === 'SELESAI') {
         computedStep = 4
     }
 
@@ -280,7 +269,7 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
                 
                 {/* Hero Training Card */}
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-10 relative">
-                    <div className="flex justify-between items-start">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
                             <span className="text-xs font-bold bg-blue-100 text-blue-700 px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block">Program Pelatihan</span>
                             <h2 className="text-2xl font-bold text-gray-900 mb-2">{training.title}</h2>
@@ -288,7 +277,7 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
                                 <MapPin size={16} className="text-gray-400" /> {training.provider || 'UPTD BLK Kabupaten Bekasi'}
                             </p>
                         </div>
-                        <Link href={`/dashboard/pencaker/pelatihan-saya/${id}/pengumuman`} className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition flex items-center gap-2 transform hover:-translate-y-0.5">
+                        <Link href={`/dashboard/pencaker/pelatihan-saya/${id}/pengumuman`} className="w-full md:w-auto justify-center px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition flex items-center gap-2 transform hover:-translate-y-0.5">
                             <FileText size={18} />
                             Lihat Pengumuman
                         </Link>
@@ -313,10 +302,6 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
                     </h3>
 
                     <div className="relative">
-                        {/* Vertical Line */}
-                        <div className="absolute left-6 top-6 bottom-6 w-0.5 bg-gray-200 hidden md:block"></div>
-                        <div className="absolute left-4 top-4 bottom-4 w-0.5 bg-gray-200 md:hidden"></div>
-
                         <div className="space-y-8">
                             {steps.map((step, index) => {
                                 let isCompleted = currentStep > step.num || (currentStep === step.num && (isFinished || isRejected))
@@ -341,6 +326,11 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
 
                                 return (
                                     <div key={step.num} className={`relative flex items-start gap-4 md:gap-6 ${isPending ? 'opacity-60' : ''}`}>
+                                        {/* Line connecting to next step */}
+                                        {index !== steps.length - 1 && (
+                                            <div className="absolute left-[0.9rem] md:left-[1.4rem] top-8 md:top-12 bottom-0 w-0.5 bg-gray-200 -mb-8"></div>
+                                        )}
+
                                         {/* Indicator Circle */}
                                         <div className="relative z-10 shrink-0 mt-1">
                                             <div className={`w-8 h-8 md:w-12 md:h-12 rounded-full border-2 flex items-center justify-center font-bold text-sm md:text-lg transition-all duration-300 ${statusColor}`}>

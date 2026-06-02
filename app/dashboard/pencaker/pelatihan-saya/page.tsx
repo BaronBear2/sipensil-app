@@ -28,6 +28,7 @@ export default function MyTrainingsPage() {
     const [isCancelling, setIsCancelling] = useState(false)
 
     useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         const getData = async () => {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) { router.push('/auth/login'); return }
@@ -300,7 +301,7 @@ export default function MyTrainingsPage() {
                     {!isRejected && (
                         <Link 
                             href={`/dashboard/pencaker/pelatihan-saya/${reg.id}`} 
-                            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg hover:shadow-blue-500/10 hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2.5 border border-blue-500/10 cursor-pointer"
+                            className="w-full md:w-auto justify-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2.5 cursor-pointer"
                         >
                             <ExternalLink size={16} className="animate-pulse" /> 
                             <span>Lacak Status Pelatihan</span>

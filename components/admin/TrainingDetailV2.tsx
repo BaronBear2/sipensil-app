@@ -28,21 +28,8 @@ export default function TrainingDetailV2({ training, registrations, systemDate }
     // Determine the highest progress step any user has reached
     const maxProgressStep = registrations.reduce((max, r) => Math.max(max, r.progress_step || 1), 1)
 
-    let globalStep = 1
-    if (accCount >= training.quota || maxProgressStep >= 2) globalStep = 2
-
-    const todayStr = systemDate || new Date().toISOString().split('T')[0]
-    const adminDate = training?.tanggal_pengumuman_kelulusan_administrasi ? new Date(training.tanggal_pengumuman_kelulusan_administrasi).toISOString().split('T')[0] : null
-    const seleksiDate = training?.tanggal_pengumuman_kelulusan_seleksi_awal ? new Date(training.tanggal_pengumuman_kelulusan_seleksi_awal).toISOString().split('T')[0] : null
-    const ujiDate = training?.tanggal_pengumuman_hasil_uji_kompetensi ? new Date(training.tanggal_pengumuman_hasil_uji_kompetensi).toISOString().split('T')[0] : null
-
-    if (globalStep === 1 && adminDate && todayStr >= adminDate) {
-        globalStep = 2
-    } else if (globalStep === 2 && seleksiDate && todayStr >= seleksiDate) {
-        globalStep = 3
-    } else if (globalStep === 3 && ujiDate && todayStr >= ujiDate) {
-        globalStep = 4
-    }
+    let globalStep = Math.max(1, maxProgressStep)
+    if (accCount >= training.quota && globalStep < 2) globalStep = 2
 
     const steps = [
         {
@@ -365,12 +352,13 @@ export default function TrainingDetailV2({ training, registrations, systemDate }
 
     // Helper for rendering 7-step tracker visually
     const renderStepBadge = (step: number, status: string) => {
-        if (status === 'DITOLAK') return <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold">Gagal/Ditolak</span>
+        if (status === 'DITOLAK' || status === 'REJECTED') return <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold">Gagal/Ditolak</span>
+        if (status === 'LULUS' || status === 'SELESAI') return <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold">Tahap 4 : Sudah Lulus</span>
 
         let label = 'Tahap 1 : Administrasi'
         if (step === 2) label = 'Tahap 2 : Seleksi'
         if (step === 3) label = 'Tahap 3 : Pelatihan & Uji Kompetensi'
-        if (step === 4) label = 'Tahap 4 : Sudah Lulus'
+        if (step >= 4) label = 'Tahap 4 : Sudah Lulus'
 
         return <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">{label}</span>
     }
