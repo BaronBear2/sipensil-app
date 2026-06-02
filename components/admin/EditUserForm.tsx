@@ -194,26 +194,6 @@ export default function EditUserForm({ profile, role, roleData }: EditUserFormPr
                                     <option value="S2">S2</option>
                                 </select>
                             </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-700 mb-2">Jurusan</label>
-                                <input
-                                    type="text"
-                                    name="major"
-                                    defaultValue={roleData.major || ''}
-                                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                                />
-                            </div>
-
-                            <div className="md:col-span-2">
-                                <label className="block text-xs font-bold text-gray-700 mb-2">Keahlian (Skills)</label>
-                                <input
-                                    type="text"
-                                    name="skills"
-                                    defaultValue={roleData.skills || ''}
-                                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                                    placeholder="Contoh: Las, Menjahit, Komputer"
-                                />
-                            </div>
                         </div>
 
                         {/* Documents Section */}
@@ -222,7 +202,7 @@ export default function EditUserForm({ profile, role, roleData }: EditUserFormPr
                             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Dokumen & Berkas</h3>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {['ktp_url', 'ijazah_url', 'photo_url', 'curriculum_vitae'].map((field) => (
+                            {['ktp_url', 'ijazah_url', 'photo_url'].map((field) => (
                                 <div key={field}>
                                     <label className="block text-xs font-bold text-gray-700 mb-2 capitalize">
                                         {field.replace('_url', '').replace('_', ' ')} (URL)

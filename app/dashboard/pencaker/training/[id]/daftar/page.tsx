@@ -15,13 +15,11 @@ export default function PendaftaranDigitalPage({ params }: { params: Promise<{ i
     const trainingId = resolvedParams.id
 
     const [training, setTraining] = useState<any>(null)
-    const [classes, setClasses] = useState<any[]>([])
     const [profile, setProfile] = useState<any>(null)
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
 
     // Form State
-    const [classId, setClassId] = useState('')
     const [isUnemployed, setIsUnemployed] = useState(false)
     const [hasSimA, setHasSimA] = useState(false)
     const [ktpAddress, setKtpAddress] = useState('')
@@ -45,10 +43,6 @@ export default function PendaftaranDigitalPage({ params }: { params: Promise<{ i
             // Fetch Training
             const { data: t } = await supabase.from('blk_trainings').select('*').eq('id', trainingId).single()
             setTraining(t)
-
-            // Fetch Classes (Angkatan)
-            const { data: c } = await supabase.from('training_classes').select('*').eq('training_id', trainingId).order('batch_number', { ascending: true })
-            setClasses(c || [])
 
             // Fetch Profile (for Age Check)
             const { data: p } = await supabase
@@ -124,11 +118,6 @@ export default function PendaftaranDigitalPage({ params }: { params: Promise<{ i
             }
         }
 
-        if (!classId && classes.length > 0) {
-            setStatusModal({ isOpen: true, type: 'error', message: 'Pilih Angkatan terlebih dahulu.' })
-            return
-        }
-
         setSubmitting(true)
 
         try {
@@ -187,7 +176,7 @@ export default function PendaftaranDigitalPage({ params }: { params: Promise<{ i
             formData.append('ktp_address', ktpAddress)
             formData.append('ktp_url', ktpUrl)
             formData.append('ijazah_url', ijazahUrl)
-            if (classId) formData.append('class_id', classId)
+            formData.append('training_id', trainingId)
             formData.append('additional_documents_json', JSON.stringify(additionalDocsUrls))
 
             const result = await applyTraining(formData)
@@ -242,37 +231,6 @@ export default function PendaftaranDigitalPage({ params }: { params: Promise<{ i
                     </div>
 
                     <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-8">
-                        {/* 1. Pilih Angkatan */}
-                        {classes.length > 0 && (
-                            <div>
-                                <h3 className="font-bold text-slate-800 text-lg mb-4">1. Pilih Angkatan (Batch)</h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {classes.map((cls) => (
-                                        <label key={cls.id} className={`flex flex-col p-4 border rounded-xl cursor-pointer transition-all ${classId === cls.id ? 'border-blue-600 bg-blue-50' : 'border-slate-200 hover:border-blue-300'}`}>
-                                            <div className="flex items-center justify-between mb-2">
-                                                <div className="flex items-center gap-2">
-                                                    <input 
-                                                        type="radio" 
-                                                        name="class_id" 
-                                                        value={cls.id} 
-                                                        checked={classId === cls.id} 
-                                                        onChange={(e) => setClassId(e.target.value)}
-                                                        className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-                                                    />
-                                                    <span className="font-bold text-slate-800">{cls.name}</span>
-                                                </div>
-                                                <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded">Sisa: {cls.quota}</span>
-                                            </div>
-                                            <p className="text-xs text-slate-500 ml-6">Mulai: {cls.start_date ? new Date(cls.start_date).toLocaleDateString('id-ID') : 'TBA'}</p>
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        <hr className="border-slate-100" />
-
-                        {/* 2. Persyaratan Utama */}
                         <div>
                             <h3 className="font-bold text-slate-800 text-lg mb-4">2. Validasi Persyaratan</h3>
                             

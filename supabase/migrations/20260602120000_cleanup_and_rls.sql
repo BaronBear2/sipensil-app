@@ -12,11 +12,30 @@ DROP TABLE IF EXISTS public.pencatatan_batches CASCADE;
 DROP TABLE IF EXISTS public.profile_lpk CASCADE;
 DROP TABLE IF EXISTS public.profile_perusahaan CASCADE;
 
--- Menghapus kolom PDF lama di blk_trainings yang sudah tidak terpakai
+-- 2. Hapus Kolom-kolom Usang di blk_trainings & training_registrations
 ALTER TABLE public.blk_trainings 
   DROP COLUMN IF EXISTS admin_passed_pdf,
   DROP COLUMN IF EXISTS selection_passed_pdf,
-  DROP COLUMN IF EXISTS final_passed_pdf;
+  DROP COLUMN IF EXISTS final_passed_pdf,
+  DROP COLUMN IF EXISTS facilities;
+
+ALTER TABLE public.training_registrations
+  DROP COLUMN IF EXISTS selection_id,
+  DROP COLUMN IF EXISTS class_id,
+  DROP COLUMN IF EXISTS exam_id,
+  DROP COLUMN IF EXISTS tanggal_verifikasi_pendaftaran,
+  DROP COLUMN IF EXISTS tanggal_pengumuman_seleksi,
+  DROP COLUMN IF EXISTS tanggal_pengumuman_kompetensi;
+
+ALTER TABLE public.profiles
+  DROP COLUMN IF EXISTS major,
+  DROP COLUMN IF EXISTS skills,
+  DROP COLUMN IF EXISTS field_of_work,
+  DROP COLUMN IF EXISTS curriculum_vitae;
+
+DROP TABLE IF EXISTS public.exam_results CASCADE;
+DROP TABLE IF EXISTS public.training_classes CASCADE;
+
 
 -- =========================================================================
 -- TAHAP 2: RLS (ROW LEVEL SECURITY) HARDENING
@@ -114,3 +133,27 @@ CREATE POLICY "Users can view own notifications" ON public.notifications FOR SEL
 CREATE POLICY "Users can update own notifications" ON public.notifications FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own notifications" ON public.notifications FOR DELETE USING (auth.uid() = user_id);
 CREATE POLICY "Admin/Dinas can insert notifications" ON public.notifications FOR INSERT WITH CHECK (public.is_admin());
+
+-- 9. Membuat Policy untuk [master_*] tables dan [qa_system_time]
+-- Mencegah hacker iseng mengubah master kategori atau lompat waktu QA
+ALTER TABLE public.master_categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.master_locations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.master_requirements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.master_notes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.qa_system_time ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view master_categories" ON public.master_categories FOR SELECT USING (true);
+CREATE POLICY "Admin/Dinas can modify master_categories" ON public.master_categories FOR ALL USING (public.is_admin());
+
+CREATE POLICY "Anyone can view master_locations" ON public.master_locations FOR SELECT USING (true);
+CREATE POLICY "Admin/Dinas can modify master_locations" ON public.master_locations FOR ALL USING (public.is_admin());
+
+CREATE POLICY "Anyone can view master_requirements" ON public.master_requirements FOR SELECT USING (true);
+CREATE POLICY "Admin/Dinas can modify master_requirements" ON public.master_requirements FOR ALL USING (public.is_admin());
+
+CREATE POLICY "Anyone can view master_notes" ON public.master_notes FOR SELECT USING (true);
+CREATE POLICY "Admin/Dinas can modify master_notes" ON public.master_notes FOR ALL USING (public.is_admin());
+
+-- qa_system_time sangat krusial, hanya Admin yang boleh melihat dan mengubah
+CREATE POLICY "Admin/Dinas can view qa_system_time" ON public.qa_system_time FOR SELECT USING (public.is_admin());
+CREATE POLICY "Admin/Dinas can modify qa_system_time" ON public.qa_system_time FOR ALL USING (public.is_admin());

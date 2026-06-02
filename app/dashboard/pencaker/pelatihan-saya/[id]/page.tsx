@@ -25,9 +25,7 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
                 *,
                 training_selections(*),
                 training_exams(*)
-            ),
-            training_classes(*),
-            exam_results(*)
+            )
         `)
         .eq('id', id)
         .eq('user_id', user.id)
@@ -57,11 +55,7 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
     const status = reg.status
     const training = reg.blk_trainings || {}
     const selection = training.training_selections?.[0]
-    const cls = reg.training_classes
     const exam = training.training_exams?.[0]
-
-    // Exam results can be multiple if there are multiple attempts? Usually single.
-    const examResult = Array.isArray(reg.exam_results) ? reg.exam_results[0] : reg.exam_results
 
     const isRejected = status === 'DITOLAK' || status === 'REJECTED'
     const isFinished = status === 'SELESAI' || status === 'LULUS'
@@ -133,59 +127,36 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
             desc: `Jadwal pelatihan dan uji kompetensi. Hasil kelulusan akan diumumkan pada: ${formatDate(training?.tanggal_pengumuman_hasil_uji_kompetensi)}.`,
             content: (
                 <div className="mt-3 space-y-4">
-                    {cls ? (
-                        <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
-                            <h4 className="font-bold text-gray-800 mb-4">{cls.name || 'Kelas Pelatihan'}</h4>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600">
-                                <div>
-                                    <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Mulai Kelas</span>
-                                    <div className="flex items-center gap-2 font-medium text-gray-700"><Calendar size={14} className="text-teal-500" /> {formatDate(cls.start_date)}</div>
+                    <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
+                        <h4 className="font-bold text-gray-800 mb-4">Jadwal Pelatihan Offline</h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600">
+                            <div>
+                                <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Mulai Pelatihan</span>
+                                <div className="flex items-center gap-2 font-medium text-gray-700">
+                                    <Calendar size={14} className="text-teal-500" /> {formatDate(training?.training_start_date)}
                                 </div>
-                                <div>
-                                    <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Selesai Kelas</span>
-                                    <div className="flex items-center gap-2 font-medium text-gray-700"><Calendar size={14} className="text-orange-500" /> {formatDate(cls.end_date)}</div>
+                            </div>
+                            <div>
+                                <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Selesai Pelatihan</span>
+                                <div className="flex items-center gap-2 font-medium text-gray-700">
+                                    <Calendar size={14} className="text-orange-500" /> {formatDate(training?.training_end_date)}
                                 </div>
-                                <div className="sm:col-span-2">
-                                    <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Lokasi & Jam Kumpul</span>
-                                    <div className="flex items-start gap-2 font-medium text-gray-700">
-                                        <MapPin size={14} className="text-blue-500 mt-1 shrink-0" />
-                                        <span>{cls.location_address || '-'}</span>
-                                    </div>
+                            </div>
+                            <div>
+                                <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Jam Pelatihan Harian</span>
+                                <div className="flex items-center gap-2 font-medium text-gray-700">
+                                    <Clock size={14} className="text-purple-500" /> {formatTime(training?.training_start_time)} - {formatTime(training?.training_end_time)}
+                                </div>
+                            </div>
+                            <div className="sm:col-span-2">
+                                <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Lokasi Pelatihan</span>
+                                <div className="flex items-start gap-2 font-medium text-gray-700">
+                                    <MapPin size={14} className="text-blue-500 mt-1 shrink-0" />
+                                    <span>{training?.provider || '-'}</span>
                                 </div>
                             </div>
                         </div>
-                    ) : (
-                        <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
-                            <h4 className="font-bold text-gray-800 mb-4">Pelatihan Offline</h4>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600">
-                                <div>
-                                    <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Mulai Pelatihan</span>
-                                    <div className="flex items-center gap-2 font-medium text-gray-700">
-                                        <Calendar size={14} className="text-teal-500" /> {formatDate(training?.training_start_date)}
-                                    </div>
-                                </div>
-                                <div>
-                                    <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Selesai Pelatihan</span>
-                                    <div className="flex items-center gap-2 font-medium text-gray-700">
-                                        <Calendar size={14} className="text-orange-500" /> {formatDate(training?.training_end_date)}
-                                    </div>
-                                </div>
-                                <div className="sm:col-span-2">
-                                    <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Jam Pelatihan</span>
-                                    <div className="flex items-center gap-2 font-medium text-gray-700">
-                                        <Clock size={14} className="text-blue-500" /> {training?.training_start_time ? formatTime(training.training_start_time) : '-'} - {training?.training_end_time ? formatTime(training.training_end_time) : '-'} WIB
-                                    </div>
-                                </div>
-                                <div className="sm:col-span-2">
-                                    <span className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Lokasi Pelatihan</span>
-                                    <div className="flex items-start gap-2 font-medium text-gray-700">
-                                        <MapPin size={14} className="text-blue-500 mt-1 shrink-0" />
-                                        <span>{training?.location || training?.provider || 'Sesuai arahan panitia'}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                    </div>
 
                     {exam ? (
                         <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4 mt-4">
@@ -215,20 +186,7 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
             desc: 'Proses penilaian dan penyelesaian pelatihan.',
             content: (
                 <div className="mt-3 space-y-4">
-                    {examResult ? (
-                        <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4 flex justify-between items-center">
-                            <div>
-                                <span className="text-xs text-gray-500 uppercase font-bold tracking-wider block mb-1">Nilai Ujian</span>
-                                <span className="text-2xl font-black text-blue-600">{examResult.final_score || '-'}</span>
-                            </div>
-                            <div className="text-right">
-                                <span className="text-xs text-gray-500 uppercase font-bold tracking-wider block mb-1">Status</span>
-                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${examResult.status?.toLowerCase() === 'lulus' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                    {examResult.status || 'Menunggu'}
-                                </span>
-                            </div>
-                        </div>
-                    ) : null}
+
 
                     {status === 'LULUS' ? (
                         <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-5 rounded-xl shadow-lg relative overflow-hidden mt-4">

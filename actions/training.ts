@@ -74,7 +74,6 @@ export async function applyTraining(formData: FormData) {
   const ktp_address = formData.get('ktp_address') as string
   const ijazah_url = formData.get('ijazah_url') as string
   const ktp_url = formData.get('ktp_url') as string
-  const class_id = formData.get('class_id') as string
   const additional_documents = JSON.parse(formData.get('additional_documents_json') as string || '{}')
 
   // Cek apakah pernah DITOLAK di pelatihan yang SAMA
@@ -98,7 +97,6 @@ export async function applyTraining(formData: FormData) {
         ktp_address: ktp_address,
         ijazah_url: ijazah_url,
         ktp_url: ktp_url,
-        class_id: class_id || null,
         additional_documents: additional_documents,
         admin_notes: null // Clear previous rejection note
       })
@@ -120,7 +118,6 @@ export async function applyTraining(formData: FormData) {
         ktp_address: ktp_address,
         ijazah_url: ijazah_url,
         ktp_url: ktp_url,
-        class_id: class_id || null,
         additional_documents: additional_documents
       })
 

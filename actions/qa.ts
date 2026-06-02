@@ -127,8 +127,7 @@ export async function qaDeleteRejectionAction(formData: FormData) {
         return { error: 'Pendaftaran ini tidak berstatus ditolak, tidak dapat dihapus.' }
     }
 
-    // Hapus data dependen (exam_results) jika ada untuk menghindari foreign key constraint
-    await adminSupabase.from('exam_results').delete().eq('registration_id', regId)
+    
 
     const { error } = await adminSupabase
         .from('training_registrations')
@@ -162,8 +161,7 @@ export async function qaDeleteFinishedTrainingAction(formData: FormData) {
         return { error: 'Pelatihan ini tidak berstatus lulus/selesai, tidak dapat dihapus.' }
     }
 
-    // Hapus data dependen (exam_results) jika ada untuk menghindari foreign key constraint
-    await adminSupabase.from('exam_results').delete().eq('registration_id', regId)
+    
 
     const { error } = await adminSupabase
         .from('training_registrations')
