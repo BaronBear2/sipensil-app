@@ -19,21 +19,26 @@ export default function TrainingDetailV2({ training, registrations, systemDate }
     const [isTriggering, setIsTriggering] = useState(false)
     const [activeTab, setActiveTab] = useState<'administrasi' | 'seleksi' | 'penilaian' | 'semua_peserta' | 'riwayat_peserta'>('administrasi')
 
-    const accCount = registrations.filter(r => r.status !== 'PENDING' && r.status !== 'DITOLAK').length
-
     const formatDate = (dateString: string | null) => {
         if (!dateString) return '-'
         return new Date(dateString).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
     }
+    const accCount = registrations.filter(r => r.status === 'DITERIMA' || r.status === 'LULUS' || r.status === 'SELESAI').length
+    
+    // Determine the highest progress step any user has reached
+    const maxProgressStep = registrations.reduce((max, r) => Math.max(max, r.progress_step || 1), 1)
 
     let globalStep = 1
-    if (accCount >= training.quota) globalStep = 2
+    if (accCount >= training.quota || maxProgressStep >= 2) globalStep = 2
 
     const todayStr = systemDate || new Date().toISOString().split('T')[0]
+    const adminDate = training?.tanggal_pengumuman_kelulusan_administrasi ? new Date(training.tanggal_pengumuman_kelulusan_administrasi).toISOString().split('T')[0] : null
     const seleksiDate = training?.tanggal_pengumuman_kelulusan_seleksi_awal ? new Date(training.tanggal_pengumuman_kelulusan_seleksi_awal).toISOString().split('T')[0] : null
     const ujiDate = training?.tanggal_pengumuman_hasil_uji_kompetensi ? new Date(training.tanggal_pengumuman_hasil_uji_kompetensi).toISOString().split('T')[0] : null
 
-    if (globalStep === 2 && seleksiDate && todayStr >= seleksiDate) {
+    if (globalStep === 1 && adminDate && todayStr >= adminDate) {
+        globalStep = 2
+    } else if (globalStep === 2 && seleksiDate && todayStr >= seleksiDate) {
         globalStep = 3
     } else if (globalStep === 3 && ujiDate && todayStr >= ujiDate) {
         globalStep = 4
