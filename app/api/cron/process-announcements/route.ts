@@ -25,9 +25,9 @@ export async function GET(request: Request) {
         const m = parts.find(p => p.type === 'month')?.value
         const d = parts.find(p => p.type === 'day')?.value
         const todayOnlyDateStr = `${y}-${m}-${d}`
-        
-        // We consider +H as: "if today is >= the scheduled date"
-        
+
+        // We consider Hari H as: "if today is >= the scheduled date"
+
         const { data: trainings, error: trainingsError } = await supabase
             .from('blk_trainings')
             .select('id, title, quota, tanggal_pengumuman_kelulusan_administrasi, tanggal_pengumuman_kelulusan_seleksi_awal, tanggal_pengumuman_hasil_uji_kompetensi')
@@ -53,64 +53,63 @@ export async function GET(request: Request) {
 
                 // Compare string dates lexicographically (YYYY-MM-DD) which is timezone-safe!
                 const scheduledDateStr = new Date(dateStr).toISOString().split('T')[0]
-                
+
                 if (todayOnlyDateStr >= scheduledDateStr) {
-                    // It is exactly Hari H or past due. Let's run the auto-announcement logic.
-                    
-                    // First, ensure we don't re-run for announcements that are already published
+                    // ====================================================================
+                    // STEP 1: UPDATE PROGRESS_STEP — always run regardless of announcement
+                    // published state. An admin may have published the announcement early,
+                    // but we must STILL update progress_step for all eligible users.
+                    // ====================================================================
+
+                    if (check.type === 'administrasi') {
+                        // On administrasi announcement date: move all DITERIMA users at step 1 -> step 2.
+                        // This handles the case where quota was never fully filled before the date arrived.
+                        await supabase.from('training_registrations')
+                            .update({ progress_step: 2 })
+                            .eq('training_id', training.id)
+                            .eq('status', 'DITERIMA')
+                            .eq('progress_step', 1)
+                    } else {
+                        // seleksi_awal: step 2 -> 3
+                        // uji_kompetensi: step 3 -> 4, status -> LULUS
+                        const statusToSet = check.type === 'uji_kompetensi' ? 'LULUS' : 'DITERIMA'
+
+                        await supabase.from('training_registrations')
+                            .update({
+                                status: statusToSet,
+                                progress_step: check.nextStep,
+                                admin_notes: 'Lulus Otomatis Sistem (Pengumuman)'
+                            })
+                            .eq('training_id', training.id)
+                            .eq('progress_step', check.currentStep)
+                            .in('status', ['PENDING', 'DITERIMA'])
+                    }
+
+                    // ====================================================================
+                    // STEP 2: CHECK IF ANNOUNCEMENT IS ALREADY PUBLISHED
+                    // If yes, progress_step was already updated above — no need to re-publish.
+                    // We use 'continue' (not 'break') so the next stage is also checked,
+                    // in case it is due but not yet published.
+                    // ====================================================================
                     const { data: checkExisting } = await supabase.from('training_announcements')
                         .select('is_published')
                         .eq('training_id', training.id)
                         .eq('type', check.type)
                         .limit(1)
-                        
+
                     if (checkExisting && checkExisting.length > 0 && checkExisting[0].is_published) {
-                        continue // Already published, skip processing
+                        // Announcement already published. Progress_step was updated above.
+                        // Use 'continue' to move to the next stage check. The 'break' at the bottom
+                        // (after publishing) prevents cascade — this path only skips re-publishing.
+                        continue
                     }
 
-                    if (check.type === 'administrasi') {
-                        // Check if quota is met
-                        const { count: acceptedCount } = await supabase.from('training_registrations')
-                            .select('*', { count: 'exact', head: true })
-                            .eq('training_id', training.id)
-                            .in('status', ['DITERIMA', 'LULUS', 'SELESAI'])
-                            .gte('progress_step', 2)
-                        
-                        if (acceptedCount === null || acceptedCount < (training.quota || 0)) {
-                            console.log(`[Administrasi Cron] Quota not met for training ${training.id}. Skipping.`)
-                            continue // Skip processing for this training
-                        }
-                        // DO NOT perform bulk update for administrasi.
-                    } else {
-                        // 1. Safe Bulk Update: Update all PENDING or DITERIMA users at currentStep to nextStep
-                        const { data: usersToPass } = await supabase.from('training_registrations')
-                            .select('id, profiles(full_name)')
-                            .eq('training_id', training.id)
-                            .in('status', ['PENDING', 'DITERIMA'])
-                            .eq('progress_step', check.currentStep)
+                    // ====================================================================
+                    // STEP 3: PUBLISH ANNOUNCEMENT
+                    // Only reaches here if the announcement is NOT yet published.
+                    // ====================================================================
 
-                        if (usersToPass && usersToPass.length > 0) {
-                            let statusToSet = 'DITERIMA'
-                            if (check.type === 'uji_kompetensi') statusToSet = 'LULUS'
-
-                            const { error: bulkError } = await supabase.from('training_registrations')
-                                .update({ 
-                                    status: statusToSet, 
-                                    progress_step: check.nextStep,
-                                    admin_notes: 'Lulus Otomatis Sistem (Pengumuman)'
-                                })
-                                .eq('training_id', training.id)
-                                .eq('progress_step', check.currentStep)
-                                .in('status', ['PENDING', 'DITERIMA'])
-
-                            if (bulkError) {
-                                console.error("Bulk update error in cron:", bulkError)
-                                continue
-                            }
-                        }
-                    }
-
-                    // Fetch ALL users who passed this stage (both manually verified and auto-passed)
+                    // Fetch ALL users who passed this stage for the participant list
                     const { data: allPassedUsers } = await supabase.from('training_registrations')
                         .select('id, profiles(full_name)')
                         .eq('training_id', training.id)
@@ -126,7 +125,7 @@ export async function GET(request: Request) {
                         pdfListMsg += "Belum ada peserta yang diluluskan."
                     }
 
-                    // 2. Check if announcement already exists
+                    // Check if announcement record already exists (to update vs insert)
                     const { data: existingAnnouncements } = await supabase.from('training_announcements')
                         .select('*')
                         .eq('training_id', training.id)
@@ -177,8 +176,9 @@ export async function GET(request: Request) {
                     }
 
                     processedCount++
-                    // Break out of the checks loop so we only process ONE stage transition per training per cron run
-                    // This prevents cascading jumps (e.g. from stage 2 directly to 4) if multiple dates have passed
+                    // Break after publishing ONE announcement per training per cron run.
+                    // This prevents cascading announcements if multiple dates have passed.
+                    // Note: progress_step updates above are NOT affected by this break.
                     break;
                 }
             }

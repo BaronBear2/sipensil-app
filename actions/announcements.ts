@@ -128,11 +128,11 @@ export async function forcePublishDraftAction(formData: FormData) {
     const { data: qaTime } = await adminClient.from('qa_system_time').select('overridden_time').eq('id', 1).single()
     const nowStr = qaTime?.overridden_time ? new Date(qaTime.overridden_time).toISOString() : new Date().toISOString()
 
-    const { error } = await supabase.from('training_announcements').update({ 
-        is_published: true, 
-        published_at: nowStr 
+    const { error } = await supabase.from('training_announcements').update({
+        is_published: true,
+        published_at: nowStr
     }).eq('id', id)
-    
+
     if (error) return { error: error.message }
 
     revalidatePath(`/dashboard/dinas/pelatihan/${trainingId}/pengumuman`)
@@ -200,14 +200,14 @@ export async function publishAnnouncementAction(formData: FormData) {
             .eq('training_id', trainingId)
             .eq('type', type)
             .limit(1)
-            
+
         const existing = existingArr?.[0]
 
         if (existing) {
             const updateData: any = { content, is_published: true, published_at: nowStr }
             if (document_url) updateData.document_url = document_url
             if (scheduledDate) updateData.scheduled_date = scheduledDate
-            
+
             const { error: updateError } = await supabase.from('training_announcements').update(updateData).eq('id', existing.id)
             error = updateError;
         } else {
@@ -232,7 +232,7 @@ export async function publishAnnouncementAction(formData: FormData) {
     // If they manually upload for "administrasi" or "seleksi_awal" or "uji_kompetensi", 
     // it overrides the default process or we just let the cron know it's done. 
     // The cron logic can just check if an announcement of that type exists.
-    
+
     if (type === 'administrasi') {
         await supabase.from('blk_trainings').update({ tanggal_pengumuman_kelulusan_administrasi: scheduledDate || null }).eq('id', trainingId)
     } else if (type === 'seleksi_awal') {
@@ -270,7 +270,7 @@ export async function deleteAnnouncementAction(formData: FormData) {
 export async function triggerManualCronAction(formData: FormData) {
     const trainingId = formData.get('trainingId') as string
     const checkType = formData.get('checkType') as string
-    
+
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: "Unauthorized" }
@@ -281,7 +281,7 @@ export async function triggerManualCronAction(formData: FormData) {
     if (role !== 'admin' && role !== 'admin_dinas' && role !== 'dinas') {
         return { error: "Unauthorized: Admin access required" }
     }
-    
+
     const { data: training } = await supabase.from('blk_trainings').select('*').eq('id', trainingId).single()
     if (!training) return { error: 'Pelatihan tidak ditemukan' }
 
@@ -298,7 +298,7 @@ export async function triggerManualCronAction(formData: FormData) {
 
     for (const check of checks) {
         if (checkType && check.type !== checkType) continue
-        
+
         // Let's just run it if they trigger manually regardless of date.
         // For manual trigger, we assume the admin wants to force it.
 
@@ -316,8 +316,8 @@ export async function triggerManualCronAction(formData: FormData) {
             if (check.type === 'uji_kompetensi') statusToSet = 'LULUS'
 
             const { error: bulkError } = await supabase.from('training_registrations')
-                .update({ 
-                    status: statusToSet, 
+                .update({
+                    status: statusToSet,
                     progress_step: check.nextStep,
                     admin_notes: 'Lulus Otomatis Sistem (Pengumuman)'
                 })
