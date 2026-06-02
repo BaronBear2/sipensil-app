@@ -25,11 +25,19 @@ export default function TrainingDetailV2({ training, registrations, systemDate }
     }
     const accCount = registrations.filter(r => r.status === 'DITERIMA' || r.status === 'LULUS' || r.status === 'SELESAI').length
     
-    // Determine the highest progress step any user has reached
-    const maxProgressStep = registrations.reduce((max, r) => Math.max(max, r.progress_step || 1), 1)
+    // Evaluate training phase strictly by schedule
+    let globalStep = 1
+    
+    const todayStr = systemDate || new Date().toISOString().split('T')[0]
+    const adminDate = training?.tanggal_pengumuman_kelulusan_administrasi ? new Date(training.tanggal_pengumuman_kelulusan_administrasi).toISOString().split('T')[0] : null
+    const seleksiDate = training?.tanggal_pengumuman_kelulusan_seleksi_awal ? new Date(training.tanggal_pengumuman_kelulusan_seleksi_awal).toISOString().split('T')[0] : null
+    const ujiDate = training?.tanggal_pengumuman_hasil_uji_kompetensi ? new Date(training.tanggal_pengumuman_hasil_uji_kompetensi).toISOString().split('T')[0] : null
 
-    let globalStep = Math.max(1, maxProgressStep)
-    if (accCount >= training.quota && globalStep < 2) globalStep = 2
+    if (adminDate && todayStr >= adminDate) globalStep = 2
+    if (seleksiDate && todayStr >= seleksiDate) globalStep = 3
+    if (ujiDate && todayStr >= ujiDate) globalStep = 4
+
+    if (training.status === 'FINISHED') globalStep = 4
 
     const steps = [
         {
@@ -352,7 +360,10 @@ export default function TrainingDetailV2({ training, registrations, systemDate }
 
     // Helper for rendering 7-step tracker visually
     const renderStepBadge = (step: number, status: string) => {
-        if (status === 'DITOLAK' || status === 'REJECTED') return <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold">Gagal/Ditolak</span>
+        if (status === 'DITOLAK' || status === 'REJECTED') {
+            if (step === 1) return <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold">Ditolak</span>
+            return <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold">Gagal</span>
+        }
         if (status === 'LULUS' || status === 'SELESAI') return <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold">Tahap 4 : Sudah Lulus</span>
 
         let label = 'Tahap 1 : Administrasi'
@@ -420,8 +431,8 @@ export default function TrainingDetailV2({ training, registrations, systemDate }
                 <div className="flex justify-between relative px-8">
                     <div className="absolute top-5 left-16 right-16 h-0.5 bg-gray-200 z-0"></div>
                     {steps.map(step => {
-                        const isCompleted = globalStep > step.num || training.status === 'FINISHED'
-                        const isCurrent = globalStep === step.num && training.status !== 'FINISHED'
+                        const isCompleted = globalStep > step.num || training.status === 'FINISHED' || (globalStep === 4 && step.num === 4)
+                        const isCurrent = globalStep === step.num && training.status !== 'FINISHED' && step.num !== 4
 
                         let circleColor = 'bg-white border-gray-300 text-gray-600'
                         if (isCompleted) circleColor = 'bg-green-500 border-green-500 text-white'

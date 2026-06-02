@@ -12,7 +12,11 @@ export async function GET(request: Request) {
     const supabase = await createAdminClient()
 
     // 1. Call the updated RPC function
-    const { data: updatedUsers, error } = await supabase.rpc('update_time_based_progress')
+    // const { data: updatedUsers, error } = await supabase.rpc('update_time_based_progress')
+    // Temporarily disable this buggy RPC! It incorrectly bumps progress_step to 4 (LULUS) when training_start_date passes.
+    // Instead of completely failing, we just mock the return for now so the cron job doesn't crash.
+    const updatedUsers: any[] = [];
+    const error = null;
 
     if (error) {
         console.error("Cron Job Error calling update_time_based_progress:", error)
@@ -20,7 +24,7 @@ export async function GET(request: Request) {
     }
 
     if (!updatedUsers || updatedUsers.length === 0) {
-        return NextResponse.json({ message: 'No users progressed today.' })
+        return NextResponse.json({ message: 'No users progressed today. (RPC Disabled)' })
     }
 
     // 2. Loop through updated users and send notifications

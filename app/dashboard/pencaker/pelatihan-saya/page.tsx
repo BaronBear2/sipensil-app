@@ -238,14 +238,14 @@ export default function MyTrainingsPage() {
                         </div>
                     ) : isRejected ? (
                         <div className="px-3 py-1 rounded-full text-xs font-bold border bg-red-100 text-red-700 border-red-200 flex items-center gap-1">
-                            <XCircle size={12} /> Ditolak
+                            <XCircle size={12} /> {reg.progress_step === 1 ? 'Ditolak' : 'Gagal'}
                         </div>
                     ) : (
                         <div className={`px-3 py-1 rounded-full text-xs font-bold border ${reg.status === 'DITERIMA' || reg.status === 'APPROVED' || reg.status === 'VERIFIED'
                             ? 'bg-green-100 text-green-700 border-green-200'
                             : 'bg-yellow-100 text-yellow-700 border-yellow-200'
                             }`}>
-                            {reg.status === 'DITOLAK' || reg.status === 'REJECTED' ? 'Gagal/Ditolak' : reg.status === 'LULUS' || reg.status === 'SELESAI' ? 'Tahap 4 : Sudah Lulus' : reg.progress_step === 1 ? 'Tahap 1 : Administrasi' : reg.progress_step === 2 ? 'Tahap 2 : Seleksi' : reg.progress_step === 3 ? 'Tahap 3 : Pelatihan & Uji Kompetensi' : reg.progress_step >= 4 ? 'Tahap 4 : Sudah Lulus' : reg.status}
+                            {reg.status === 'DITOLAK' || reg.status === 'REJECTED' ? (reg.progress_step === 1 ? 'Ditolak' : 'Gagal') : reg.status === 'LULUS' || reg.status === 'SELESAI' ? 'Tahap 4 : Sudah Lulus' : reg.progress_step === 1 ? 'Tahap 1 : Administrasi' : reg.progress_step === 2 ? 'Tahap 2 : Seleksi' : reg.progress_step === 3 ? 'Tahap 3 : Pelatihan & Uji Kompetensi' : reg.progress_step >= 4 ? 'Tahap 4 : Sudah Lulus' : reg.status}
                         </div>
                     )}
                 </div>
@@ -289,7 +289,7 @@ export default function MyTrainingsPage() {
                     <div className="bg-red-50 p-4 rounded-lg border border-red-100 mb-4 flex items-start gap-3">
                         <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={18} />
                         <div>
-                            <h4 className="font-bold text-red-800 text-sm">Alasan Penolakan</h4>
+                            <h4 className="font-bold text-red-800 text-sm">{reg.progress_step === 1 ? 'Alasan Penolakan' : 'Alasan Gagal'}</h4>
                             <p className="text-red-600 text-sm mt-1">"{reg.admin_notes || 'Tidak ada catatan admin.'}"</p>
                         </div>
                     </div>

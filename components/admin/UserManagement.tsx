@@ -395,7 +395,7 @@ export default function UserManagement({ users, currentPage, totalPages, totalCo
                                                         <p className="text-xs text-gray-500 mt-1">Tanggal Daftar: {new Date(reg.created_at).toLocaleDateString('id-ID')}</p>
                                                     </div>
                                                     <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${isRejected ? 'bg-red-100 text-red-700' : (reg.status === 'DITERIMA' || reg.status === 'LULUS') ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                                        {reg.status === 'DITOLAK' || reg.status === 'REJECTED' ? 'Gagal/Ditolak' : reg.status === 'LULUS' || reg.status === 'SELESAI' ? 'Tahap 4 : Sudah Lulus' : reg.progress_step === 1 ? 'Tahap 1 : Administrasi' : reg.progress_step === 2 ? 'Tahap 2 : Seleksi' : reg.progress_step === 3 ? 'Tahap 3 : Pelatihan & Uji Kompetensi' : reg.progress_step >= 4 ? 'Tahap 4 : Sudah Lulus' : reg.status || 'PENDING'}
+                                                        {reg.status === 'DITOLAK' || reg.status === 'REJECTED' ? (reg.progress_step === 1 ? 'Ditolak' : 'Gagal') : reg.status === 'LULUS' || reg.status === 'SELESAI' ? 'Tahap 4 : Sudah Lulus' : reg.progress_step === 1 ? 'Tahap 1 : Administrasi' : reg.progress_step === 2 ? 'Tahap 2 : Seleksi' : reg.progress_step === 3 ? 'Tahap 3 : Pelatihan & Uji Kompetensi' : reg.progress_step >= 4 ? 'Tahap 4 : Sudah Lulus' : reg.status || 'PENDING'}
                                                     </span>
                                                 </div>
 

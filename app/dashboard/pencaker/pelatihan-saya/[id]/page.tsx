@@ -12,7 +12,9 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
     if (!user) redirect('/auth/login')
 
     // Evaluate time-based progression
-    await supabase.rpc('update_time_based_progress')
+    // Removed: await supabase.rpc('update_time_based_progress')
+    // This RPC is buggy and incorrectly bumps progress_step to 4 (which means LULUS in the new schema)
+    // when the training_start_date passes, leading to premature graduation.
 
     // Fetch Registration Details with Joins
     const { data: reg, error } = await supabase
@@ -287,8 +289,8 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
                         <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl flex gap-3 items-start">
                             <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={20} />
                             <div>
-                                <h4 className="font-bold text-red-800">Pendaftaran Ditolak</h4>
-                                <p className="text-red-600 text-sm mt-1">{reg.admin_notes || 'Silakan cek kembali kelengkapan profil Anda atau hubungi admin.'}</p>
+                                <h4 className="font-bold text-red-800">{computedStep === 1 ? 'Pendaftaran Ditolak' : 'Gagal'}</h4>
+                                <p className="text-red-600 text-sm mt-1">{reg.admin_notes || 'Tidak ada catatan tambahan.'}</p>
                             </div>
                         </div>
                     )}

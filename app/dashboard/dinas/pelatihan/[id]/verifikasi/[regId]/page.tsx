@@ -8,8 +8,8 @@ export default async function VerificationDetailPage({ params }: { params: Promi
     const { id, regId } = await params // 'id' is training, 'regId' is registration ID
 
     // Evaluate time-based progression
-    await supabase.rpc('update_time_based_progress')
-
+    // Removed: await supabase.rpc('update_time_based_progress')
+    // This RPC incorrectly bumps progress_step to 4 when training_start_date passes.
     // Fetch Registration + Profile
     const { data: reg, error } = await supabase
         .from('training_registrations')
