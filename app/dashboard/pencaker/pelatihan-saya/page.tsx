@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
-import { FileText, Calendar, MapPin, Clock, Download, ExternalLink, ArrowLeft, AlertCircle, CheckCircle, XCircle, History } from 'lucide-react'
+import { FileText, Calendar, MapPin, Clock, Download, ExternalLink, ArrowLeft, AlertCircle, CheckCircle, XCircle, History, ChevronDown, ChevronUp } from 'lucide-react'
 import Link from 'next/link'
 
 // Helper to format date
@@ -474,15 +474,15 @@ export default function MyTrainingsPage() {
                             <section>
                                 <button 
                                     onClick={() => setIsPassedOpen(!isPassedOpen)} 
-                                    className="w-full flex items-center justify-between gap-2 mb-4 bg-green-50 hover:bg-green-100 transition px-4 py-3 rounded-xl cursor-pointer border border-green-100"
+                                    className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm mb-4"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <span className="w-8 h-8 rounded-full bg-green-200 text-green-700 flex items-center justify-center">
-                                            <CheckCircle size={16} />
-                                        </span>
-                                        <h2 className="text-lg font-bold text-green-800">Pelatihan Yang Sudah Lulus ({passedRegistrations.length})</h2>
+                                        <CheckCircle size={18} className="text-gray-400" />
+                                        <h2 className="text-base font-bold text-gray-700">Pelatihan Yang Sudah Lulus ({passedRegistrations.length})</h2>
                                     </div>
-                                    <span className="text-green-600 font-bold text-xl">{isPassedOpen ? '−' : '+'}</span>
+                                    <div className="text-gray-400">
+                                        {isPassedOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                    </div>
                                 </button>
                                 
                                 {isPassedOpen && (
@@ -498,15 +498,15 @@ export default function MyTrainingsPage() {
                             <section>
                                 <button 
                                     onClick={() => setIsRejectedOpen(!isRejectedOpen)} 
-                                    className="w-full flex items-center justify-between gap-2 mb-4 bg-red-50 hover:bg-red-100 transition px-4 py-3 rounded-xl cursor-pointer border border-red-100"
+                                    className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm mb-4"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <span className="w-8 h-8 rounded-full bg-red-200 text-red-700 flex items-center justify-center">
-                                            <XCircle size={16} />
-                                        </span>
-                                        <h2 className="text-lg font-bold text-red-800">Pelatihan Ditolak ({rejectedRegistrations.length})</h2>
+                                        <XCircle size={18} className="text-gray-400" />
+                                        <h2 className="text-base font-bold text-gray-700">Pelatihan Ditolak ({rejectedRegistrations.length})</h2>
                                     </div>
-                                    <span className="text-red-600 font-bold text-xl">{isRejectedOpen ? '−' : '+'}</span>
+                                    <div className="text-gray-400">
+                                        {isRejectedOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                    </div>
                                 </button>
                                 
                                 {isRejectedOpen && (
@@ -522,15 +522,15 @@ export default function MyTrainingsPage() {
                             <section>
                                 <button 
                                     onClick={() => setIsHistoryOpen(!isHistoryOpen)} 
-                                    className="w-full flex items-center justify-between gap-2 mb-4 bg-gray-100 hover:bg-gray-200 transition px-4 py-3 rounded-xl cursor-pointer"
+                                    className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm mb-4"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <span className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center">
-                                            <History size={16} />
-                                        </span>
-                                        <h2 className="text-lg font-bold text-gray-800">Riwayat Pelatihan Lainnya ({historyRegistrations.length})</h2>
+                                        <History size={18} className="text-gray-400" />
+                                        <h2 className="text-base font-bold text-gray-700">Riwayat Pelatihan Lainnya ({historyRegistrations.length})</h2>
                                     </div>
-                                    <span className="text-gray-500 font-bold text-xl">{isHistoryOpen ? '−' : '+'}</span>
+                                    <div className="text-gray-400">
+                                        {isHistoryOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                    </div>
                                 </button>
                                 
                                 {isHistoryOpen && (
