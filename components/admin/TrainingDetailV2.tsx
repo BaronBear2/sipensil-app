@@ -369,7 +369,11 @@ export default function TrainingDetailV2({ training, registrations, systemDate }
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between mb-4">
                     <h1 className="text-2xl font-bold text-gray-800">{training.title}</h1>
-                    <span className={`px-3 py-1 rounded-full text-sm font-bold ${training.status === 'FINISHED' ? 'bg-gray-100 text-gray-600' : 'bg-green-100 text-green-700'}`}>
+                    <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+                        training.status === 'FINISHED' ? 'bg-gray-100 text-gray-600' : 
+                        training.status === 'CLOSED' ? 'bg-red-100 text-red-700' : 
+                        'bg-green-100 text-green-700'
+                    }`}>
                         {training.status}
                     </span>
                 </div>
