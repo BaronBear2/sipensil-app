@@ -39,17 +39,17 @@ export default function TrainingDetailV2({ training, registrations }: { training
     const steps = [
         {
             num: 1,
-            title: 'Administrasi',
+            title: 'Tahap 1 : Administrasi',
             desc: `Verifikasi berkas. Pengumuman: ${formatDate(training?.tanggal_pengumuman_kelulusan_administrasi)}`,
         },
         {
             num: 2,
-            title: 'Seleksi',
+            title: 'Tahap 2 : Seleksi',
             desc: `Hasil diumumkan: ${formatDate(training?.tanggal_pengumuman_kelulusan_seleksi_awal)}`,
         },
         {
             num: 3,
-            title: 'Jadwal Pelatihan',
+            title: 'Tahap 3 : Pelatihan & Uji Kompetensi',
             desc: `Hasil kelulusan: ${formatDate(training?.tanggal_pengumuman_hasil_uji_kompetensi)}`,
         },
         {
@@ -72,10 +72,10 @@ export default function TrainingDetailV2({ training, registrations }: { training
         const hash = window.location.hash
         if (hash) {
             const userId = hash.replace('#peserta-', '')
-            
+
             // Find the participant to determine which tab they belong to
             const targetReg = registrations.find(r => r.user_id === userId)
-            
+
             if (targetReg) {
                 // Determine the correct tab
                 let targetTab: 'administrasi' | 'seleksi' | 'penilaian' | 'riwayat_peserta' = 'administrasi'
@@ -101,7 +101,7 @@ export default function TrainingDetailV2({ training, registrations }: { training
                         element.scrollIntoView({ behavior: 'smooth', block: 'center' })
                         element.classList.add('bg-blue-50')
                         setTimeout(() => element.classList.remove('bg-blue-50'), 2000)
-                        
+
                         // Clear the hash without reloading so it doesn't trap the user when they switch tabs later
                         window.history.replaceState(null, '', window.location.pathname + window.location.search)
                     }
@@ -214,7 +214,7 @@ export default function TrainingDetailV2({ training, registrations }: { training
         const fd = new FormData()
         fd.append('trainingId', training.id)
         fd.append('checkType', type)
-        
+
         try {
             const res = await triggerManualCronAction(fd)
             if (res?.error) {
@@ -265,12 +265,12 @@ export default function TrainingDetailV2({ training, registrations }: { training
             SwalAlert.fire({ icon: 'info', title: 'Kosong', text: 'Tidak ada peserta untuk didownload' })
             return
         }
-        
+
         const zip = new JSZip()
         const rootFolder = zip.folder(training.title || 'Pelatihan')
 
         SwalToast.fire({ icon: 'info', title: 'Sedang menyiapkan unduhan...' })
-        
+
         let fileCount = 0;
 
         for (const reg of filteredRegistrations) {
@@ -359,10 +359,10 @@ export default function TrainingDetailV2({ training, registrations }: { training
     const renderStepBadge = (step: number, status: string) => {
         if (status === 'DITOLAK') return <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold">Gagal/Ditolak</span>
 
-        let label = 'Tahap 1: Administrasi'
-        if (step === 2) label = 'Tahap 2: Seleksi'
-        if (step === 3) label = 'Tahap 3: Jadwal Pelatihan & Ujian'
-        if (step === 4) label = 'Tahap 4: Hasil Uji Kompetensi'
+        let label = 'Tahap 1 : Administrasi'
+        if (step === 2) label = 'Tahap 2 : Seleksi'
+        if (step === 3) label = 'Tahap 3 : Pelatihan & Uji Kompetensi'
+        if (step === 4) label = 'Tahap 4 : Sudah Lulus'
 
         return <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">{label}</span>
     }
@@ -420,28 +420,28 @@ export default function TrainingDetailV2({ training, registrations }: { training
 
             {/* HORIZONTAL STEPPER FOR TRAINING STATUS */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hidden md:block">
-                 <h3 className="text-sm font-bold text-gray-700 mb-6">Status Tahapan Pelatihan Secara Keseluruhan</h3>
-                 <div className="flex justify-between relative px-8">
-                      <div className="absolute top-5 left-16 right-16 h-0.5 bg-gray-200 z-0"></div>
-                      {steps.map(step => {
-                          const isCompleted = globalStep > step.num || training.status === 'FINISHED'
-                          const isCurrent = globalStep === step.num && training.status !== 'FINISHED'
-                          
-                          let circleColor = 'bg-white border-gray-300 text-gray-600'
-                          if (isCompleted) circleColor = 'bg-green-500 border-green-500 text-white'
-                          else if (isCurrent) circleColor = 'bg-blue-600 border-blue-600 text-white ring-4 ring-blue-50'
+                <h3 className="text-sm font-bold text-gray-700 mb-6">Status Tahapan Pelatihan Secara Keseluruhan</h3>
+                <div className="flex justify-between relative px-8">
+                    <div className="absolute top-5 left-16 right-16 h-0.5 bg-gray-200 z-0"></div>
+                    {steps.map(step => {
+                        const isCompleted = globalStep > step.num || training.status === 'FINISHED'
+                        const isCurrent = globalStep === step.num && training.status !== 'FINISHED'
 
-                          return (
-                              <div key={step.num} className="flex flex-col items-center text-center w-1/4 relative">
-                                  <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold text-sm transition-all duration-300 z-10 ${circleColor}`}>
-                                      {isCompleted ? <CheckCircle2 size={16} /> : step.num}
-                                  </div>
-                                  <h4 className={`font-bold text-sm mt-3 ${isCurrent ? 'text-blue-700' : isCompleted ? 'text-gray-900' : 'text-gray-500'}`}>{step.title}</h4>
-                                  <p className="text-xs text-gray-400 mt-1 max-w-[140px]">{step.desc}</p>
-                              </div>
-                          )
-                      })}
-                 </div>
+                        let circleColor = 'bg-white border-gray-300 text-gray-600'
+                        if (isCompleted) circleColor = 'bg-green-500 border-green-500 text-white'
+                        else if (isCurrent) circleColor = 'bg-blue-600 border-blue-600 text-white ring-4 ring-blue-50'
+
+                        return (
+                            <div key={step.num} className="flex flex-col items-center text-center w-1/4 relative">
+                                <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold text-sm transition-all duration-300 z-10 ${circleColor}`}>
+                                    {isCompleted ? <CheckCircle2 size={16} /> : step.num}
+                                </div>
+                                <h4 className={`font-bold text-sm mt-3 ${isCurrent ? 'text-blue-700' : isCompleted ? 'text-gray-900' : 'text-gray-500'}`}>{step.title}</h4>
+                                <p className="text-xs text-gray-400 mt-1 max-w-[140px]">{step.desc}</p>
+                            </div>
+                        )
+                    })}
+                </div>
             </div>
 
             {/* Tabs Navigation */}
@@ -485,12 +485,12 @@ export default function TrainingDetailV2({ training, registrations }: { training
                     <div className="flex gap-2 items-center">
                         {activeTab === 'seleksi' && (
                             <button onClick={() => handleTriggerCron('seleksi_awal')} disabled={isTriggering} className="bg-green-100 hover:bg-green-200 text-green-700 font-bold py-2 px-4 rounded-lg flex items-center gap-2 text-sm transition">
-                                {isTriggering ? 'Memproses...' : 'Luluskan (Seleksi)'}
+                                {isTriggering ? 'Memproses...' : 'Luluskan semua peserta (Seleksi)'}
                             </button>
                         )}
                         {activeTab === 'penilaian' && (
                             <button onClick={() => handleTriggerCron('uji_kompetensi')} disabled={isTriggering} className="bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold py-2 px-4 rounded-lg flex items-center gap-2 text-sm transition">
-                                {isTriggering ? 'Memproses...' : 'Luluskan (Uji Kompetensi)'}
+                                {isTriggering ? 'Memproses...' : 'Luluskan semua peserta (Uji Kompetensi)'}
                             </button>
                         )}
                         {activeTab === 'semua_peserta' && (

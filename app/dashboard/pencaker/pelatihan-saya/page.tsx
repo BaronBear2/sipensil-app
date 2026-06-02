@@ -209,7 +209,7 @@ export default function MyTrainingsPage() {
                             ? 'bg-green-100 text-green-700 border-green-200'
                             : 'bg-yellow-100 text-yellow-700 border-yellow-200'
                             }`}>
-                            {reg.status === 'PENDING' ? 'Menunggu Verifikasi' : reg.status}
+                            {reg.status === 'DITOLAK' || reg.status === 'REJECTED' ? 'Gagal/Ditolak' : reg.status === 'LULUS' || reg.status === 'SELESAI' ? 'Tahap 4 : Sudah Lulus' : reg.progress_step === 1 ? 'Tahap 1 : Administrasi' : reg.progress_step === 2 ? 'Tahap 2 : Seleksi' : reg.progress_step === 3 ? 'Tahap 3 : Pelatihan & Uji Kompetensi' : reg.progress_step >= 4 ? 'Tahap 4 : Sudah Lulus' : reg.status}
                         </div>
                     )}
                 </div>

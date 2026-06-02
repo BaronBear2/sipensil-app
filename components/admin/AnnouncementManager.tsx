@@ -140,6 +140,7 @@ export default function AnnouncementManager({ trainingId, announcements, trainin
         setFormData({ type: ann.type, content: ann.content || '', scheduledDate: ann.scheduled_date ? ann.scheduled_date.split('T')[0] : '' })
         setFile(null)
         setShowForm(true)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
     return (

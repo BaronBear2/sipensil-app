@@ -64,10 +64,14 @@ export default async function VerificationDetailPage({ params }: { params: Promi
     let computedStep = reg.progress_step || 1
 
     const todayStr = new Date().toISOString().split('T')[0]
+    const adminDate = training?.tanggal_pengumuman_kelulusan_administrasi ? new Date(training.tanggal_pengumuman_kelulusan_administrasi).toISOString().split('T')[0] : null
     const seleksiDate = training?.tanggal_pengumuman_kelulusan_seleksi_awal ? new Date(training.tanggal_pengumuman_kelulusan_seleksi_awal).toISOString().split('T')[0] : null
     const ujiDate = training?.tanggal_pengumuman_hasil_uji_kompetensi ? new Date(training.tanggal_pengumuman_hasil_uji_kompetensi).toISOString().split('T')[0] : null
 
     // Time-based progression evaluation for the UI
+    if (computedStep === 1 && adminDate && todayStr >= adminDate) {
+        computedStep = 2
+    }
     if (computedStep === 2 && seleksiDate && todayStr >= seleksiDate) {
         computedStep = 3
     }
@@ -88,22 +92,22 @@ export default async function VerificationDetailPage({ params }: { params: Promi
     const steps = [
         {
             num: 1,
-            title: 'Administrasi',
+            title: 'Tahap 1 : Administrasi',
             desc: `Verifikasi dokumen pencaker. Pengumuman: ${formatDate(training?.tanggal_pengumuman_kelulusan_administrasi)}.`,
         },
         {
             num: 2,
-            title: 'Seleksi',
+            title: 'Tahap 2 : Seleksi',
             desc: `Tahap seleksi. Hasil seleksi akan diumumkan pada: ${formatDate(training?.tanggal_pengumuman_kelulusan_seleksi_awal)}.`,
         },
         {
             num: 3,
-            title: 'Jadwal Pelatihan',
+            title: 'Tahap 3 : Pelatihan & Uji Kompetensi',
             desc: `Jadwal pelatihan dan uji kompetensi. Hasil kelulusan: ${formatDate(training?.tanggal_pengumuman_hasil_uji_kompetensi)}.`,
         },
         {
             num: 4,
-            title: 'Hasil Uji Kompetensi',
+            title: 'Selesai',
             desc: 'Proses penilaian dan penyelesaian pelatihan.',
         }
     ]
@@ -288,8 +292,8 @@ export default async function VerificationDetailPage({ params }: { params: Promi
                                 </div>
                                 <div className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm flex-1">
                                     <span className="text-[10px] text-gray-400 font-bold uppercase block mb-1">Status</span>
-                                    <span className={`inline-block px-2 py-1 rounded text-xs font-bold ${reg.status === 'PENDING' ? 'bg-orange-100 text-orange-600' : reg.status === 'DITERIMA' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                                        {reg.status}
+                                    <span className={`inline-block px-2 py-1 rounded text-xs font-bold ${reg.status === 'PENDING' ? 'bg-orange-100 text-orange-600' : (reg.status === 'DITERIMA' || reg.status === 'LULUS') ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                                        {reg.status === 'DITOLAK' || reg.status === 'REJECTED' ? 'Gagal/Ditolak' : reg.status === 'LULUS' || reg.status === 'SELESAI' ? 'Tahap 4 : Sudah Lulus' : computedStep === 1 ? 'Tahap 1 : Administrasi' : computedStep === 2 ? 'Tahap 2 : Seleksi' : computedStep === 3 ? 'Tahap 3 : Pelatihan & Uji Kompetensi' : computedStep >= 4 ? 'Tahap 4 : Sudah Lulus' : reg.status}
                                     </span>
                                 </div>
                             </div>

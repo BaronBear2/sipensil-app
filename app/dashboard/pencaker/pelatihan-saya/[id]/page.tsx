@@ -47,10 +47,14 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
 
     const todayStr = new Date().toISOString().split('T')[0]
     const trainingData = reg.blk_trainings || {}
+    const adminDate = trainingData?.tanggal_pengumuman_kelulusan_administrasi ? new Date(trainingData.tanggal_pengumuman_kelulusan_administrasi).toISOString().split('T')[0] : null
     const seleksiDate = trainingData?.tanggal_pengumuman_kelulusan_seleksi_awal ? new Date(trainingData.tanggal_pengumuman_kelulusan_seleksi_awal).toISOString().split('T')[0] : null
     const ujiDate = trainingData?.tanggal_pengumuman_hasil_uji_kompetensi ? new Date(trainingData.tanggal_pengumuman_hasil_uji_kompetensi).toISOString().split('T')[0] : null
 
     // Time-based progression evaluation for the UI
+    if (computedStep === 1 && adminDate && todayStr >= adminDate) {
+        computedStep = 2
+    }
     if (computedStep === 2 && seleksiDate && todayStr >= seleksiDate) {
         computedStep = 3
     }
@@ -85,13 +89,13 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
     const steps = [
         {
             num: 1,
-            title: 'Administrasi',
+            title: 'Tahap 1 : Administrasi',
             desc: `Menunggu admin mengecek dokumen Anda. Pengumuman dijadwalkan pada: ${formatDate(training?.tanggal_pengumuman_kelulusan_administrasi)}.`,
             content: null
         },
         {
             num: 2,
-            title: 'Seleksi',
+            title: 'Tahap 2 : Seleksi',
             desc: `Tahap seleksi dan penggabungan grup WhatsApp. Hasil seleksi akan diumumkan pada: ${formatDate(training?.tanggal_pengumuman_kelulusan_seleksi_awal)}.`,
             content: (
                 <div className="mt-3 space-y-4">
@@ -134,7 +138,7 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
         },
         {
             num: 3,
-            title: 'Jadwal Pelatihan',
+            title: 'Tahap 3 : Pelatihan & Uji Kompetensi',
             desc: `Jadwal pelatihan dan uji kompetensi. Hasil kelulusan akan diumumkan pada: ${formatDate(training?.tanggal_pengumuman_hasil_uji_kompetensi)}.`,
             content: (
                 <div className="mt-3 space-y-4">
@@ -216,7 +220,7 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
         },
         {
             num: 4,
-            title: 'Hasil Uji Kompetensi',
+            title: 'Tahap 4 : Sudah Lulus',
             desc: 'Proses penilaian dan penyelesaian pelatihan.',
             content: (
                 <div className="mt-3 space-y-4">
