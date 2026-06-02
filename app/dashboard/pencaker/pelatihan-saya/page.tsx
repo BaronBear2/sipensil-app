@@ -13,7 +13,7 @@ const formatDate = (dateString: string | null) => {
 }
 
 import { cancelRegistrationAction } from '@/actions/cancel_registration'
-import { qaDeleteRejectionAction } from '@/actions/qa'
+import { qaDeleteRejectionAction, qaDeleteFinishedTrainingAction } from '@/actions/qa'
 import { SwalConfirm, SwalToast, SwalAlert } from '@/utils/swal'
 
 export default function MyTrainingsPage() {
@@ -27,6 +27,8 @@ export default function MyTrainingsPage() {
 
     // Drawer state
     const [isHistoryOpen, setIsHistoryOpen] = useState(false)
+    const [isPassedOpen, setIsPassedOpen] = useState(false)
+    const [isRejectedOpen, setIsRejectedOpen] = useState(false)
 
     // For Cancelling
     const [isCancelling, setIsCancelling] = useState(false)
@@ -212,6 +214,40 @@ export default function MyTrainingsPage() {
         }
     }
 
+    const handleQADeleteFinished = async (reg: any) => {
+        if (isCancelling) return
+
+        const result = await SwalConfirm.fire({
+            title: 'Fitur QA: Hapus Pelatihan Selesai?',
+            text: 'Ini akan menghapus riwayat pelatihan ini sepenuhnya dari daftar pelatihan yang sudah lulus/selesai. Lanjutkan?',
+            icon: 'warning',
+            confirmButtonText: 'Ya, Hapus',
+            confirmButtonColor: '#d33',
+            cancelButtonText: 'Batal'
+        })
+
+        if (result.isConfirmed) {
+            setIsCancelling(true)
+            const formData = new FormData()
+            formData.append('regId', reg.id)
+
+            try {
+                const res = await qaDeleteFinishedTrainingAction(formData)
+                if (res.error) {
+                    SwalAlert.fire({ title: 'Gagal', text: res.error, icon: 'error' })
+                } else {
+                    await SwalToast.fire({ title: 'Riwayat Berhasil Dihapus', icon: 'success' })
+                    router.refresh()
+                }
+            } catch (err) {
+                console.error(err)
+                SwalAlert.fire({ title: 'Error', text: 'Terjadi kesalahan sistem', icon: 'error' })
+            } finally {
+                setIsCancelling(false)
+            }
+        }
+    }
+
     // Check if cancellation is allowed (date valid)
     const canCancel = (reg: any) => {
         if (!reg.blk_trainings?.registration_end) return true // If no end date, assume cancellable? Or false? Let's assume true for open-ended, or usually there is a date.
@@ -338,7 +374,7 @@ export default function MyTrainingsPage() {
                     )}
 
                     {/* Accepted Buttons (Active or History) - If History, maybe they still want proofs? Usually yes. */}
-                    {!isRejected && (reg.status === 'DITERIMA' || reg.status === 'APPROVED' || reg.status === 'VERIFIED') && (
+                    {!isRejected && (reg.status === 'DITERIMA' || reg.status === 'APPROVED' || reg.status === 'VERIFIED' || reg.status === 'LULUS' || reg.status === 'SELESAI') && (
                         <>
                             <button onClick={() => handlePrint(reg, 'registration')} className="px-3 py-2 border border-blue-200 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-100 flex items-center gap-2 shadow-sm">
                                 <FileText size={14} /> Tanda Daftar
@@ -359,6 +395,21 @@ export default function MyTrainingsPage() {
                             {isCancelling ? 'Memproses...' : (
                                 <>
                                     <XCircle size={14} /> Fitur QA: Hapus Penolakan
+                                </>
+                            )}
+                        </button>
+                    )}
+
+                    {/* Finished QA Button */}
+                    {(reg.status === 'LULUS' || reg.status === 'SELESAI') && (
+                        <button
+                            onClick={() => handleQADeleteFinished(reg)}
+                            className="px-3 py-2 border border-orange-200 bg-orange-50 text-orange-600 rounded-lg text-xs font-bold hover:bg-orange-100 flex items-center gap-2 shadow-sm"
+                            disabled={isCancelling}
+                        >
+                            {isCancelling ? 'Memproses...' : (
+                                <>
+                                    <XCircle size={14} /> Fitur QA: Hapus Riwayat Lulus
                                 </>
                             )}
                         </button>
@@ -421,30 +472,48 @@ export default function MyTrainingsPage() {
                         {/* SECTION 1.5: PASSED */}
                         {(passedRegistrations.length > 0) && (
                             <section>
-                                <div className="flex items-center gap-2 mb-4">
-                                    <span className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
-                                        <CheckCircle size={16} />
-                                    </span>
-                                    <h2 className="text-lg font-bold text-gray-800">Pelatihan Yang Sudah Lulus</h2>
-                                </div>
-                                <div className="space-y-4">
-                                    {passedRegistrations.map(reg => <TrainingCard key={reg.id} reg={reg} />)}
-                                </div>
+                                <button 
+                                    onClick={() => setIsPassedOpen(!isPassedOpen)} 
+                                    className="w-full flex items-center justify-between gap-2 mb-4 bg-green-50 hover:bg-green-100 transition px-4 py-3 rounded-xl cursor-pointer border border-green-100"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <span className="w-8 h-8 rounded-full bg-green-200 text-green-700 flex items-center justify-center">
+                                            <CheckCircle size={16} />
+                                        </span>
+                                        <h2 className="text-lg font-bold text-green-800">Pelatihan Yang Sudah Lulus ({passedRegistrations.length})</h2>
+                                    </div>
+                                    <span className="text-green-600 font-bold text-xl">{isPassedOpen ? '−' : '+'}</span>
+                                </button>
+                                
+                                {isPassedOpen && (
+                                    <div className="space-y-4 animate-fade-in">
+                                        {passedRegistrations.map(reg => <TrainingCard key={reg.id} reg={reg} />)}
+                                    </div>
+                                )}
                             </section>
                         )}
 
                         {/* SECTION 2: REJECTED (Reordered) */}
                         {(rejectedRegistrations.length > 0) && (
                             <section>
-                                <div className="flex items-center gap-2 mb-4">
-                                    <span className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center">
-                                        <XCircle size={16} />
-                                    </span>
-                                    <h2 className="text-lg font-bold text-gray-800">Pelatihan Ditolak</h2>
-                                </div>
-                                <div className="space-y-4">
-                                    {rejectedRegistrations.map(reg => <TrainingCard key={reg.id} reg={reg} isRejected={true} />)}
-                                </div>
+                                <button 
+                                    onClick={() => setIsRejectedOpen(!isRejectedOpen)} 
+                                    className="w-full flex items-center justify-between gap-2 mb-4 bg-red-50 hover:bg-red-100 transition px-4 py-3 rounded-xl cursor-pointer border border-red-100"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <span className="w-8 h-8 rounded-full bg-red-200 text-red-700 flex items-center justify-center">
+                                            <XCircle size={16} />
+                                        </span>
+                                        <h2 className="text-lg font-bold text-red-800">Pelatihan Ditolak ({rejectedRegistrations.length})</h2>
+                                    </div>
+                                    <span className="text-red-600 font-bold text-xl">{isRejectedOpen ? '−' : '+'}</span>
+                                </button>
+                                
+                                {isRejectedOpen && (
+                                    <div className="space-y-4 animate-fade-in">
+                                        {rejectedRegistrations.map(reg => <TrainingCard key={reg.id} reg={reg} isRejected={true} />)}
+                                    </div>
+                                )}
                             </section>
                         )}
 

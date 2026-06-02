@@ -143,3 +143,37 @@ export async function qaDeleteRejectionAction(formData: FormData) {
     return { success: true }
 }
 
+export async function qaDeleteFinishedTrainingAction(formData: FormData) {
+    const supabase = await createClient()
+
+    // 1. Cek User Login (Dev Only)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Unauthorized' }
+
+    const regId = formData.get('regId') as string
+    if (!regId) return { error: 'Invalid data' }
+
+    // Use admin client to bypass RLS if necessary, or user can delete their own
+    const adminSupabase = await createAdminClient()
+
+    // Cek apakah statusnya benar-benar LULUS/SELESAI
+    const { data: reg } = await adminSupabase.from('training_registrations').select('status').eq('id', regId).single()
+    if (reg?.status !== 'LULUS' && reg?.status !== 'SELESAI') {
+        return { error: 'Pelatihan ini tidak berstatus lulus/selesai, tidak dapat dihapus.' }
+    }
+
+    // Hapus data dependen (exam_results) jika ada untuk menghindari foreign key constraint
+    await adminSupabase.from('exam_results').delete().eq('registration_id', regId)
+
+    const { error } = await adminSupabase
+        .from('training_registrations')
+        .delete()
+        .eq('id', regId)
+
+    if (error) {
+        return { error: error.message }
+    }
+
+    revalidatePath('/dashboard/pencaker/pelatihan-saya')
+    return { success: true }
+}

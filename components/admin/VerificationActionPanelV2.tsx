@@ -87,10 +87,13 @@ export default function VerificationActionPanelV2({ user, status }: { user: any,
     }
 
     if (status !== 'PENDING') {
+        const isSuccess = status === 'DITERIMA' || status === 'LULUS' || status === 'SELESAI'
+        let label = status === 'DITERIMA' ? 'Diverifikasi' : (status === 'LULUS' || status === 'SELESAI' ? 'Lulus / Selesai' : 'Ditolak')
+
         return (
-            <div className={`p-6 rounded-xl border ${status === 'DITERIMA' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-                <h3 className={`font-bold text-center ${status === 'DITERIMA' ? 'text-green-800' : 'text-red-800'} mb-2`}>
-                    Sudah {status === 'DITERIMA' ? 'Diverifikasi' : 'Ditolak'}
+            <div className={`p-6 rounded-xl border ${isSuccess ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                <h3 className={`font-bold text-center ${isSuccess ? 'text-green-800' : 'text-red-800'} mb-2`}>
+                    Sudah {label}
                 </h3>
                 {status === 'DITOLAK' && (
                     <button

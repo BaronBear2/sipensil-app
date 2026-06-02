@@ -594,7 +594,7 @@ export default function TrainingDetailV2({ training, registrations, systemDate }
                                                     </>
                                                 )}
 
-                                                {(activeTab === 'semua_peserta' || activeTab === 'riwayat_peserta') && reg.status !== 'DITOLAK' && (
+                                                {(activeTab === 'semua_peserta' || activeTab === 'riwayat_peserta') && reg.status !== 'DITOLAK' && reg.progress_step < 4 && (
                                                     <button
                                                         disabled={loadingRegId === reg.id}
                                                         onClick={() => handleVerify(reg.id, 'reject')}
