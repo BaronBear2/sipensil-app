@@ -340,11 +340,11 @@ export default function MyTrainingsPage() {
                 <div className="flex justify-end flex-wrap gap-2 pt-2">
                     {/* Only show DETAIL if NOT Rejected */}
                     {!isRejected && (
-                        <Link 
-                            href={`/dashboard/pencaker/pelatihan-saya/${reg.id}`} 
+                        <Link
+                            href={`/dashboard/pencaker/pelatihan-saya/${reg.id}`}
                             className="w-full md:w-auto justify-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2.5 cursor-pointer"
                         >
-                            <ExternalLink size={16} className="animate-pulse" /> 
+                            <ExternalLink size={16} className="animate-pulse" />
                             <span>Lacak Status Pelatihan</span>
                         </Link>
                     )}
@@ -472,8 +472,8 @@ export default function MyTrainingsPage() {
                         {/* SECTION 1.5: PASSED */}
                         {(passedRegistrations.length > 0) && (
                             <section>
-                                <button 
-                                    onClick={() => setIsPassedOpen(!isPassedOpen)} 
+                                <button
+                                    onClick={() => setIsPassedOpen(!isPassedOpen)}
                                     className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm mb-4"
                                 >
                                     <div className="flex items-center gap-3">
@@ -484,7 +484,7 @@ export default function MyTrainingsPage() {
                                         {isPassedOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                                     </div>
                                 </button>
-                                
+
                                 {isPassedOpen && (
                                     <div className="space-y-4 animate-fade-in">
                                         {passedRegistrations.map(reg => <TrainingCard key={reg.id} reg={reg} />)}
@@ -496,19 +496,19 @@ export default function MyTrainingsPage() {
                         {/* SECTION 2: REJECTED (Reordered) */}
                         {(rejectedRegistrations.length > 0) && (
                             <section>
-                                <button 
-                                    onClick={() => setIsRejectedOpen(!isRejectedOpen)} 
+                                <button
+                                    onClick={() => setIsRejectedOpen(!isRejectedOpen)}
                                     className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm mb-4"
                                 >
                                     <div className="flex items-center gap-3">
                                         <XCircle size={18} className="text-gray-400" />
-                                        <h2 className="text-base font-bold text-gray-700">Pelatihan Ditolak ({rejectedRegistrations.length})</h2>
+                                        <h2 className="text-base font-bold text-gray-700">Pelatihan Gagal/Pendaftaran Ditolak ({rejectedRegistrations.length})</h2>
                                     </div>
                                     <div className="text-gray-400">
                                         {isRejectedOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                                     </div>
                                 </button>
-                                
+
                                 {isRejectedOpen && (
                                     <div className="space-y-4 animate-fade-in">
                                         {rejectedRegistrations.map(reg => <TrainingCard key={reg.id} reg={reg} isRejected={true} />)}
@@ -520,8 +520,8 @@ export default function MyTrainingsPage() {
                         {/* SECTION 3: HISTORY (Collapsible) */}
                         {(historyRegistrations.length > 0) && (
                             <section>
-                                <button 
-                                    onClick={() => setIsHistoryOpen(!isHistoryOpen)} 
+                                <button
+                                    onClick={() => setIsHistoryOpen(!isHistoryOpen)}
                                     className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm mb-4"
                                 >
                                     <div className="flex items-center gap-3">
@@ -532,7 +532,7 @@ export default function MyTrainingsPage() {
                                         {isHistoryOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                                     </div>
                                 </button>
-                                
+
                                 {isHistoryOpen && (
                                     <div className="space-y-4 animate-fade-in">
                                         {historyRegistrations.map(reg => <TrainingCard key={reg.id} reg={reg} isHistory={true} />)}
