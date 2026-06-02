@@ -2,6 +2,7 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, CheckCircle2, Circle, CheckCircle, ExternalLink, MapPin, Calendar, Clock, AlertCircle, FileText, Info, XCircle } from 'lucide-react'
+import { getSystemTime } from '@/actions/qa'
 
 export default async function PelatihanSayaDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const supabase = await createClient()
@@ -45,7 +46,8 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
 
     let computedStep = reg.progress_step || 1
 
-    const todayStr = new Date().toISOString().split('T')[0]
+    const systemDate = await getSystemTime()
+    const todayStr = systemDate || new Date().toISOString().split('T')[0]
     const trainingData = reg.blk_trainings || {}
     const adminDate = trainingData?.tanggal_pengumuman_kelulusan_administrasi ? new Date(trainingData.tanggal_pengumuman_kelulusan_administrasi).toISOString().split('T')[0] : null
     const seleksiDate = trainingData?.tanggal_pengumuman_kelulusan_seleksi_awal ? new Date(trainingData.tanggal_pengumuman_kelulusan_seleksi_awal).toISOString().split('T')[0] : null
@@ -54,11 +56,9 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
     // Time-based progression evaluation for the UI
     if (computedStep === 1 && adminDate && todayStr >= adminDate) {
         computedStep = 2
-    }
-    if (computedStep === 2 && seleksiDate && todayStr >= seleksiDate) {
+    } else if (computedStep === 2 && seleksiDate && todayStr >= seleksiDate) {
         computedStep = 3
-    }
-    if (computedStep === 3 && ujiDate && todayStr >= ujiDate) {
+    } else if (computedStep === 3 && ujiDate && todayStr >= ujiDate) {
         computedStep = 4
     }
 

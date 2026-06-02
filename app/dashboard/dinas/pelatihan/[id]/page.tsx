@@ -1,6 +1,7 @@
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { notFound } from 'next/navigation'
 import TrainingDetailV2 from '@/components/admin/TrainingDetailV2'
+import { getSystemTime } from '@/actions/qa'
 
 export default async function TrainingDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const supabase = await createAdminClient()
@@ -34,9 +35,11 @@ export default async function TrainingDetailPage({ params }: { params: Promise<{
         }
     }) || []
 
+    const systemDate = await getSystemTime()
+
     return (
         <div className="p-6 font-sans bg-gray-50/50 min-h-screen">
-            <TrainingDetailV2 training={training} registrations={registrations} />
+            <TrainingDetailV2 training={training} registrations={registrations} systemDate={systemDate} />
         </div>
     )
 }

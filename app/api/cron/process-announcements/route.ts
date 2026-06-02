@@ -163,7 +163,7 @@ export async function GET(request: Request) {
                             content: newContent,
                             document_url: document_url,
                             is_published: true,
-                            published_at: existing.published_at || new Date().toISOString()
+                            published_at: existing.published_at || now.toISOString()
                         }).eq('id', existing.id)
                     } else {
                         await supabase.from('training_announcements').insert({
@@ -172,18 +172,21 @@ export async function GET(request: Request) {
                             content: `Pengumuman Sistem Otomatis\n\n${pdfListMsg}`,
                             document_url: document_url,
                             is_published: true,
-                            published_at: new Date().toISOString()
+                            published_at: now.toISOString()
                         })
                     }
 
                     processedCount++
+                    // Break out of the checks loop so we only process ONE stage transition per training per cron run
+                    // This prevents cascading jumps (e.g. from stage 2 directly to 4) if multiple dates have passed
+                    break;
                 }
             }
         }
 
         // Process custom manual announcements with scheduled_date
         const { error: genericUpdateError } = await supabase.from('training_announcements')
-            .update({ is_published: true, published_at: new Date().toISOString() })
+            .update({ is_published: true, published_at: now.toISOString() })
             .eq('is_published', false)
             .not('scheduled_date', 'is', null)
             .lte('scheduled_date', todayOnlyDateStr)

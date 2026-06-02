@@ -8,6 +8,10 @@ export async function generateDefaultDraftsAction(formData: FormData) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Unauthorized")
 
+    const adminClient = await createClient()
+    const { data: qaTime } = await adminClient.from('qa_system_time').select('overridden_time').eq('id', 1).single()
+    const nowStr = qaTime?.overridden_time ? new Date(qaTime.overridden_time).toISOString() : new Date().toISOString()
+
     // Role check
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
     const role = profile?.role?.toLowerCase()
@@ -83,7 +87,11 @@ export async function updateDraftAction(formData: FormData) {
         document_url = await uploadDocument(file, trainingId, type || 'draft')
     }
 
-    const updateData: any = { content, updated_at: new Date().toISOString() }
+    const adminClient = await createClient()
+    const { data: qaTime } = await adminClient.from('qa_system_time').select('overridden_time').eq('id', 1).single()
+    const nowStr = qaTime?.overridden_time ? new Date(qaTime.overridden_time).toISOString() : new Date().toISOString()
+
+    const updateData: any = { content, updated_at: nowStr }
     if (document_url) updateData.document_url = document_url
     if (scheduledDate) updateData.scheduled_date = scheduledDate
     else updateData.scheduled_date = null
@@ -116,9 +124,13 @@ export async function forcePublishDraftAction(formData: FormData) {
     const trainingId = formData.get('trainingId') as string
     if (!id) return { error: "ID required" }
 
+    const adminClient = await createClient()
+    const { data: qaTime } = await adminClient.from('qa_system_time').select('overridden_time').eq('id', 1).single()
+    const nowStr = qaTime?.overridden_time ? new Date(qaTime.overridden_time).toISOString() : new Date().toISOString()
+
     const { error } = await supabase.from('training_announcements').update({ 
         is_published: true, 
-        published_at: new Date().toISOString() 
+        published_at: nowStr 
     }).eq('id', id)
     
     if (error) return { error: error.message }
@@ -177,6 +189,10 @@ export async function publishAnnouncementAction(formData: FormData) {
         document_url = await uploadDocument(file, trainingId, type)
     }
 
+    const adminClient = await createClient()
+    const { data: qaTime } = await adminClient.from('qa_system_time').select('overridden_time').eq('id', 1).single()
+    const nowStr = qaTime?.overridden_time ? new Date(qaTime.overridden_time).toISOString() : new Date().toISOString()
+
     let error;
     if (type !== 'informasi_umum') {
         const { data: existingArr } = await supabase.from('training_announcements')
@@ -188,7 +204,7 @@ export async function publishAnnouncementAction(formData: FormData) {
         const existing = existingArr?.[0]
 
         if (existing) {
-            const updateData: any = { content, is_published: true, published_at: new Date().toISOString() }
+            const updateData: any = { content, is_published: true, published_at: nowStr }
             if (document_url) updateData.document_url = document_url
             if (scheduledDate) updateData.scheduled_date = scheduledDate
             
@@ -196,7 +212,7 @@ export async function publishAnnouncementAction(formData: FormData) {
             error = updateError;
         } else {
             const insertData: any = {
-                training_id: trainingId, type, content, document_url, is_published: true, published_at: new Date().toISOString()
+                training_id: trainingId, type, content, document_url, is_published: true, published_at: nowStr
             }
             if (scheduledDate) insertData.scheduled_date = scheduledDate
             const { error: insertError } = await supabase.from('training_announcements').insert(insertData)
@@ -204,7 +220,7 @@ export async function publishAnnouncementAction(formData: FormData) {
         }
     } else {
         const insertData: any = {
-            training_id: trainingId, type, content, document_url, is_published: true, published_at: new Date().toISOString()
+            training_id: trainingId, type, content, document_url, is_published: true, published_at: nowStr
         }
         if (scheduledDate) insertData.scheduled_date = scheduledDate
         const { error: insertError } = await supabase.from('training_announcements').insert(insertData)
@@ -268,6 +284,9 @@ export async function triggerManualCronAction(formData: FormData) {
     
     const { data: training } = await supabase.from('blk_trainings').select('*').eq('id', trainingId).single()
     if (!training) return { error: 'Pelatihan tidak ditemukan' }
+
+    const { data: qaTime } = await supabase.from('qa_system_time').select('overridden_time').eq('id', 1).single()
+    const nowStr = qaTime?.overridden_time ? new Date(qaTime.overridden_time).toISOString() : new Date().toISOString()
 
     let processedAny = false
 
@@ -366,7 +385,7 @@ export async function triggerManualCronAction(formData: FormData) {
                 content: newContent,
                 document_url: document_url,
                 is_published: true,
-                published_at: existing.published_at || new Date().toISOString()
+                published_at: existing.published_at || nowStr
             }).eq('id', existing.id)
         } else {
             await supabase.from('training_announcements').insert({
@@ -375,7 +394,7 @@ export async function triggerManualCronAction(formData: FormData) {
                 content: `Pengumuman Sistem Otomatis\n\n${pdfListMsg}`,
                 document_url: document_url,
                 is_published: true,
-                published_at: new Date().toISOString()
+                published_at: nowStr
             })
         }
 

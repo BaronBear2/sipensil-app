@@ -12,7 +12,7 @@ import { saveAs } from 'file-saver'
 
 import { useRouter, useSearchParams } from 'next/navigation'
 
-export default function TrainingDetailV2({ training, registrations }: { training: any, registrations: any[] }) {
+export default function TrainingDetailV2({ training, registrations, systemDate }: { training: any, registrations: any[], systemDate?: string | null }) {
     const router = useRouter()
     const [loadingRegId, setLoadingRegId] = useState<string | null>(null)
     const [uploading, setUploading] = useState(false)
@@ -29,12 +29,15 @@ export default function TrainingDetailV2({ training, registrations }: { training
     let globalStep = 1
     if (accCount >= training.quota) globalStep = 2
 
-    const todayStr = new Date().toISOString().split('T')[0]
+    const todayStr = systemDate || new Date().toISOString().split('T')[0]
     const seleksiDate = training?.tanggal_pengumuman_kelulusan_seleksi_awal ? new Date(training.tanggal_pengumuman_kelulusan_seleksi_awal).toISOString().split('T')[0] : null
     const ujiDate = training?.tanggal_pengumuman_hasil_uji_kompetensi ? new Date(training.tanggal_pengumuman_hasil_uji_kompetensi).toISOString().split('T')[0] : null
 
-    if (globalStep === 2 && seleksiDate && todayStr >= seleksiDate) globalStep = 3
-    if (globalStep === 3 && ujiDate && todayStr >= ujiDate) globalStep = 4
+    if (globalStep === 2 && seleksiDate && todayStr >= seleksiDate) {
+        globalStep = 3
+    } else if (globalStep === 3 && ujiDate && todayStr >= ujiDate) {
+        globalStep = 4
+    }
 
     const steps = [
         {
