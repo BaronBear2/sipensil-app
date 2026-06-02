@@ -128,20 +128,29 @@ export default function TrainingListV2({ trainings, categories = [] }: { trainin
                                     {item.title}
                                 </h3>
 
-                                <div className="space-y-3 mb-5 text-sm text-gray-600 flex-1">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-1.5 bg-red-50 rounded-md"><MapPin size={14} className="text-red-500" /></div>
-                                        <span className="truncate font-medium">{item.provider}</span>
+                                <div className="space-y-4 mb-5 flex-1">
+                                    <div className="flex items-start gap-3">
+                                        <div className="p-1.5 bg-gray-100 rounded-md mt-0.5"><MapPin size={14} className="text-gray-500" /></div>
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Penyelenggara</span>
+                                            <span className="text-xs font-bold text-gray-700 line-clamp-1">{item.provider || '-'}</span>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-1.5 bg-red-50 rounded-md"><Users size={14} className="text-red-500" /></div>
-                                        <span className="font-medium">Kuota: <strong className="text-red-600">{item.quota}</strong> Peserta</span>
+                                    <div className="flex items-start gap-3">
+                                        <div className="p-1.5 bg-gray-100 rounded-md mt-0.5"><Users size={14} className="text-gray-500" /></div>
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Kuota Peserta</span>
+                                            <span className="text-xs font-bold text-gray-700">{item.quota || 0} Peserta</span>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-1.5 bg-red-50 rounded-md"><Calendar size={14} className="text-red-500" /></div>
-                                        <span className="text-xs font-medium">
-                                            Tanggal Pendaftaran: {item.registration_start ? new Date(item.registration_start).toLocaleDateString('id-ID') : '-'} s/d {item.registration_end ? new Date(item.registration_end).toLocaleDateString('id-ID') : '-'}
-                                        </span>
+                                    <div className="flex items-start gap-3">
+                                        <div className="p-1.5 bg-gray-100 rounded-md mt-0.5"><Calendar size={14} className="text-gray-500" /></div>
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Tanggal Pendaftaran</span>
+                                            <span className="text-xs font-bold text-gray-700">
+                                                {item.registration_start ? new Date(item.registration_start).toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'}) : '-'} - {item.registration_end ? new Date(item.registration_end).toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'}) : '-'}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
 
