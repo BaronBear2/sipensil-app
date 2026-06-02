@@ -135,19 +135,19 @@ export default function TrainingListV2({ trainings, categories = [] }: { trainin
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <div className="p-1.5 bg-red-50 rounded-md"><Users size={14} className="text-red-500" /></div>
-                                        <span className="font-medium">Kuota: <strong className="text-red-600">{item.accCount || 0}</strong>/{item.quota} di-ACC</span>
+                                        <span className="font-medium">Kuota: <strong className="text-red-600">{item.quota}</strong> Peserta</span>
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <div className="p-1.5 bg-red-50 rounded-md"><Calendar size={14} className="text-red-500" /></div>
                                         <span className="text-xs font-medium">
-                                            {item.registration_start ? new Date(item.registration_start).toLocaleDateString('id-ID') : '-'} s/d {item.registration_end ? new Date(item.registration_end).toLocaleDateString('id-ID') : '-'}
+                                            Tanggal Pendaftaran: {item.registration_start ? new Date(item.registration_start).toLocaleDateString('id-ID') : '-'} s/d {item.registration_end ? new Date(item.registration_end).toLocaleDateString('id-ID') : '-'}
                                         </span>
                                     </div>
                                 </div>
 
                                 <div className="mb-4">
                                     {item.status === 'OPEN' ? (
-                                        <Link href={`/dashboard/dinas/pelatihan/${item.id}`} className="w-full flex items-center justify-center gap-2 bg-red-600 text-white py-2.5 rounded-lg font-bold text-sm hover:bg-red-700 shadow-[0_0_15px_rgba(220,38,38,0.4)] animate-pulse transition">
+                                        <Link href={`/dashboard/dinas/pelatihan/${item.id}`} className="w-full flex items-center justify-center gap-2 bg-green-600 text-white py-2.5 rounded-lg font-bold text-sm hover:bg-green-700 shadow-md transition">
                                             Verifikasi Pencaker
                                         </Link>
                                     ) : (

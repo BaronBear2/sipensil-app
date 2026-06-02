@@ -27,7 +27,7 @@ ALTER TABLE public.training_registrations
   DROP COLUMN IF EXISTS tanggal_pengumuman_seleksi,
   DROP COLUMN IF EXISTS tanggal_pengumuman_kompetensi;
 
-ALTER TABLE public.profiles
+ALTER TABLE public.profile_pencaker
   DROP COLUMN IF EXISTS major,
   DROP COLUMN IF EXISTS skills,
   DROP COLUMN IF EXISTS field_of_work,
@@ -35,6 +35,7 @@ ALTER TABLE public.profiles
 
 DROP TABLE IF EXISTS public.exam_results CASCADE;
 DROP TABLE IF EXISTS public.training_classes CASCADE;
+DROP TABLE IF EXISTS public.news CASCADE;
 
 
 -- =========================================================================
@@ -47,12 +48,10 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.profile_pencaker ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.training_registrations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.blk_trainings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.news ENABLE ROW LEVEL SECURITY;
+
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.training_announcements ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.exam_results ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.training_selections ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.training_classes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.training_exams ENABLE ROW LEVEL SECURITY;
 
 -- 2. Drop existing policies to avoid conflicts (Safe Policy Dropper)
@@ -99,34 +98,22 @@ CREATE POLICY "Pencaker can update own registrations (e.g. upload pdf)" ON publi
 CREATE POLICY "Pencaker can delete own registrations (batal daftar)" ON public.training_registrations FOR DELETE USING (auth.uid() = user_id);
 CREATE POLICY "Admin/Dinas can do all on registrations" ON public.training_registrations FOR ALL USING (public.is_admin());
 
--- 6. Membuat Policy untuk [blk_trainings, news, announcements, dll] (Publik bisa BACA, Admin bisa TULIS)
+-- 6. Membuat Policy untuk [blk_trainings, announcements, dll] (Publik bisa BACA, Admin bisa TULIS)
 -- BLK Trainings
 CREATE POLICY "Anyone can view trainings" ON public.blk_trainings FOR SELECT USING (true);
 CREATE POLICY "Admin/Dinas can modify trainings" ON public.blk_trainings FOR ALL USING (public.is_admin());
-
--- News
-CREATE POLICY "Anyone can view news" ON public.news FOR SELECT USING (true);
-CREATE POLICY "Admin/Dinas can modify news" ON public.news FOR ALL USING (public.is_admin());
 
 -- Training Announcements
 CREATE POLICY "Anyone can view announcements" ON public.training_announcements FOR SELECT USING (true);
 CREATE POLICY "Admin/Dinas can modify announcements" ON public.training_announcements FOR ALL USING (public.is_admin());
 
--- Training Details (Classes, Exams, Selections)
-CREATE POLICY "Anyone can view training_classes" ON public.training_classes FOR SELECT USING (true);
-CREATE POLICY "Admin/Dinas can modify training_classes" ON public.training_classes FOR ALL USING (public.is_admin());
-
+-- Training Details (Exams, Selections)
 CREATE POLICY "Anyone can view training_exams" ON public.training_exams FOR SELECT USING (true);
 CREATE POLICY "Admin/Dinas can modify training_exams" ON public.training_exams FOR ALL USING (public.is_admin());
 
 CREATE POLICY "Anyone can view training_selections" ON public.training_selections FOR SELECT USING (true);
 CREATE POLICY "Admin/Dinas can modify training_selections" ON public.training_selections FOR ALL USING (public.is_admin());
 
--- 7. Membuat Policy untuk [exam_results]
-CREATE POLICY "Pencaker can view own exam results" ON public.exam_results FOR SELECT USING (
-  EXISTS (SELECT 1 FROM public.training_registrations r WHERE r.id = exam_results.registration_id AND r.user_id = auth.uid())
-);
-CREATE POLICY "Admin/Dinas can do all on exam results" ON public.exam_results FOR ALL USING (public.is_admin());
 
 -- 8. Membuat Policy untuk [notifications]
 CREATE POLICY "Users can view own notifications" ON public.notifications FOR SELECT USING (auth.uid() = user_id);
