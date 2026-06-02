@@ -92,9 +92,13 @@ export async function setSystemTime(timeStr: string | null) {
         const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https'
         const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || `${protocol}://${host}`
         
-        const res = await fetch(`${baseUrl}/api/cron/daily-progress`, { cache: 'no-store' })
-        const json = await res.json()
-        console.log("QA Time Travel Triggered Cron:", json)
+        const res1 = await fetch(`${baseUrl}/api/cron/daily-progress`, { cache: 'no-store' })
+        const json1 = await res1.json()
+        
+        const res2 = await fetch(`${baseUrl}/api/cron/process-announcements`, { cache: 'no-store' })
+        const json2 = await res2.json()
+
+        console.log("QA Time Travel Triggered Crons:", { dailyProgress: json1, processAnnouncements: json2 })
     } catch (err) {
         console.error("Failed to trigger Cron API during QA:", err)
     }

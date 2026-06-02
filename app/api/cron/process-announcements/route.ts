@@ -14,8 +14,11 @@ export async function GET(request: Request) {
     }
 
     try {
+        // Fetch QA system time if it exists
+        const { data: qaTime } = await supabase.from('qa_system_time').select('overridden_time').eq('id', 1).single()
+        const now = qaTime?.overridden_time ? new Date(qaTime.overridden_time) : new Date()
+
         // Calculate today's date in Asia/Jakarta timezone to prevent 7-hour timezone offset bugs
-        const now = new Date()
         const formatter = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' })
         const parts = formatter.formatToParts(now)
         const y = parts.find(p => p.type === 'year')?.value
@@ -53,6 +56,17 @@ export async function GET(request: Request) {
                 
                 if (todayOnlyDateStr >= scheduledDateStr) {
                     // It is exactly Hari H or past due. Let's run the auto-announcement logic.
+                    
+                    // First, ensure we don't re-run for announcements that are already published
+                    const { data: checkExisting } = await supabase.from('training_announcements')
+                        .select('is_published')
+                        .eq('training_id', training.id)
+                        .eq('type', check.type)
+                        .limit(1)
+                        
+                    if (checkExisting && checkExisting.length > 0 && checkExisting[0].is_published) {
+                        continue // Already published, skip processing
+                    }
 
                     if (check.type === 'administrasi') {
                         // Check if quota is met
