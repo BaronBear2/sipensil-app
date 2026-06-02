@@ -91,7 +91,40 @@ export async function updateDraftAction(formData: FormData) {
     const { error } = await supabase.from('training_announcements').update(updateData).eq('id', id)
     if (error) return { error: error.message }
 
+    if (type === 'administrasi') {
+        await supabase.from('blk_trainings').update({ tanggal_pengumuman_kelulusan_administrasi: scheduledDate || null }).eq('id', trainingId)
+    } else if (type === 'seleksi_awal') {
+        await supabase.from('blk_trainings').update({ tanggal_pengumuman_kelulusan_seleksi_awal: scheduledDate || null }).eq('id', trainingId)
+    } else if (type === 'uji_kompetensi') {
+        await supabase.from('blk_trainings').update({ tanggal_pengumuman_hasil_uji_kompetensi: scheduledDate || null }).eq('id', trainingId)
+    }
+
     revalidatePath(`/dashboard/dinas/pelatihan/${trainingId}/pengumuman`)
+    return { success: true }
+}
+
+export async function forcePublishDraftAction(formData: FormData) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Unauthorized")
+
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    const role = profile?.role?.toLowerCase()
+    if (role !== 'admin' && role !== 'admin_dinas' && role !== 'dinas') throw new Error("Unauthorized: Admin access required")
+
+    const id = formData.get('id') as string
+    const trainingId = formData.get('trainingId') as string
+    if (!id) return { error: "ID required" }
+
+    const { error } = await supabase.from('training_announcements').update({ 
+        is_published: true, 
+        published_at: new Date().toISOString() 
+    }).eq('id', id)
+    
+    if (error) return { error: error.message }
+
+    revalidatePath(`/dashboard/dinas/pelatihan/${trainingId}/pengumuman`)
+    revalidatePath(`/dashboard/pencaker/pelatihan-saya/${trainingId}/pengumuman`)
     return { success: true }
 }
 
@@ -183,6 +216,14 @@ export async function publishAnnouncementAction(formData: FormData) {
     // If they manually upload for "administrasi" or "seleksi_awal" or "uji_kompetensi", 
     // it overrides the default process or we just let the cron know it's done. 
     // The cron logic can just check if an announcement of that type exists.
+    
+    if (type === 'administrasi') {
+        await supabase.from('blk_trainings').update({ tanggal_pengumuman_kelulusan_administrasi: scheduledDate || null }).eq('id', trainingId)
+    } else if (type === 'seleksi_awal') {
+        await supabase.from('blk_trainings').update({ tanggal_pengumuman_kelulusan_seleksi_awal: scheduledDate || null }).eq('id', trainingId)
+    } else if (type === 'uji_kompetensi') {
+        await supabase.from('blk_trainings').update({ tanggal_pengumuman_hasil_uji_kompetensi: scheduledDate || null }).eq('id', trainingId)
+    }
 
     revalidatePath(`/dashboard/dinas/pelatihan/${trainingId}/pengumuman`)
     revalidatePath(`/dashboard/pencaker/pelatihan-saya/${trainingId}/pengumuman`)

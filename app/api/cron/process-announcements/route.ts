@@ -51,8 +51,8 @@ export async function GET(request: Request) {
                 // Compare string dates lexicographically (YYYY-MM-DD) which is timezone-safe!
                 const scheduledDateStr = new Date(dateStr).toISOString().split('T')[0]
                 
-                if (todayOnlyDateStr === scheduledDateStr) {
-                    // It is exactly Hari H. Let's run the auto-announcement logic.
+                if (todayOnlyDateStr >= scheduledDateStr) {
+                    // It is exactly Hari H or past due. Let's run the auto-announcement logic.
 
                     if (check.type === 'administrasi') {
                         // Check if quota is met

@@ -2,13 +2,14 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { FileText, Upload, Plus, Trash2, Globe, Lock, Info, CheckCircle2, Edit2, Zap, Calendar } from 'lucide-react'
-import { publishAnnouncementAction, deleteAnnouncementAction, generateDefaultDraftsAction, updateDraftAction } from '@/actions/announcements'
+import { FileText, Upload, Plus, Trash2, Globe, Lock, Info, CheckCircle2, Edit2, Zap, Calendar, Rocket } from 'lucide-react'
+import { publishAnnouncementAction, deleteAnnouncementAction, generateDefaultDraftsAction, updateDraftAction, triggerManualCronAction, forcePublishDraftAction } from '@/actions/announcements'
 import { SwalAlert, SwalConfirm, SwalToast } from '@/utils/swal'
 
 export default function AnnouncementManager({ trainingId, announcements, training }: { trainingId: string, announcements: any[], training: any }) {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
+    const [isTriggering, setIsTriggering] = useState<string | null>(null)
 
     // Form state
     const [showForm, setShowForm] = useState(false)
@@ -77,6 +78,44 @@ export default function AnnouncementManager({ trainingId, announcements, trainin
             } else {
                 SwalToast.fire({ icon: 'success', title: 'Dihapus' })
                 router.refresh()
+            }
+        }
+    }
+
+    const handleForcePublish = async (ann: any) => {
+        const confirm = await SwalConfirm.fire({
+            title: 'Publikasikan Sekarang?',
+            text: ann.type === 'informasi_umum' 
+                ? 'Pengumuman ini akan langsung dipublikasikan.' 
+                : 'Sistem akan meluluskan peserta secara massal, membuat PDF, dan mempublikasikan pengumuman ini sekarang juga.',
+            confirmButtonText: 'Ya, Publikasikan'
+        })
+
+        if (confirm.isConfirmed) {
+            setIsTriggering(ann.id)
+            const fd = new FormData()
+            fd.append('trainingId', trainingId)
+            fd.append('id', ann.id)
+            
+            try {
+                let res;
+                if (ann.type === 'informasi_umum') {
+                    res = await forcePublishDraftAction(fd)
+                } else {
+                    fd.append('checkType', ann.type)
+                    res = await triggerManualCronAction(fd)
+                }
+
+                if (res?.error) {
+                    SwalAlert.fire({ icon: 'error', title: 'Gagal', text: res.error })
+                } else {
+                    SwalToast.fire({ icon: 'success', title: 'Pengumuman Berhasil Dipublikasikan!' })
+                    router.refresh()
+                }
+            } catch (err) {
+                SwalAlert.fire({ icon: 'error', title: 'Error', text: 'Terjadi kesalahan sistem.' })
+            } finally {
+                setIsTriggering(null)
             }
         }
     }
@@ -187,7 +226,12 @@ export default function AnnouncementManager({ trainingId, announcements, trainin
                                     </div>
                                     <div className="flex gap-2">
                                         {!ann.is_published && (
-                                            <button onClick={() => handleEditClick(ann)} className="text-blue-500 hover:text-blue-700 transition" title="Edit Draf"><Edit2 size={16} /></button>
+                                            <>
+                                                <button onClick={() => handleForcePublish(ann)} disabled={isTriggering === ann.id} className="text-orange-500 hover:text-orange-700 transition" title="Publikasikan Sekarang">
+                                                    <Rocket size={16} className={isTriggering === ann.id ? 'animate-bounce' : ''} />
+                                                </button>
+                                                <button onClick={() => handleEditClick(ann)} className="text-blue-500 hover:text-blue-700 transition" title="Edit Draf"><Edit2 size={16} /></button>
+                                            </>
                                         )}
                                         <button onClick={() => handleDelete(ann.id)} className="text-red-400 hover:text-red-600 transition" title="Hapus"><Trash2 size={16} /></button>
                                     </div>

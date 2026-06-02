@@ -36,16 +36,6 @@ CREATE TABLE public.blk_trainings (
   tanggal_pengumuman_hasil_uji_kompetensi date,
   CONSTRAINT blk_trainings_pkey PRIMARY KEY (id)
 );
-CREATE TABLE public.exam_results (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  registration_id uuid NOT NULL,
-  final_score numeric,
-  status text,
-  created_at timestamp with time zone DEFAULT now(),
-  updated_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT exam_results_pkey PRIMARY KEY (id),
-  CONSTRAINT exam_results_registration_id_fkey FOREIGN KEY (registration_id) REFERENCES public.training_registrations(id)
-);
 CREATE TABLE public.im_japan_registrations (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL,
@@ -136,31 +126,6 @@ CREATE TABLE public.magang_permits (
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT magang_permits_pkey PRIMARY KEY (id),
   CONSTRAINT magang_permits_company_id_fkey FOREIGN KEY (company_id) REFERENCES public.profiles(id)
-);
-CREATE TABLE public.master_categories (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  name text NOT NULL UNIQUE,
-  created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT master_categories_pkey PRIMARY KEY (id)
-);
-CREATE TABLE public.master_locations (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  name text NOT NULL,
-  address text,
-  created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT master_locations_pkey PRIMARY KEY (id)
-);
-CREATE TABLE public.master_notes (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  text text NOT NULL UNIQUE,
-  created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT master_notes_pkey PRIMARY KEY (id)
-);
-CREATE TABLE public.master_requirements (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  text text NOT NULL UNIQUE,
-  created_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT master_requirements_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.news (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -268,52 +233,6 @@ CREATE TABLE public.profiles (
   CONSTRAINT profiles_pkey PRIMARY KEY (id),
   CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
 );
-CREATE TABLE public.qa_system_time (
-  id integer NOT NULL DEFAULT 1 CHECK (id = 1),
-  overridden_time timestamp with time zone,
-  CONSTRAINT qa_system_time_pkey PRIMARY KEY (id)
-);
-CREATE TABLE public.training_announcements (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  training_id uuid NOT NULL,
-  type text NOT NULL,
-  document_url text,
-  content text,
-  is_published boolean DEFAULT false,
-  published_at timestamp with time zone,
-  created_at timestamp with time zone DEFAULT now(),
-  updated_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT training_announcements_pkey PRIMARY KEY (id),
-  CONSTRAINT training_announcements_training_id_fkey FOREIGN KEY (training_id) REFERENCES public.blk_trainings(id)
-);
-CREATE TABLE public.training_classes (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  training_id uuid NOT NULL,
-  batch_number integer,
-  name text NOT NULL,
-  address text,
-  start_date date,
-  end_date date,
-  time_schedule text,
-  quota integer DEFAULT 0,
-  whatsapp_group_link text,
-  created_at timestamp with time zone DEFAULT now(),
-  updated_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT training_classes_pkey PRIMARY KEY (id),
-  CONSTRAINT training_classes_training_id_fkey FOREIGN KEY (training_id) REFERENCES public.blk_trainings(id)
-);
-CREATE TABLE public.training_exams (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  training_id uuid NOT NULL,
-  name text NOT NULL,
-  address text,
-  exam_date date,
-  exam_time time without time zone,
-  created_at timestamp with time zone DEFAULT now(),
-  updated_at timestamp with time zone DEFAULT now(),
-  CONSTRAINT training_exams_pkey PRIMARY KEY (id),
-  CONSTRAINT training_exams_training_id_fkey FOREIGN KEY (training_id) REFERENCES public.blk_trainings(id)
-);
 CREATE TABLE public.training_registrations (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL,
@@ -354,4 +273,86 @@ CREATE TABLE public.training_selections (
   name text,
   CONSTRAINT training_selections_pkey PRIMARY KEY (id),
   CONSTRAINT training_selections_training_id_fkey FOREIGN KEY (training_id) REFERENCES public.blk_trainings(id)
+);
+CREATE TABLE public.training_classes (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  training_id uuid NOT NULL,
+  batch_number integer,
+  name text NOT NULL,
+  address text,
+  start_date date,
+  end_date date,
+  time_schedule text,
+  quota integer DEFAULT 0,
+  whatsapp_group_link text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT training_classes_pkey PRIMARY KEY (id),
+  CONSTRAINT training_classes_training_id_fkey FOREIGN KEY (training_id) REFERENCES public.blk_trainings(id)
+);
+CREATE TABLE public.training_exams (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  training_id uuid NOT NULL,
+  name text NOT NULL,
+  address text,
+  exam_date date,
+  exam_time time without time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT training_exams_pkey PRIMARY KEY (id),
+  CONSTRAINT training_exams_training_id_fkey FOREIGN KEY (training_id) REFERENCES public.blk_trainings(id)
+);
+CREATE TABLE public.exam_results (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  registration_id uuid NOT NULL,
+  final_score numeric,
+  status text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT exam_results_pkey PRIMARY KEY (id),
+  CONSTRAINT exam_results_registration_id_fkey FOREIGN KEY (registration_id) REFERENCES public.training_registrations(id)
+);
+CREATE TABLE public.master_categories (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name text NOT NULL UNIQUE,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT master_categories_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.master_locations (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  address text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT master_locations_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.master_requirements (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  text text NOT NULL UNIQUE,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT master_requirements_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.master_notes (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  text text NOT NULL UNIQUE,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT master_notes_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.qa_system_time (
+  id integer NOT NULL DEFAULT 1 CHECK (id = 1),
+  overridden_time timestamp with time zone,
+  CONSTRAINT qa_system_time_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.training_announcements (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  training_id uuid NOT NULL,
+  type text NOT NULL,
+  document_url text,
+  content text,
+  is_published boolean DEFAULT false,
+  published_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  scheduled_date date,
+  CONSTRAINT training_announcements_pkey PRIMARY KEY (id),
+  CONSTRAINT training_announcements_training_id_fkey FOREIGN KEY (training_id) REFERENCES public.blk_trainings(id)
 );
