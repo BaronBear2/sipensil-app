@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { CheckCircle, XCircle, Users, Eye, AlertCircle, CheckCircle2 } from 'lucide-react'
-import { verifyTrainingRegistrationAction, uploadTrainingPdfAction, bulkRejectPendingAction } from '@/actions/dinas'
+import { verifyTrainingRegistrationAction, bulkRejectPendingAction } from '@/actions/dinas'
 import { triggerManualCronAction } from '@/actions/announcements'
 import { SwalAlert, SwalConfirm, SwalToast } from '@/utils/swal'
 import Link from 'next/link'
@@ -233,36 +233,6 @@ export default function TrainingDetailV2({ training, registrations, systemDate }
         }
     }
 
-    const handleUploadPdf = async (e: React.ChangeEvent<HTMLInputElement>, phase: string) => {
-        const file = e.target.files?.[0]
-        if (!file) return
-
-        const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png']
-        if (!allowedTypes.includes(file.type)) {
-            SwalAlert.fire({ icon: 'error', title: 'Invalid File', text: 'Harap unggah file PDF, JPG, atau PNG.' })
-            return
-        }
-
-        setUploading(true)
-        try {
-            const formData = new FormData()
-            formData.append('trainingId', training.id)
-            formData.append('phase', phase)
-            formData.append('file', file)
-
-            const res = await uploadTrainingPdfAction(formData)
-            if (res.error) {
-                SwalAlert.fire({ icon: 'error', title: 'Upload Gagal', text: res.error })
-            } else {
-                SwalToast.fire({ icon: 'success', title: 'PDF Berhasil Diunggah' })
-            }
-        } catch (err) {
-            SwalAlert.fire({ icon: 'error', title: 'Error', text: 'Terjadi kesalahan sistem' })
-        } finally {
-            setUploading(false)
-        }
-    }
-
     const handleDownloadAllFiles = async () => {
         if (!filteredRegistrations.length) {
             SwalAlert.fire({ icon: 'info', title: 'Kosong', text: 'Tidak ada peserta untuk didownload' })
@@ -375,28 +345,22 @@ export default function TrainingDetailV2({ training, registrations, systemDate }
     }
 
     let filteredRegistrations: any[] = []
-    let currentPhasePdfUrl = null
     let currentPhase = 'admin'
 
     if (activeTab === 'administrasi') {
         filteredRegistrations = registrations.filter(r => r.progress_step === 1 && r.status !== 'DITOLAK')
-        currentPhasePdfUrl = training.admin_passed_pdf
         currentPhase = 'admin'
     } else if (activeTab === 'seleksi') {
         filteredRegistrations = registrations.filter(r => r.progress_step === 2 && r.status !== 'DITOLAK')
-        currentPhasePdfUrl = training.selection_passed_pdf
         currentPhase = 'selection'
     } else if (activeTab === 'penilaian') {
         filteredRegistrations = registrations.filter(r => r.progress_step === 3 && r.status !== 'DITOLAK')
-        currentPhasePdfUrl = training.final_passed_pdf
         currentPhase = 'final'
     } else if (activeTab === 'semua_peserta') {
         filteredRegistrations = registrations.filter(r => r.status !== 'DITOLAK')
-        currentPhasePdfUrl = null
         currentPhase = 'admin' // default so it does not break, though upload is hidden
     } else if (activeTab === 'riwayat_peserta') {
         filteredRegistrations = registrations
-        currentPhasePdfUrl = null
         currentPhase = 'admin'
     }
 

@@ -319,130 +319,16 @@ export async function revertTrainingRegistrationAction(formData: FormData) {
   return { success: true }
 }
 
-export async function uploadTrainingPdfAction(formData: FormData) {
-  await verifyAdminRole();
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error("Unauthorized")
 
-    const trainingId = formData.get('trainingId') as string
-    const phase = formData.get('phase') as string // 'admin' | 'selection' | 'final'
-    const file = formData.get('file') as File
-
-    if (!file || file.size === 0) return { error: "No file provided" }
-
-    const buffer = Buffer.from(await file.arrayBuffer())
-    const filename = `${Date.now()}-${file.name.replace(/\s/g, '-')}`
-    const { data, error } = await supabase.storage.from('documents').upload(`trainings/${trainingId}/${phase}/${filename}`, buffer)
-
-    if (error) return { error: error.message }
-
-    const { data: urlData } = supabase.storage.from('documents').getPublicUrl(`trainings/${trainingId}/${phase}/${filename}`)
-    const publicUrl = urlData.publicUrl
-
-    // Update blk_trainings
-    const column = phase === 'admin' ? 'admin_passed_pdf' : phase === 'selection' ? 'selection_passed_pdf' : 'final_passed_pdf'
-    const { error: dbError } = await supabase.from('blk_trainings').update({ [column]: publicUrl }).eq('id', trainingId)
-
-    if (dbError) return { error: dbError.message }
-
-    revalidatePath(`/dashboard/dinas/pelatihan/${trainingId}`)
-    return { success: true, url: publicUrl }
-}
 
 // --- 2. VERIFIKASI IM JAPAN ---
-export async function verifyImJapanAction(formData: FormData) {
-  await verifyAdminRole();
-  // 1. Verify Perms with User Client
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("Unauthorized")
 
-  // You might want to check Role here too if strictly needed, but let's assume Middleware covers it or check profile.
-  // const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  // if (profile?.role !== 'ADMIN_DINAS') throw new Error("Unauthorized Role")
-
-  // 2. Perform Write with Admin Client
-  const adminClient = await createAdminClient()
-
-  const regId = formData.get('regId') as string
-  const action = formData.get('action') as string
-  const reason = formData.get('reason') as string
-
-  if (action === 'approve') {
-    const { error } = await adminClient.from('im_japan_registrations').update({ status: 'VERIFIED', admin_notes: null }).eq('id', regId)
-    if (error) console.error("VERIFY ERROR:", error)
-  } else {
-    const { error } = await adminClient.from('im_japan_registrations').update({ status: 'REJECTED', admin_notes: reason }).eq('id', regId)
-    if (error) console.error("REJECT ERROR:", error)
-  }
-  revalidatePath('/dashboard/dinas', 'layout')
-  revalidatePath('/dashboard/dinas/im-japan')
-}
 
 // --- 3. VERIFIKASI LAPORAN LPK ---
-export async function verifyLpkReportAction(formData: FormData) {
-  await verifyAdminRole();
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("Unauthorized")
 
-  const adminSupabase = await createAdminClient()
-
-  const reportId = formData.get('reportId') as string
-  const userId = formData.get('userId') as string // ID LPK Owner
-  const action = formData.get('action') as string
-  const reason = formData.get('reason') as string
-
-  const { data, error } = await adminSupabase.rpc('verify_lpk_report', {
-    p_report_id: reportId,
-    p_user_id: userId,
-    p_action: action,
-    p_reason: reason || null
-  })
-
-  if (error) {
-    console.error("❌ RPC Error:", error)
-    return { error: "Gagal memproses verifikasi: " + error.message }
-  }
-
-  // RPC returns JSONB: { success: boolean, message: string, error: string }
-  if (data && !data.success) {
-    console.error("❌ RPC Logic Error:", data.error)
-    return { error: data.error }
-  }
-
-  revalidatePath('/dashboard/dinas/lpk')
-
-  if (action === 'approve') {
-    redirect('/dashboard/dinas/lpk?status=approved')
-  } else {
-    redirect('/dashboard/dinas/lpk?status=rejected')
-  }
-  // revalidatePath('/dashboard/dinas/lpk') // Moved inside to prevent unreachable code after redirect
-  // return { success: true }
-}
 
 // --- 4. VERIFIKASI MAGANG PERMIT ---
-export async function verifyMagangPermitAction(formData: FormData) {
-  await verifyAdminRole();
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("Unauthorized")
 
-  const permitId = formData.get('permitId') as string
-  const action = formData.get('action') as string
-  const reason = formData.get('reason') as string
-
-  if (action === 'approve') {
-    const letterNum = `SK-MGG/${new Date().getFullYear()}/${Math.floor(Math.random() * 1000)}`
-    await supabase.from('magang_permits').update({ status: 'APPROVED', letter_number: letterNum, rejection_reason: null }).eq('id', permitId)
-  } else {
-    await supabase.from('magang_permits').update({ status: 'REJECTED', rejection_reason: reason }).eq('id', permitId)
-  }
-  revalidatePath('/dashboard/dinas', 'layout')
-  return { success: true }
-}
 
 // --- 5. MANAJEMEN PELATIHAN (CRUD) ---
 
@@ -942,14 +828,7 @@ export async function deleteRegistrationHistoryAction(formData: FormData) {
   revalidatePath('/dashboard/dinas', 'layout')
 }
 
-export async function deleteImJapanHistoryAction(formData: FormData) {
-  await verifyAdminRole();
-  const supabase = await createClient()
-  const regId = formData.get('regId') as string
 
-  await supabase.from('im_japan_registrations').delete().eq('id', regId)
-  revalidatePath('/dashboard/dinas', 'layout')
-}
 
 // Helper for Document Upload
 async function uploadDocument(file: File): Promise<string | null> {
@@ -977,136 +856,21 @@ async function uploadDocument(file: File): Promise<string | null> {
 }
 
 // --- 9. IM JAPAN REQUIREMENTS CRUD ---
-export async function createImJapanRequirementAction(formData: FormData) {
-  await verifyAdminRole();
-  const supabase = await createAdminClient()
-  const title = formData.get('title') as string
-  const description = formData.get('description') as string
-  const is_required = formData.get('is_required') === 'on'
-  const is_active = formData.get('is_active') === 'on'
 
-  // Handle Template Upload
-  const templateFile = formData.get('template') as File
-  let template_url = null
-  if (templateFile && templateFile.size > 0) {
-    template_url = await uploadDocument(templateFile)
-  }
 
-  await supabase.from('im_japan_requirements').insert({ title, description, is_required, is_active, template_url })
-  revalidatePath('/dashboard/dinas/im-japan/requirements')
-  redirect('/dashboard/dinas/im-japan/requirements')
-}
 
-export async function updateImJapanRequirementAction(formData: FormData) {
-  await verifyAdminRole();
-  const supabase = await createAdminClient()
-  const id = formData.get('id') as string
-  const title = formData.get('title') as string
-  const description = formData.get('description') as string
-  const is_required = formData.get('is_required') === 'on'
-  const is_active = formData.get('is_active') === 'on'
 
-  // Handle Template Upload
-  const templateFile = formData.get('template') as File
-  let templateUpdate = {}
-  if (templateFile && templateFile.size > 0) {
-    const url = await uploadDocument(templateFile)
-    if (url) templateUpdate = { template_url: url }
-  }
 
-  await supabase.from('im_japan_requirements').update({ title, description, is_required, is_active, ...templateUpdate }).eq('id', id)
-  revalidatePath('/dashboard/dinas/im-japan/requirements')
-}
-
-export async function deleteImJapanRequirementAction(formData: FormData) {
-  await verifyAdminRole();
-  const supabase = await createAdminClient()
-  const id = formData.get('id') as string
-  await supabase.from('im_japan_requirements').delete().eq('id', id)
-  revalidatePath('/dashboard/dinas/im-japan/requirements')
-}
 
 // --- 10. LPK ACTIONS ---
-export async function deleteLpkReportAction(formData: FormData) {
-  await verifyAdminRole();
-  const supabase = await createAdminClient()
-  const id = formData.get('id') as string
-  await supabase.from('lpk_reports').delete().eq('id', id)
-  revalidatePath('/dashboard/dinas', 'layout')
-}
+
 
 // Data LPK CRUD
-export async function createLpkAction(formData: FormData) {
-  await verifyAdminRole();
-  const supabase = await createAdminClient()
-  const email = formData.get('email') as string
-  const password = formData.get('password') as string
-  const name = formData.get('name') as string // LPK Name
-  const phone = formData.get('phone') as string
-  const address = formData.get('address') as string
 
-  // 1. Create Auth User
-  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    user_metadata: { role: 'lpk', full_name: name }
-  })
 
-  if (authError) return { error: authError.message }
-  const userId = authData.user.id
 
-  // 2. Create Profile (Trigger might handle this, but let's be safe/explicit if trigger only sets basic info)
-  // Trigger `handle_new_user` usually creates profile. We update it.
-  const { error: profileError } = await supabase.from('profiles').update({
-    full_name: name,
-    role: 'lpk',
-    account_status: 'verified'
-  }).eq('id', userId)
 
-  if (profileError) return { error: profileError.message }
 
-  // 3. Update profile_lpk
-  const { error: lpkError } = await supabase.from('profile_lpk').upsert({
-    user_id: userId,
-    lpk_name: name,
-    phone: phone,
-    address_office: address
-  })
-
-  if (lpkError) return { error: lpkError.message }
-
-  revalidatePath('/dashboard/dinas/lpk/data')
-  return { success: true }
-}
-
-export async function updateLpkAction(formData: FormData) {
-  await verifyAdminRole();
-  const supabase = await createAdminClient()
-  const userId = formData.get('userId') as string
-  const name = formData.get('name') as string
-  const phone = formData.get('phone') as string
-  const address = formData.get('address') as string
-
-  await supabase.from('profiles').update({ full_name: name }).eq('id', userId)
-  await supabase.from('profile_lpk').update({ lpk_name: name, phone: phone, address_office: address }).eq('user_id', userId)
-
-  revalidatePath('/dashboard/dinas/lpk/data')
-  return { success: true }
-}
-
-export async function deleteLpkAction(formData: FormData) {
-  await verifyAdminRole();
-  const supabase = await createAdminClient()
-  const userId = formData.get('userId') as string
-
-  // Delete auth user (cascades to profiles usually, if configured)
-  const { error } = await supabase.auth.admin.deleteUser(userId)
-  if (error) return { error: error.message }
-
-  revalidatePath('/dashboard/dinas/lpk/data')
-  return { success: true }
-}
 
 // --- 11. ADMIN USER MANAGEMENT ---
 
@@ -1248,122 +1012,18 @@ export async function adminCreateUserAction(formData: FormData) {
 }
 
 // --- 12. PERUSAHAAN ACTIONS ---
-export async function deleteMagangPermitAction(formData: FormData) {
-  await verifyAdminRole();
-  const supabase = await createAdminClient()
-  const id = formData.get('id') as string
-  await supabase.from('magang_permits').delete().eq('id', id)
-  revalidatePath('/dashboard/dinas', 'layout')
-}
 
-export async function deletePencatatanBatchAction(formData: FormData) {
-  await verifyAdminRole();
-  const supabase = await createAdminClient()
-  const id = formData.get('id') as string
-  await supabase.from('pencatatan_batches').delete().eq('id', id)
-  revalidatePath('/dashboard/dinas/pemagangan')
-}
 
-export async function verifyPencatatanBatchAction(formData: FormData) {
-  await verifyAdminRole();
-  const supabase = await createAdminClient()
-  const id = formData.get('permitId') as string
-  const action = formData.get('action') as string
-  const reason = formData.get('reason') as string
 
-  let error
 
-  if (action === 'approve') {
-    // Approve Batch
-    const res = await supabase.from('pencatatan_batches').update({ status: 'APPROVED', rejection_reason: null }).eq('id', id)
-    error = res.error
 
-    // Also approve all waiting agreements in this batch?
-    // Usually agreements are auto-approved if batch is approved, or we leave them.
-    // Let's assume Batch Approval implies "Letter Issued".
-
-  } else {
-    // Reject Batch
-    const res = await supabase.from('pencatatan_batches').update({ status: 'REJECTED', rejection_reason: reason }).eq('id', id)
-    error = res.error
-  }
-
-  if (error) return { error: error.message }
-
-  revalidatePath('/dashboard/dinas/pemagangan')
-  return { success: true }
-}
 
 // Data Perusahaan CRUD
-export async function createPerusahaanAction(formData: FormData) {
-  await verifyAdminRole();
-  const supabase = await createAdminClient()
-  const email = formData.get('email') as string
-  const password = formData.get('password') as string
-  const name = formData.get('name') as string // Company Name
-  const phone = formData.get('phone') as string
-  const address = formData.get('address') as string
 
-  // 1. Create Auth User
-  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    user_metadata: { role: 'perusahaan', full_name: name }
-  })
 
-  if (authError) return { error: authError.message }
-  const userId = authData.user.id
 
-  // 2. Create Profile
-  const { error: profileError } = await supabase.from('profiles').update({
-    full_name: name,
-    role: 'perusahaan',
-    account_status: 'verified'
-  }).eq('id', userId)
 
-  if (profileError) return { error: profileError.message }
 
-  // 3. Update profile_perusahaan
-  const { error: compError } = await supabase.from('profile_perusahaan').upsert({
-    user_id: userId,
-    company_name: name,
-    phone: phone,
-    address_office: address
-  })
-
-  if (compError) return { error: compError.message }
-
-  revalidatePath('/dashboard/dinas/perusahaan/data')
-  return { success: true }
-}
-
-export async function updatePerusahaanAction(formData: FormData) {
-  await verifyAdminRole();
-  const supabase = await createAdminClient()
-  const userId = formData.get('userId') as string
-  const name = formData.get('name') as string
-  const phone = formData.get('phone') as string
-  const address = formData.get('address') as string
-
-  await supabase.from('profiles').update({ full_name: name }).eq('id', userId)
-  await supabase.from('profile_perusahaan').update({ company_name: name, phone, address_office: address }).eq('user_id', userId)
-
-  revalidatePath('/dashboard/dinas/perusahaan/data')
-  return { success: true }
-}
-
-export async function deletePerusahaanAction(formData: FormData) {
-  await verifyAdminRole();
-  const supabase = await createAdminClient()
-  const userId = formData.get('userId') as string
-
-  const { error } = await supabase.auth.admin.deleteUser(userId)
-  if (error) return { error: error.message }
-
-  revalidatePath('/dashboard/dinas/perusahaan/data')
-  return { success: true }
-}
 
 export async function deleteUserAction(formData: FormData) {
   await verifyAdminRole();
