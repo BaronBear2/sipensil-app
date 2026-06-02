@@ -302,7 +302,7 @@ export async function triggerManualCronAction(formData: FormData) {
         // Let's just run it if they trigger manually regardless of date.
         // For manual trigger, we assume the admin wants to force it.
 
-        const allowedStatuses = check.type === 'administrasi' ? ['DITERIMA'] : ['PENDING', 'DITERIMA']
+        const allowedStatuses = ['DITERIMA']
 
         // 1. Safe Bulk Update: Update users at currentStep to nextStep
         const { data: usersToPass } = await supabase.from('training_registrations')

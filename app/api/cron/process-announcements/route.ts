@@ -82,7 +82,7 @@ export async function GET(request: Request) {
                             })
                             .eq('training_id', training.id)
                             .eq('progress_step', check.currentStep)
-                            .in('status', ['PENDING', 'DITERIMA'])
+                            .eq('status', 'DITERIMA')
                     }
 
                     // ====================================================================

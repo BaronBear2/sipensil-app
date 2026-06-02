@@ -21,8 +21,12 @@ export default function MyTrainingsPage() {
     const router = useRouter()
     const [loading, setLoading] = useState(true)
     const [activeRegistrations, setActiveRegistrations] = useState<any[]>([])
+    const [passedRegistrations, setPassedRegistrations] = useState<any[]>([])
     const [historyRegistrations, setHistoryRegistrations] = useState<any[]>([])
     const [rejectedRegistrations, setRejectedRegistrations] = useState<any[]>([])
+
+    // Drawer state
+    const [isHistoryOpen, setIsHistoryOpen] = useState(false)
 
     // For Cancelling
     const [isCancelling, setIsCancelling] = useState(false)
@@ -46,6 +50,7 @@ export default function MyTrainingsPage() {
                 const now = new Date()
 
                 const active = []
+                const passed = []
                 const history = []
                 const rejected = []
 
@@ -56,9 +61,8 @@ export default function MyTrainingsPage() {
 
                     if (status === 'DITOLAK' || status === 'REJECTED') {
                         rejected.push(reg)
-                    } else if (status === 'SELESAI') {
-                        // Explicitly finished
-                        history.push(reg)
+                    } else if (reg.progress_step >= 4 || status === 'LULUS' || status === 'SELESAI') {
+                        passed.push(reg)
                     } else if (status === 'DITERIMA' || status === 'APPROVED' || status === 'VERIFIED') {
                         // Check if training period has passed
                         if (isFinishedDate) {
@@ -73,6 +77,7 @@ export default function MyTrainingsPage() {
                 }
 
                 setActiveRegistrations(active)
+                setPassedRegistrations(passed)
                 setHistoryRegistrations(history)
                 setRejectedRegistrations(rejected)
             }
@@ -241,7 +246,7 @@ export default function MyTrainingsPage() {
                             <XCircle size={12} /> {reg.progress_step === 1 ? 'Ditolak' : 'Gagal'}
                         </div>
                     ) : (
-                        <div className={`px-3 py-1 rounded-full text-xs font-bold border ${reg.status === 'DITERIMA' || reg.status === 'APPROVED' || reg.status === 'VERIFIED'
+                        <div className={`px-3 py-1 rounded-full text-xs font-bold border ${reg.status === 'DITERIMA' || reg.status === 'APPROVED' || reg.status === 'VERIFIED' || reg.status === 'LULUS' || reg.status === 'SELESAI'
                             ? 'bg-green-100 text-green-700 border-green-200'
                             : 'bg-yellow-100 text-yellow-700 border-yellow-200'
                             }`}>
@@ -413,6 +418,21 @@ export default function MyTrainingsPage() {
                             )}
                         </section>
 
+                        {/* SECTION 1.5: PASSED */}
+                        {(passedRegistrations.length > 0) && (
+                            <section>
+                                <div className="flex items-center gap-2 mb-4">
+                                    <span className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
+                                        <CheckCircle size={16} />
+                                    </span>
+                                    <h2 className="text-lg font-bold text-gray-800">Pelatihan Yang Sudah Lulus</h2>
+                                </div>
+                                <div className="space-y-4">
+                                    {passedRegistrations.map(reg => <TrainingCard key={reg.id} reg={reg} />)}
+                                </div>
+                            </section>
+                        )}
+
                         {/* SECTION 2: REJECTED (Reordered) */}
                         {(rejectedRegistrations.length > 0) && (
                             <section>
@@ -428,18 +448,27 @@ export default function MyTrainingsPage() {
                             </section>
                         )}
 
-                        {/* SECTION 3: HISTORY (Reordered) */}
+                        {/* SECTION 3: HISTORY (Collapsible) */}
                         {(historyRegistrations.length > 0) && (
                             <section>
-                                <div className="flex items-center gap-2 mb-4">
-                                    <span className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
-                                        <History size={16} />
-                                    </span>
-                                    <h2 className="text-lg font-bold text-gray-800">Pelatihan Yang Pernah Diikuti</h2>
-                                </div>
-                                <div className="space-y-4">
-                                    {historyRegistrations.map(reg => <TrainingCard key={reg.id} reg={reg} isHistory={true} />)}
-                                </div>
+                                <button 
+                                    onClick={() => setIsHistoryOpen(!isHistoryOpen)} 
+                                    className="w-full flex items-center justify-between gap-2 mb-4 bg-gray-100 hover:bg-gray-200 transition px-4 py-3 rounded-xl cursor-pointer"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <span className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center">
+                                            <History size={16} />
+                                        </span>
+                                        <h2 className="text-lg font-bold text-gray-800">Riwayat Pelatihan Lainnya ({historyRegistrations.length})</h2>
+                                    </div>
+                                    <span className="text-gray-500 font-bold text-xl">{isHistoryOpen ? '−' : '+'}</span>
+                                </button>
+                                
+                                {isHistoryOpen && (
+                                    <div className="space-y-4 animate-fade-in">
+                                        {historyRegistrations.map(reg => <TrainingCard key={reg.id} reg={reg} isHistory={true} />)}
+                                    </div>
+                                )}
                             </section>
                         )}
                     </div>

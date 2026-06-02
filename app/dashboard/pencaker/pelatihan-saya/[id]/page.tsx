@@ -47,7 +47,7 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
     }
 
     let computedStep = reg.progress_step || 1
-    
+
     // If the user is LULUS or SELESAI, they are definitely at step 4
     if (reg.status === 'LULUS' || reg.status === 'SELESAI') {
         computedStep = 4
@@ -59,7 +59,7 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
     const selection = training.training_selections?.[0]
     const cls = reg.training_classes
     const exam = training.training_exams?.[0]
-    
+
     // Exam results can be multiple if there are multiple attempts? Usually single.
     const examResult = Array.isArray(reg.exam_results) ? reg.exam_results[0] : reg.exam_results
 
@@ -81,7 +81,7 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
         {
             num: 1,
             title: 'Tahap 1 : Administrasi',
-            desc: `Menunggu admin mengecek dokumen Anda. Pengumuman dijadwalkan pada: ${formatDate(training?.tanggal_pengumuman_kelulusan_administrasi)}.`,
+            desc: `Menunggu admin mengecek dokumen Anda. Hasil administrasi dijadwalkan pada: ${formatDate(training?.tanggal_pengumuman_kelulusan_administrasi)}.`,
             content: null
         },
         {
@@ -99,7 +99,7 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
                             </a>
                         </div>
                     )}
-                    
+
                     {training.training_selections && training.training_selections.length > 0 ? (
                         <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
                             <h4 className="font-bold text-gray-800 text-sm mb-3 flex items-center justify-between">
@@ -211,7 +211,7 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
         },
         {
             num: 4,
-            title: 'Tahap 4 : Sudah Lulus',
+            title: 'Tahap 4 : Kelulusan',
             desc: 'Proses penilaian dan penyelesaian pelatihan.',
             content: (
                 <div className="mt-3 space-y-4">
@@ -268,7 +268,7 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
             </div>
 
             <div className="max-w-4xl mx-auto px-4 py-8">
-                
+
                 {/* Hero Training Card */}
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-10 relative">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -284,7 +284,7 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
                             Lihat Pengumuman
                         </Link>
                     </div>
-                    
+
                     {isRejected && (
                         <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl flex gap-3 items-start">
                             <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={20} />
@@ -312,7 +312,7 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
 
                                 let statusColor = 'bg-white border-gray-300 text-gray-600' // Pending
                                 let contentColor = 'text-gray-500'
-                                
+
                                 if (isCompleted) {
                                     if (isRejected && currentStep === step.num) {
                                         statusColor = 'bg-red-500 border-red-500 text-white shadow-lg shadow-red-200'
@@ -350,7 +350,7 @@ export default async function PelatihanSayaDetailPage({ params }: { params: Prom
                                                 {step.title}
                                             </h4>
                                             <p className={`text-sm ${contentColor} font-medium`}>{step.desc}</p>
-                                            
+
                                             {/* Extra Content (Cards, Buttons) - Only show if current or completed, but maybe only if it has content */}
                                             {step.content && (isCurrent || isCompleted) && (
                                                 <div className="mt-4 animate-fade-in-up">
