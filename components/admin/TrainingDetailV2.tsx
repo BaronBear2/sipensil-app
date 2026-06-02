@@ -387,7 +387,7 @@ export default function TrainingDetailV2({ training, registrations, systemDate }
         currentPhasePdfUrl = training.selection_passed_pdf
         currentPhase = 'selection'
     } else if (activeTab === 'penilaian') {
-        filteredRegistrations = registrations.filter(r => (r.progress_step >= 3 || r.status === 'LULUS') && r.status !== 'DITOLAK')
+        filteredRegistrations = registrations.filter(r => r.progress_step === 3 && r.status !== 'DITOLAK')
         currentPhasePdfUrl = training.final_passed_pdf
         currentPhase = 'final'
     } else if (activeTab === 'semua_peserta') {
