@@ -11,16 +11,16 @@ export default function TrainingListV2({ trainings, categories = [] }: { trainin
     const [isArchiving, setIsArchiving] = useState(false)
     const [selectedCategory, setSelectedCategory] = useState<string>('ALL')
 
-    const filteredTrainings = trainings.filter(item => 
+    const filteredTrainings = trainings.filter(item =>
         selectedCategory === 'ALL' ? true : item.category === selectedCategory
     )
 
     const handleDeleteClick = async (item: any) => {
         if (item.totalApplicants > 0) {
-            SwalAlert.fire({ 
-                icon: 'error', 
-                title: 'Tidak Dapat Dihapus', 
-                text: 'Pelatihan tidak dapat dihapus karena sudah ada pencaker yang pernah mendaftar. Silakan gunakan fitur Arsipkan atau Edit.' 
+            SwalAlert.fire({
+                icon: 'error',
+                title: 'Tidak Dapat Dihapus',
+                text: 'Pelatihan tidak dapat dihapus karena sudah ada pencaker yang pernah mendaftar. Silakan gunakan fitur Arsipkan atau Edit.'
             })
             return
         }
@@ -88,8 +88,8 @@ export default function TrainingListV2({ trainings, categories = [] }: { trainin
             {categories && categories.length > 0 && (
                 <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
                     <div className="font-bold text-gray-700">Filter Kategori:</div>
-                    <select 
-                        value={selectedCategory} 
+                    <select
+                        value={selectedCategory}
                         onChange={(e) => setSelectedCategory(e.target.value)}
                         className="border border-gray-200 p-2.5 rounded-xl outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white hover:bg-gray-50 text-gray-700 font-bold text-sm transition-all cursor-pointer shadow-sm"
                     >
@@ -148,7 +148,7 @@ export default function TrainingListV2({ trainings, categories = [] }: { trainin
                                         <div className="flex flex-col">
                                             <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-0.5">Tanggal Pendaftaran</span>
                                             <span className="text-xs font-bold text-gray-700">
-                                                {item.registration_start ? new Date(item.registration_start).toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'}) : '-'} - {item.registration_end ? new Date(item.registration_end).toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'}) : '-'}
+                                                {item.registration_start ? new Date(item.registration_start).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'} - {item.registration_end ? new Date(item.registration_end).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
                                             </span>
                                         </div>
                                     </div>
