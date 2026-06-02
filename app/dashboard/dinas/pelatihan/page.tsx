@@ -42,7 +42,7 @@ export default async function PelatihanAdminPage() {
                 </div>
             )}
             {/* HERO SECTION */}
-            <div className="bg-gradient-to-br from-red-700 via-red-800 to-rose-900 text-white pt-10 pb-24 px-6 md:px-12 relative overflow-hidden rounded-b-[2.5rem] shadow-2xl mb-10 mt-2 border-b-4 border-red-500">
+            <div className="bg-gradient-to-r from-red-600 to-rose-700 text-white pt-10 pb-24 px-6 md:px-12 relative overflow-hidden rounded-b-[2.5rem] shadow-2xl mb-10 mt-2 border-b-4 border-red-500">
                 <div className="absolute -top-24 -right-24 p-4 opacity-5 transform rotate-12 scale-150 mix-blend-overlay">
                     <BookOpen size={400} />
                 </div>

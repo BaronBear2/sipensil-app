@@ -171,13 +171,13 @@ export default function MasterDataClient({
                                         value={formValues[field.name] || ''}
                                         onChange={e => setFormValues(prev => ({ ...prev, [field.name]: e.target.value }))}
                                         placeholder={field.placeholder}
-                                        className="w-full border p-2 rounded-lg text-sm outline-none focus:ring-2 focus:ring-green-500"
+                                        className="w-full border p-2 rounded-lg text-sm outline-none focus:ring-2 focus:ring-red-500"
                                         required
                                     />
                                 </div>
                             ))}
                         </div>
-                        <button disabled={loading} className="w-full bg-green-600 text-white font-bold py-2 rounded-lg flex justify-center items-center gap-2 hover:bg-green-700 disabled:opacity-50 transition">
+                        <button disabled={loading} className="w-full bg-red-600 text-white font-bold py-2 rounded-lg flex justify-center items-center gap-2 hover:bg-red-700 disabled:opacity-50 transition">
                             <Plus size={16} /> Tambah
                         </button>
                     </form>

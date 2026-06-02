@@ -206,7 +206,7 @@ export async function verifyTrainingRegistrationAction(formData: FormData) {
       }
     }
   } else if (action === 'approve_seleksi') {
-    // Lolos Seleksi (Step 2 -> 4, skip 3 because placement is same batch)
+    // Lolos Seleksi (Step 2 -> 3)
     const { error } = await supabase
       .from('training_registrations')
       .update({
@@ -216,7 +216,7 @@ export async function verifyTrainingRegistrationAction(formData: FormData) {
       .eq('id', regId)
 
     if (error) return { error: error.message }
-    console.log('Mock API Notification Triggered for user:', regId, 'new_step: 4')
+    console.log('Mock API Notification Triggered for user:', regId, 'new_step: 3')
   } else if (action === 'lulus') {
     // Lulus Penilaian Akhir (Step 6 -> 7)
     const { error } = await supabase

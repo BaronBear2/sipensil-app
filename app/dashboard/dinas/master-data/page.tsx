@@ -36,7 +36,7 @@ export default async function MasterDataPage() {
                     </div>
                 </div>
             )}
-            <div className="bg-gradient-to-r from-green-600 to-emerald-700 text-white pt-8 pb-20 px-6 md:px-12 relative overflow-hidden rounded-b-3xl shadow-lg mb-8 mt-4">
+            <div className="bg-gradient-to-r from-red-600 to-rose-700 text-white pt-8 pb-20 px-6 md:px-12 relative overflow-hidden rounded-b-3xl shadow-lg mb-8 mt-4">
                 <div className="absolute top-0 right-0 p-4 opacity-10 transform translate-x-1/4 -translate-y-1/4">
                     <Settings size={300} />
                 </div>
@@ -44,7 +44,7 @@ export default async function MasterDataPage() {
                     <h1 className="text-3xl md:text-4xl font-extrabold mb-2 tracking-tight text-white">
                         Master Data
                     </h1>
-                    <p className="text-green-100 font-medium text-lg max-w-xl">
+                    <p className="text-red-100 font-medium text-lg max-w-xl">
                         Kelola referensi data yang digunakan di seluruh sistem pelatihan.
                     </p>
                 </div>
