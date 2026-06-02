@@ -112,7 +112,7 @@ export async function verifyProfileAction(formData: FormData) {
         if (count && count >= trainingData.quota) {
           const { error: bulkRejectError } = await supabase.from('training_registrations').update({ status: 'DITOLAK', admin_notes: 'Mohon maaf, kuota angkatan telah terpenuhi.' }).eq('training_id', regData.training_id).eq('status', 'PENDING')
           // Move all accepted to Step 2
-          await supabase.from('training_registrations').update({ progress_step: 2 }).eq('training_id', regData.training_id).eq('status', 'DITERIMA')
+          await supabase.from('training_registrations').update({ progress_step: 2 }).eq('training_id', regData.training_id).eq('status', 'DITERIMA').eq('progress_step', 1)
           if (!bulkRejectError) autoFailTriggered = true
         }
       }
@@ -190,7 +190,7 @@ export async function verifyTrainingRegistrationAction(formData: FormData) {
       if (count && count >= trainingData.quota) {
         const { error: bulkRejectError } = await supabase.from('training_registrations').update({ status: 'DITOLAK', admin_notes: 'Mohon maaf, kuota angkatan telah terpenuhi.' }).eq('training_id', trainingId).eq('status', 'PENDING')
         // Move all accepted to Step 2
-        await supabase.from('training_registrations').update({ progress_step: 2 }).eq('training_id', trainingId).eq('status', 'DITERIMA')
+        await supabase.from('training_registrations').update({ progress_step: 2 }).eq('training_id', trainingId).eq('status', 'DITERIMA').eq('progress_step', 1)
         if (!bulkRejectError) autoFailTriggered = true
       }
     }
