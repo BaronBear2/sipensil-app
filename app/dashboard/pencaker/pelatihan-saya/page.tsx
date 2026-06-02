@@ -13,6 +13,7 @@ const formatDate = (dateString: string | null) => {
 }
 
 import { cancelRegistrationAction } from '@/actions/cancel_registration'
+import { qaDeleteRejectionAction } from '@/actions/qa'
 import { SwalConfirm, SwalToast, SwalAlert } from '@/utils/swal'
 
 export default function MyTrainingsPage() {
@@ -171,6 +172,40 @@ export default function MyTrainingsPage() {
         }
     }
 
+    const handleQADeleteRejection = async (reg: any) => {
+        if (isCancelling) return
+
+        const result = await SwalConfirm.fire({
+            title: 'Fitur QA: Hapus Penolakan?',
+            text: 'Ini akan menghapus riwayat penolakan Anda sepenuhnya, sehingga Anda bisa mendaftar ulang di pelatihan ini. Lanjutkan?',
+            icon: 'warning',
+            confirmButtonText: 'Ya, Hapus',
+            confirmButtonColor: '#d33',
+            cancelButtonText: 'Batal'
+        })
+
+        if (result.isConfirmed) {
+            setIsCancelling(true)
+            const formData = new FormData()
+            formData.append('regId', reg.id)
+
+            try {
+                const res = await qaDeleteRejectionAction(formData)
+                if (res.error) {
+                    SwalAlert.fire({ title: 'Gagal', text: res.error, icon: 'error' })
+                } else {
+                    await SwalToast.fire({ title: 'Penolakan Berhasil Dihapus', icon: 'success' })
+                    router.refresh()
+                }
+            } catch (err) {
+                console.error(err)
+                SwalAlert.fire({ title: 'Error', text: 'Terjadi kesalahan sistem', icon: 'error' })
+            } finally {
+                setIsCancelling(false)
+            }
+        }
+    }
+
     // Check if cancellation is allowed (date valid)
     const canCancel = (reg: any) => {
         if (!reg.blk_trainings?.registration_end) return true // If no end date, assume cancellable? Or false? Let's assume true for open-ended, or usually there is a date.
@@ -306,6 +341,21 @@ export default function MyTrainingsPage() {
                                 <Download size={14} /> Download Bukti
                             </button>
                         </>
+                    )}
+
+                    {/* Rejected QA Button */}
+                    {isRejected && (
+                        <button
+                            onClick={() => handleQADeleteRejection(reg)}
+                            className="px-3 py-2 border border-orange-200 bg-orange-50 text-orange-600 rounded-lg text-xs font-bold hover:bg-orange-100 flex items-center gap-2 shadow-sm"
+                            disabled={isCancelling}
+                        >
+                            {isCancelling ? 'Memproses...' : (
+                                <>
+                                    <XCircle size={14} /> Fitur QA: Hapus Penolakan
+                                </>
+                            )}
+                        </button>
                     )}
                 </div>
             </div>
