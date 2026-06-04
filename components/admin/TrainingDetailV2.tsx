@@ -14,16 +14,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function TrainingDetailV2({ training, registrations, systemDate }: { training: any, registrations: any[], systemDate?: string | null }) {
     const router = useRouter()
-    const [loadingRegId, setLoadingRegId] = useState<string | null>(null)
-    const [uploading, setUploading] = useState(false)
-    const [isTriggering, setIsTriggering] = useState(false)
-    const [activeTab, setActiveTab] = useState<'administrasi' | 'seleksi' | 'penilaian' | 'semua_peserta' | 'riwayat_peserta'>('administrasi')
-
-    const formatDate = (dateString: string | null) => {
-        if (!dateString) return '-'
-        return new Date(dateString).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
-    }
-    const accCount = registrations.filter(r => r.status === 'DITERIMA' || r.status === 'LULUS' || r.status === 'SELESAI').length
 
     // Evaluate training phase strictly by schedule
     let globalStep = 1
@@ -38,6 +28,18 @@ export default function TrainingDetailV2({ training, registrations, systemDate }
     if (ujiDate && todayStr >= ujiDate) globalStep = 4
 
     if (training.status === 'FINISHED') globalStep = 4
+
+    const initialTab = globalStep === 1 ? 'administrasi' : globalStep === 2 ? 'seleksi' : 'penilaian'
+    const [activeTab, setActiveTab] = useState<'administrasi' | 'seleksi' | 'penilaian' | 'semua_peserta' | 'riwayat_peserta'>(initialTab)
+    const [loadingRegId, setLoadingRegId] = useState<string | null>(null)
+    const [uploading, setUploading] = useState(false)
+    const [isTriggering, setIsTriggering] = useState(false)
+
+    const formatDate = (dateString: string | null) => {
+        if (!dateString) return '-'
+        return new Date(dateString).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+    }
+    const accCount = registrations.filter(r => r.status === 'DITERIMA' || r.status === 'LULUS' || r.status === 'SELESAI').length
 
     const steps = [
         {
@@ -140,9 +142,9 @@ export default function TrainingDetailV2({ training, registrations, systemDate }
     const handleVerify = async (regId: string, action: 'approve_admin' | 'approve_seleksi' | 'lulus' | 'tidak_lulus' | 'reject') => {
         if (action === 'reject' || action === 'tidak_lulus') {
             const { value: reason } = await SwalConfirm.fire({
-                title: 'Tolak Pendaftar?',
+                title: 'Gagalkan Pendaftar?',
                 input: 'text',
-                inputPlaceholder: 'Masukkan alasan penolakan...',
+                inputPlaceholder: 'Masukkan alasan kegagalan...',
                 showCancelButton: true,
                 confirmButtonText: 'Ya, Tolak',
                 cancelButtonText: 'Batal'

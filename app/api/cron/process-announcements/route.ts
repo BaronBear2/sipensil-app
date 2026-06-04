@@ -31,7 +31,7 @@ export async function GET(request: Request) {
         const { data: trainings, error: trainingsError } = await supabase
             .from('blk_trainings')
             .select('id, title, quota, tanggal_pengumuman_kelulusan_administrasi, tanggal_pengumuman_kelulusan_seleksi_awal, tanggal_pengumuman_hasil_uji_kompetensi')
-            .in('status', ['OPEN', 'ONGOING', 'SELECTION']) // Ensure we don't process already FINISHED
+            .in('status', ['OPEN', 'CLOSED']) // Ensure we don't process already FINISHED
 
         if (trainingsError || !trainings) {
             console.error("Cron Error fetching trainings:", trainingsError)
