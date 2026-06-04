@@ -446,19 +446,19 @@ export default function MyTrainingsPage() {
                         <div className="flex overflow-x-auto no-scrollbar gap-2 mb-8 bg-white p-2 rounded-2xl shadow-sm border border-gray-100 sticky top-20 z-20">
                             <button 
                                 onClick={() => setActiveTab('aktif')}
-                                className={`flex-1 min-w-[120px] whitespace-nowrap px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 ${activeTab === 'aktif' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                                className={`flex-shrink-0 md:flex-1 whitespace-nowrap px-3 md:px-4 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 ${activeTab === 'aktif' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
                             >
-                                <Clock size={16} /> Sedang Berjalan ({activeRegistrations.length})
+                                <Clock size={16} /> Sedang Berjalan
                             </button>
                             <button 
                                 onClick={() => setActiveTab('selesai')}
-                                className={`flex-1 min-w-[120px] whitespace-nowrap px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 ${activeTab === 'selesai' ? 'bg-green-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                                className={`flex-shrink-0 md:flex-1 whitespace-nowrap px-3 md:px-4 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 ${activeTab === 'selesai' ? 'bg-green-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
                             >
                                 <CheckCircle size={16} /> Selesai ({passedRegistrations.length + historyRegistrations.length})
                             </button>
                             <button 
                                 onClick={() => setActiveTab('gagal')}
-                                className={`flex-1 min-w-[120px] whitespace-nowrap px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 ${activeTab === 'gagal' ? 'bg-red-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                                className={`flex-shrink-0 md:flex-1 whitespace-nowrap px-3 md:px-4 py-2 md:py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 ${activeTab === 'gagal' ? 'bg-red-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
                             >
                                 <XCircle size={16} /> Ditolak / Gagal ({rejectedRegistrations.length})
                             </button>

@@ -1,18 +1,25 @@
+export const dynamic = 'force-dynamic'
+
 import PublicNavbar from '@/components/PublicNavbar'
 import PublicFooter from '@/components/PublicFooter'
 import { createClient } from '@/utils/supabase/server'
 import PelatihanClient from '@/components/pelatihan/PelatihanClient'
+import { autoUpdateTrainingStatusAction } from '@/actions/dinas'
 
 export default async function PelatihanPage() {
     const supabase = await createClient()
 
+    // Run maintenance
+    await autoUpdateTrainingStatusAction()
+
     const { data: systemDate } = await supabase.rpc('get_system_date')
-    const today = systemDate || new Date().toISOString().split('T')[0]
+    const today = systemDate ? new Date(systemDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+    
     // Fetch Active Trainings
     const { data: trainings } = await supabase
         .from('blk_trainings')
         .select('*')
-        .in('status', ['OPEN', 'CLOSED', 'FINISHED']) // Show OPEN, CLOSED, and FINISHED trainings
+        .in('status', ['OPEN', 'CLOSED']) // Hide FINISHED (Archived) trainings
         .order('id', { ascending: false })
 
     return (

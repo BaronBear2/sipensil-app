@@ -1082,6 +1082,22 @@ export async function autoUpdateTrainingStatusAction() {
   sevenDaysAgoDate.setDate(todayDate.getDate() - 7)
   const sevenDaysAgo = sevenDaysAgoDate.toISOString().split('T')[0]
 
+  // --- QA REVERSE SYNC (To support traveling backwards in time) ---
+  // 1. Revert FINISHED -> CLOSED if they haven't passed the 7-day archive threshold yet
+  await supabase
+    .from('blk_trainings')
+    .update({ status: 'CLOSED' })
+    .eq('status', 'FINISHED')
+    .gte('tanggal_pengumuman_hasil_uji_kompetensi', sevenDaysAgo)
+
+  // 2. Revert CLOSED -> OPEN if they haven't passed the registration deadline yet
+  await supabase
+    .from('blk_trainings')
+    .update({ status: 'OPEN' })
+    .eq('status', 'CLOSED')
+    .gte('registration_end', today)
+
+  // --- NORMAL FORWARD SYNC ---
   // 1. Close Registration
   // Update status 'OPEN' -> 'CLOSED' if registration_end < today
   await supabase
