@@ -92,7 +92,7 @@ export async function verifyProfileAction(formData: FormData) {
       .from('training_registrations')
       .update({
         status: statusUpdate,
-        progress_step: 1, // Keep at step 1 until quota is full
+        progress_step: action === 'approve' ? 2 : 1, // Directly move to step 2 if approved
         admin_notes: action === 'reject' ? reason : null // Fix: Save the reason!
       })
       .eq('id', regId)
@@ -130,6 +130,10 @@ export async function verifyProfileAction(formData: FormData) {
   } else {
     // Fallback if no regId provided (backward compatibility or error)
     console.error("No regId provided for training update")
+  }
+
+  if (regId && action === 'approve') {
+    await syncRegistrationProgress(regId, formData.get('trainingId') as string || (await supabase.from('training_registrations').select('training_id').eq('id', regId).single()).data?.training_id)
   }
 
   revalidatePath('/dashboard/dinas/verifikasi-pencaker')
@@ -170,7 +174,7 @@ export async function verifyTrainingRegistrationAction(formData: FormData) {
       .from('training_registrations')
       .update({
         status: 'DITERIMA',
-        progress_step: 1, // Keep at step 1 until quota is full
+        progress_step: 2, // Directly move to step 2
         admin_notes: null
       })
       .eq('id', regId)
@@ -205,6 +209,7 @@ export async function verifyTrainingRegistrationAction(formData: FormData) {
             message: message
         })
     }
+    await syncRegistrationProgress(regId, trainingId)
   } else if (action === 'approve_seleksi') {
     // Lolos Seleksi (Step 2 -> 3)
     const { error } = await supabase

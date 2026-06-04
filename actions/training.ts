@@ -90,7 +90,7 @@ export async function applyTraining(formData: FormData) {
       .from('training_registrations')
       .update({
         status: initialStatus,
-        progress_step: 1, // Reset Step
+        progress_step: initialStatus === 'DITERIMA' ? 2 : 1, // Reset Step
         age: age,
         is_unemployed: is_unemployed,
         has_sim_a: has_sim_a,
@@ -111,7 +111,7 @@ export async function applyTraining(formData: FormData) {
         user_id: user.id,
         training_id: trainingId,
         status: initialStatus,
-        progress_step: 1, // Default Step 1
+        progress_step: initialStatus === 'DITERIMA' ? 2 : 1, // Default Step
         age: age,
         is_unemployed: is_unemployed,
         has_sim_a: has_sim_a,
