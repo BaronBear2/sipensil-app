@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
 import { Building, Lock, User, ArrowLeft, AlertCircle, Eye, EyeOff } from 'lucide-react'
-import { login } from '@/actions/auth'
+
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -15,23 +15,45 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
 
   const router = useRouter()
-  // const supabase = createClient() // Unused here if using Server Action
+  const supabase = createClient()
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError('')
     setLoading(true)
 
-    const formData = new FormData(e.currentTarget)
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+    })
 
-    // Call Server Action directly
-    const result = await login(formData)
-
-    if (result?.error) {
-      setError('Login Gagal: ' + result.error)
+    if (authError) {
+      setError('Login Gagal: Email atau password salah.')
       setLoading(false)
+      return
     }
-    // Redirect is handled by server action
+
+    if (authData.user) {
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', authData.user.id)
+            .single()
+
+        const role = profile?.role || 'PENCAKER'
+
+        if (role === 'SUPER_ADMIN') {
+            router.push('/dashboard/super-admin')
+        } else if (role === 'ADMIN_DINAS') {
+            router.push('/dashboard/dinas')
+        } else if (role === 'LPK') {
+            router.push('/dashboard/lpk')
+        } else if (role === 'PERUSAHAAN') {
+            router.push('/dashboard/perusahaan')
+        } else {
+            router.push('/dashboard/pencaker')
+        }
+    }
   }
 
   return (
@@ -100,11 +122,6 @@ export default function LoginPage() {
             {loading ? 'Memproses...' : 'Masuk'}
           </button>
 
-          <div className="text-center pt-2">
-            <p className="text-sm text-gray-600">
-              Belum punya akun? <Link href="/auth/register" className="text-blue-600 font-bold hover:underline">Daftar Disini</Link>
-            </p>
-          </div>
 
           <div className="text-center mt-4">
             <Link href="/" className="flex items-center justify-center gap-1 text-sm text-gray-500 hover:text-blue-600 transition">
