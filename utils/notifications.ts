@@ -89,3 +89,43 @@ export async function sendWhatsApp(phone: string, message: string) {
         return { success: false, error };
     }
 }
+
+/**
+ * Send a generic training notification email using Resend
+ */
+export async function sendTrainingNotificationEmail(email: string, name: string, title: string, message: string) {
+    try {
+        if (!process.env.RESEND_API_KEY) {
+            console.warn('[Email] RESEND_API_KEY is not set. Skipping email to:', email);
+            return { success: false, error: 'RESEND_API_KEY not configured' };
+        }
+
+        const htmlContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
+                <h2 style="color: #2563eb;">Halo, ${name}!</h2>
+                <p>${message}</p>
+                <br/>
+                <p>Salam hangat,</p>
+                <p><strong>Tim SIPENSIL</strong></p>
+            </div>
+        `;
+
+        const { data, error } = await resend.emails.send({
+            from: 'SIPENSIL <noreply@sipensil.com>', // Ensure you have configured your Resend domain if deploying
+            to: email,
+            subject: 'Informasi Pelatihan: ' + title,
+            html: htmlContent,
+        });
+
+        if (error) {
+            console.error('[Email] Failed to send email:', error);
+            return { success: false, error };
+        }
+
+        console.log('[Email] Successfully sent notification email to:', email);
+        return { success: true, data };
+    } catch (error) {
+        console.error('[Email] Unexpected error:', error);
+        return { success: false, error };
+    }
+}

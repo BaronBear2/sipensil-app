@@ -22,9 +22,10 @@ interface Training {
 
 interface PelatihanClientProps {
     trainings: Training[] | null
+    systemDateStr?: string
 }
 
-export default function PelatihanClient({ trainings }: PelatihanClientProps) {
+export default function PelatihanClient({ trainings, systemDateStr }: PelatihanClientProps) {
     const [isAuthModalOpen, setAuthModalOpen] = useState(false)
     const [authView, setAuthView] = useState<'LOGIN' | 'REGISTER'>('LOGIN')
 
@@ -33,8 +34,11 @@ export default function PelatihanClient({ trainings }: PelatihanClientProps) {
         setAuthModalOpen(true)
     }
 
-    const d = new Date()
-    const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    let todayStr = systemDateStr
+    if (!todayStr) {
+        const d = new Date()
+        todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    }
 
     return (
         <div className="container mx-auto px-4 lg:px-8 py-12">
@@ -66,7 +70,7 @@ export default function PelatihanClient({ trainings }: PelatihanClientProps) {
             <div className="grid md:grid-cols-3 gap-8">
                 {trainings?.map((item) => {
                     const isUpcoming = item.registration_start && todayStr < item.registration_start
-                    const isClosed = item.status === 'CLOSED' || (item.registration_end && todayStr > item.registration_end)
+                    const isClosed = item.status === 'CLOSED' || item.status === 'FINISHED' || (item.registration_end && todayStr > item.registration_end)
 
                     return (
                         <div key={item.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition flex flex-col h-full group">

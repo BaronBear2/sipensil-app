@@ -5,8 +5,6 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import path from 'path'
 import fs from 'fs/promises'
-import { sendWhatsApp } from '@/utils/notifications'
-
 
 async function verifyAdminRole() {
   const supabase = await createClient();
@@ -117,15 +115,16 @@ export async function verifyProfileAction(formData: FormData) {
         }
       }
 
-      // Send WhatsApp Notification
+      // Kirim Notifikasi Dalam Aplikasi (In-App)
       if (regData?.user_id) {
-        const { data: profile } = await supabase.from('profile_pencaker').select('phone').eq('user_id', regData.user_id).single()
-        if (profile?.phone) {
           const blkTraining = regData.blk_trainings as any;
           const title = blkTraining?.title || (Array.isArray(blkTraining) && blkTraining[0]?.title) || 'Pelatihan'
-          const message = `Selamat! Pendaftaran Anda untuk pelatihan "${title}" telah Lulus Administrasi (Tahap 1). Silakan masuk ke dashboard SIPENSIL untuk melihat jadwal seleksi/ujian.`
-          sendWhatsApp(profile.phone, message).catch(e => console.error('WA notification failed:', e))
-        }
+          const message = `Selamat! Pendaftaran Anda untuk pelatihan "${title}" telah Lulus Administrasi (Tahap 1). Silakan masuk ke menu Pelatihan Saya untuk melihat detail selanjutnya.`
+          await supabase.from('notifications').insert({
+              user_id: regData.user_id,
+              title: 'Lulus Administrasi',
+              message: message
+          })
       }
     }
   } else {
@@ -195,15 +194,16 @@ export async function verifyTrainingRegistrationAction(formData: FormData) {
       }
     }
 
-    // Send WhatsApp Notification
+    // Kirim Notifikasi Dalam Aplikasi (In-App)
     const { data: regData } = await supabase.from('training_registrations').select('user_id').eq('id', regId).single()
     if (regData?.user_id) {
-      const { data: profile } = await supabase.from('profile_pencaker').select('phone').eq('user_id', regData.user_id).single()
-      if (profile?.phone) {
         const title = trainingData?.title || 'Pelatihan'
-        const message = `Selamat! Pendaftaran Anda untuk pelatihan "${title}" telah Lulus Administrasi (Tahap 1). Silakan masuk ke dashboard SIPENSIL untuk melihat jadwal seleksi/ujian.`
-        sendWhatsApp(profile.phone, message).catch(e => console.error('WA notification failed:', e))
-      }
+        const message = `Selamat! Pendaftaran Anda untuk pelatihan "${title}" telah Lulus Administrasi (Tahap 1). Silakan masuk ke menu Pelatihan Saya untuk melihat detail selanjutnya.`
+        await supabase.from('notifications').insert({
+            user_id: regData.user_id,
+            title: 'Lulus Administrasi',
+            message: message
+        })
     }
   } else if (action === 'approve_seleksi') {
     // Lolos Seleksi (Step 2 -> 3)

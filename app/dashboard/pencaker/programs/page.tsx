@@ -19,8 +19,7 @@ export default async function BLKProgramsPage() {
     const { data: trainings } = await supabase
         .from('blk_trainings')
         .select('*')
-        .eq('status', 'OPEN')
-        .gte('registration_end', today)
+        .in('status', ['OPEN', 'CLOSED', 'FINISHED'])
         .order('created_at', { ascending: false })
 
     return (

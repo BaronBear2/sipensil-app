@@ -351,7 +351,7 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
                                     const regEnd = training.registration_end     // "YYYY-MM-DD"
 
                                     // Lexicographical string comparison works perfectly for YYYY-MM-DD
-                                    const isClosed = training.status === 'CLOSED' || (regEnd && todayStr > regEnd)
+                                    const isClosed = training.status === 'CLOSED' || training.status === 'FINISHED' || (regEnd && todayStr > regEnd)
                                     const isUpcoming = regStart && todayStr < regStart
 
                                     if (existingReg) {

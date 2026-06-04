@@ -12,8 +12,7 @@ export default async function PelatihanPage() {
     const { data: trainings } = await supabase
         .from('blk_trainings')
         .select('*')
-        .eq('status', 'OPEN') // Only show OPEN trainings
-        .gte('registration_end', today)
+        .in('status', ['OPEN', 'CLOSED', 'FINISHED']) // Show OPEN, CLOSED, and FINISHED trainings
         .order('id', { ascending: false })
 
     return (
@@ -31,7 +30,7 @@ export default async function PelatihanPage() {
                     </div>
                 </div>
 
-                <PelatihanClient trainings={trainings as any[]} />
+                <PelatihanClient trainings={trainings as any[]} systemDateStr={today} />
             </main>
 
             <PublicFooter />

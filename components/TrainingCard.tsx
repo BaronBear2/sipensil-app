@@ -26,7 +26,7 @@ export default function TrainingCard({ item, userStatus, systemDateStr }: { item
   const regStart = item.registration_start // "YYYY-MM-DD"
   const regEnd = item.registration_end     // "YYYY-MM-DD"
 
-  const isClosed = item.status === 'CLOSED' || (regEnd && todayStr > regEnd)
+  const isClosed = item.status === 'CLOSED' || item.status === 'FINISHED' || (regEnd && todayStr > regEnd)
   const isUpcoming = regStart && todayStr < regStart
 
   const handleApply = async () => {
