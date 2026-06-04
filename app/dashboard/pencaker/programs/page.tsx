@@ -1,6 +1,8 @@
+export const dynamic = 'force-dynamic'
 
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
+import { autoUpdateTrainingStatusAction } from '@/actions/dinas'
 
 import TrainingCard from '@/components/TrainingCard'
 import { BookOpen, ClipboardList, ArrowLeft, Search } from 'lucide-react'
@@ -13,13 +15,16 @@ export default async function BLKProgramsPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) redirect('/auth/login')
 
+    // 2. Jalankan maintenance logic untuk update status (Open -> Closed -> Archive) sesuai waktu
+    await autoUpdateTrainingStatusAction()
+
     const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
     const { data: systemDate } = await supabase.rpc('get_system_date')
-    const today = systemDate || new Date().toISOString().split('T')[0]
+    const today = systemDate ? new Date(systemDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
     const { data: trainings } = await supabase
         .from('blk_trainings')
         .select('*')
-        .in('status', ['OPEN', 'CLOSED', 'FINISHED'])
+        .in('status', ['OPEN', 'CLOSED'])
         .order('created_at', { ascending: false })
 
     return (

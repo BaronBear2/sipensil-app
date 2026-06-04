@@ -24,10 +24,10 @@ export default function TrainingDetailV2({ training, registrations, systemDate }
         return new Date(dateString).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
     }
     const accCount = registrations.filter(r => r.status === 'DITERIMA' || r.status === 'LULUS' || r.status === 'SELESAI').length
-    
+
     // Evaluate training phase strictly by schedule
     let globalStep = 1
-    
+
     const todayStr = systemDate || new Date().toISOString().split('T')[0]
     const adminDate = training?.tanggal_pengumuman_kelulusan_administrasi ? new Date(training.tanggal_pengumuman_kelulusan_administrasi).toISOString().split('T')[0] : null
     const seleksiDate = training?.tanggal_pengumuman_kelulusan_seleksi_awal ? new Date(training.tanggal_pengumuman_kelulusan_seleksi_awal).toISOString().split('T')[0] : null
@@ -203,7 +203,7 @@ export default function TrainingDetailV2({ training, registrations, systemDate }
         let title = 'Jalankan Proses?'
         if (type === 'seleksi_awal') title = 'Jalankan Kelulusan Seleksi?'
         if (type === 'uji_kompetensi') title = 'Jalankan Kelulusan Uji Kompetensi?'
-        const text = 'Sistem akan meluluskan massal pencaker di tahap ini dan menerbitkan pengumuman. Apakah Anda yakin?'
+        const text = 'Sistem akan meluluskan massal pencaker di tahap ini. Apakah Anda yakin?'
 
         const confirm = await SwalConfirm.fire({
             title,
@@ -369,11 +369,10 @@ export default function TrainingDetailV2({ training, registrations, systemDate }
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between mb-4">
                     <h1 className="text-2xl font-bold text-gray-800">{training.title}</h1>
-                    <span className={`px-3 py-1 rounded-full text-sm font-bold ${
-                        training.status === 'FINISHED' ? 'bg-gray-100 text-gray-600' : 
-                        training.status === 'CLOSED' ? 'bg-red-100 text-red-700' : 
-                        'bg-green-100 text-green-700'
-                    }`}>
+                    <span className={`px-3 py-1 rounded-full text-sm font-bold ${training.status === 'FINISHED' ? 'bg-gray-100 text-gray-600' :
+                        training.status === 'CLOSED' ? 'bg-red-100 text-red-700' :
+                            'bg-green-100 text-green-700'
+                        }`}>
                         {training.status}
                     </span>
                 </div>
@@ -459,21 +458,21 @@ export default function TrainingDetailV2({ training, registrations, systemDate }
                     <h3 className="font-bold text-gray-700">Daftar Peserta - {activeTab === 'administrasi' ? 'Administrasi' : activeTab === 'seleksi' ? 'Tahap Seleksi (Tidak Gagal = Lulus)' : activeTab === 'penilaian' ? 'Uji Kompetensi (Tidak Gagal = Kompeten)' : activeTab === 'semua_peserta' ? 'Peserta Aktif' : 'Semua Pendaftar'}</h3>
                     <div className="flex gap-2 items-center">
                         {activeTab === 'seleksi' && (
-                            <button onClick={() => handleTriggerCron('seleksi_awal')} disabled={isTriggering} className="bg-green-100 hover:bg-green-200 text-green-700 font-bold py-2 px-4 rounded-lg flex items-center gap-2 text-sm transition">
+                            <button onClick={() => handleTriggerCron('seleksi_awal')} disabled={isTriggering} className="bg-green-50 hover:bg-green-100 text-green-700 font-bold py-2 px-4 rounded-lg flex items-center gap-2 text-sm transition">
                                 {isTriggering ? 'Memproses...' : 'Luluskan semua peserta (Seleksi)'}
                             </button>
                         )}
                         {activeTab === 'penilaian' && (
-                            <button onClick={() => handleTriggerCron('uji_kompetensi')} disabled={isTriggering} className="bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold py-2 px-4 rounded-lg flex items-center gap-2 text-sm transition">
+                            <button onClick={() => handleTriggerCron('uji_kompetensi')} disabled={isTriggering} className="bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold py-2 px-4 rounded-lg flex items-center gap-2 text-sm transition">
                                 {isTriggering ? 'Memproses...' : 'Luluskan semua peserta (Uji Kompetensi)'}
                             </button>
                         )}
                         {activeTab === 'semua_peserta' && (
-                            <button onClick={handleDownloadAllFiles} className="bg-green-100 hover:bg-green-200 text-green-700 font-bold py-2 px-4 rounded-lg flex items-center gap-2 text-sm transition">
+                            <button onClick={handleDownloadAllFiles} className="bg-green-50 hover:bg-green-100 text-green-700 font-bold py-2 px-4 rounded-lg flex items-center gap-2 text-sm transition">
                                 <Download size={16} /> Download Berkas Pencaker
                             </button>
                         )}
-                        <Link href={`/dashboard/dinas/pelatihan/${training.id}/pengumuman`} className="bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold py-2 px-4 rounded-lg flex items-center gap-2 text-sm transition">
+                        <Link href={`/dashboard/dinas/pelatihan/${training.id}/pengumuman`} className="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-2 px-4 rounded-lg flex items-center gap-2 text-sm transition">
                             Kelola Pengumuman
                         </Link>
                     </div>

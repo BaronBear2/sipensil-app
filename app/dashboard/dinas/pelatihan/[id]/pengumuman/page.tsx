@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, FileText, Upload, Calendar, Edit, Bell } from 'lucide-react'
 import AnnouncementManager from '@/components/admin/AnnouncementManager'
+import PageHeader from '@/components/ui/PageHeader'
 
 export default async function AdminPengumumanPage({ params }: { params: Promise<{ id: string }> }) {
     const supabase = await createClient()
@@ -30,39 +31,37 @@ export default async function AdminPengumumanPage({ params }: { params: Promise<
     // Next.js handles caching but Server Actions revalidate the path
 
     return (
-        <div className="p-6 max-w-6xl mx-auto font-sans">
-            <div className="flex items-center gap-4 mb-8">
-                <Link href={`/dashboard/dinas/pelatihan/${id}`} className="bg-white p-2 rounded-full border shadow-sm hover:text-blue-600 transition">
-                    <ArrowLeft size={20} />
-                </Link>
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Manajemen Pengumuman</h1>
-                    <p className="text-gray-500">Program: <span className="font-semibold text-blue-600">{training.title}</span></p>
-                </div>
-            </div>
+        <div className="font-sans pb-20">
+            <PageHeader
+                title="Manajemen Pengumuman"
+                description={<>Program: <span className="font-semibold text-blue-600">{training.title}</span></>}
+                backLink={`/dashboard/dinas/pelatihan/${id}`}
+            />
 
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-8 flex gap-4 items-start">
-                <Bell className="text-blue-600 shrink-0 mt-1" />
-                <div>
-                    <h3 className="font-bold text-blue-800">Jadwal Pengumuman</h3>
-                    <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm text-sm">
-                            <span className="block text-gray-500 font-bold mb-1">Administrasi</span>
-                            <span className="font-medium text-gray-800">{training.tanggal_pengumuman_kelulusan_administrasi ? new Date(training.tanggal_pengumuman_kelulusan_administrasi).toLocaleDateString('id-ID') : 'Belum Diatur'}</span>
-                        </div>
-                        <div className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm text-sm">
-                            <span className="block text-gray-500 font-bold mb-1">Seleksi Awal</span>
-                            <span className="font-medium text-gray-800">{training.tanggal_pengumuman_kelulusan_seleksi_awal ? new Date(training.tanggal_pengumuman_kelulusan_seleksi_awal).toLocaleDateString('id-ID') : 'Belum Diatur'}</span>
-                        </div>
-                        <div className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm text-sm">
-                            <span className="block text-gray-500 font-bold mb-1">Uji Kompetensi</span>
-                            <span className="font-medium text-gray-800">{training.tanggal_pengumuman_hasil_uji_kompetensi ? new Date(training.tanggal_pengumuman_hasil_uji_kompetensi).toLocaleDateString('id-ID') : 'Belum Diatur'}</span>
+            <div className="max-w-6xl mx-auto px-4">
+                <div className="bg-orange-50 border border-orange-200 rounded-xl p-5 mb-8 flex gap-4 items-start">
+                    <Bell className="text-orange-600 shrink-0 mt-1" />
+                    <div>
+                        <h3 className="font-bold text-orange-800">Jadwal Pengumuman</h3>
+                        <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="bg-green-50 p-3 rounded-lg border border-orange-100 shadow-sm text-sm">
+                                <span className="block text-gray-500 font-bold mb-1">Administrasi</span>
+                                <span className="font-medium text-gray-800">{training.tanggal_pengumuman_kelulusan_administrasi ? new Date(training.tanggal_pengumuman_kelulusan_administrasi).toLocaleDateString('id-ID') : 'Belum Diatur'}</span>
+                            </div>
+                            <div className="bg-yellow-50 p-3 rounded-lg border border-orange-100 shadow-sm text-sm">
+                                <span className="block text-gray-500 font-bold mb-1">Seleksi Awal</span>
+                                <span className="font-medium text-gray-800">{training.tanggal_pengumuman_kelulusan_seleksi_awal ? new Date(training.tanggal_pengumuman_kelulusan_seleksi_awal).toLocaleDateString('id-ID') : 'Belum Diatur'}</span>
+                            </div>
+                            <div className="bg-red-50 p-3 rounded-lg border border-orange-100 shadow-sm text-sm">
+                                <span className="block text-gray-500 font-bold mb-1">Uji Kompetensi</span>
+                                <span className="font-medium text-gray-800">{training.tanggal_pengumuman_hasil_uji_kompetensi ? new Date(training.tanggal_pengumuman_hasil_uji_kompetensi).toLocaleDateString('id-ID') : 'Belum Diatur'}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <AnnouncementManager trainingId={id} announcements={announcements || []} training={training} />
+                <AnnouncementManager trainingId={id} announcements={announcements || []} training={training} />
+            </div>
         </div>
     )
 }

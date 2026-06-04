@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { FileText, Upload, Plus, Trash2, Globe, Lock, Info, CheckCircle2, Edit2, Zap, Calendar, Rocket } from 'lucide-react'
-import { publishAnnouncementAction, deleteAnnouncementAction, generateDefaultDraftsAction, updateDraftAction, triggerManualCronAction, forcePublishDraftAction } from '@/actions/announcements'
+import { publishAnnouncementAction, deleteAnnouncementAction, generateDefaultDraftsAction, updateDraftAction, forcePublishDraftAction } from '@/actions/announcements'
 import { SwalAlert, SwalConfirm, SwalToast } from '@/utils/swal'
 
 export default function AnnouncementManager({ trainingId, announcements, training }: { trainingId: string, announcements: any[], training: any }) {
@@ -85,9 +85,7 @@ export default function AnnouncementManager({ trainingId, announcements, trainin
     const handleForcePublish = async (ann: any) => {
         const confirm = await SwalConfirm.fire({
             title: 'Publikasikan Sekarang?',
-            text: ann.type === 'informasi_umum' 
-                ? 'Pengumuman ini akan langsung dipublikasikan.' 
-                : 'Sistem akan meluluskan peserta secara massal, membuat PDF, dan mempublikasikan pengumuman ini sekarang juga.',
+            text: 'Pengumuman ini akan langsung dipublikasikan sekarang juga.',
             confirmButtonText: 'Ya, Publikasikan'
         })
 
@@ -96,15 +94,9 @@ export default function AnnouncementManager({ trainingId, announcements, trainin
             const fd = new FormData()
             fd.append('trainingId', trainingId)
             fd.append('id', ann.id)
-            
+
             try {
-                let res;
-                if (ann.type === 'informasi_umum') {
-                    res = await forcePublishDraftAction(fd)
-                } else {
-                    fd.append('checkType', ann.type)
-                    res = await triggerManualCronAction(fd)
-                }
+                const res = await forcePublishDraftAction(fd)
 
                 if (res?.error) {
                     SwalAlert.fire({ icon: 'error', title: 'Gagal', text: res.error })
@@ -144,17 +136,22 @@ export default function AnnouncementManager({ trainingId, announcements, trainin
     }
 
     return (
-        <div>
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                <div>
-                    <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2"><Globe className="text-blue-500" /> Daftar Pengumuman</h2>
-                    <p className="text-sm text-gray-500">Kelola informasi kelulusan dan pengumuman lainnya.</p>
+        <div className="space-y-6">
+            <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-blue-50 rounded-lg text-blue-600">
+                        <Globe size={24} />
+                    </div>
+                    <div>
+                        <h2 className="text-lg font-bold text-gray-800">Daftar Pengumuman</h2>
+                        <p className="text-sm text-gray-500">Kelola informasi kelulusan dan pengumuman lainnya.</p>
+                    </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                    <button onClick={handleGenerateDrafts} disabled={loading} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-bold hover:bg-gray-200 transition flex items-center gap-2 text-sm border">
-                        <Zap size={16} /> Buat Draf Default
+                <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                    <button onClick={handleGenerateDrafts} disabled={loading} className="flex-1 md:flex-none bg-white text-gray-700 px-4 py-2.5 rounded-lg font-bold hover:bg-gray-50 transition flex items-center justify-center gap-2 text-sm border shadow-sm">
+                        <Zap size={16} className="text-blue-500" /> Buat Draf Default
                     </button>
-                    <button onClick={() => { setEditId(null); setFormData({ type: 'administrasi', content: '', scheduledDate: '' }); setShowForm(!showForm) }} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 transition flex items-center gap-2 text-sm">
+                    <button onClick={() => { setEditId(null); setFormData({ type: 'administrasi', content: '', scheduledDate: '' }); setShowForm(!showForm) }} className="flex-1 md:flex-none bg-blue-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-blue-700 transition flex items-center justify-center gap-2 text-sm shadow-sm shadow-blue-200">
                         <Plus size={16} /> Buat Manual
                     </button>
                 </div>
@@ -182,7 +179,7 @@ export default function AnnouncementManager({ trainingId, announcements, trainin
                             <input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} className="w-full border p-2.5 rounded-lg text-sm bg-gray-50 focus:bg-white focus:ring-2 outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" accept=".pdf,.doc,.docx" />
                             <p className="text-xs text-gray-500 mt-1">Jika tidak diupload, sistem dapat menggunakan dokumen default. Jika diupload, dokumen ini akan menimpa default sistem.</p>
                         </div>
-                        
+
                         <div>
                             <label className="block text-sm font-bold text-gray-700 mb-1">Jadwal Rilis (Opsional)</label>
                             <input type="date" value={formData.scheduledDate} onChange={(e) => setFormData({ ...formData, scheduledDate: e.target.value })} className="w-full border p-2.5 rounded-lg text-sm bg-gray-50 focus:bg-white focus:ring-2 outline-none" />
@@ -218,9 +215,9 @@ export default function AnnouncementManager({ trainingId, announcements, trainin
                                             <span className="block text-xs font-bold text-orange-500 mt-2 flex items-center gap-1">
                                                 <Calendar size={14} /> Akan dipublikasikan pada: {
                                                     ann.type === 'administrasi' ? (training.tanggal_pengumuman_kelulusan_administrasi ? new Date(training.tanggal_pengumuman_kelulusan_administrasi).toLocaleDateString('id-ID') : 'Belum diatur') :
-                                                    ann.type === 'seleksi_awal' ? (training.tanggal_pengumuman_kelulusan_seleksi_awal ? new Date(training.tanggal_pengumuman_kelulusan_seleksi_awal).toLocaleDateString('id-ID') : 'Belum diatur') :
-                                                    ann.type === 'uji_kompetensi' ? (training.tanggal_pengumuman_hasil_uji_kompetensi ? new Date(training.tanggal_pengumuman_hasil_uji_kompetensi).toLocaleDateString('id-ID') : 'Belum diatur') :
-                                                    (ann.scheduled_date ? new Date(ann.scheduled_date).toLocaleDateString('id-ID') : 'Segera (Manual)')
+                                                        ann.type === 'seleksi_awal' ? (training.tanggal_pengumuman_kelulusan_seleksi_awal ? new Date(training.tanggal_pengumuman_kelulusan_seleksi_awal).toLocaleDateString('id-ID') : 'Belum diatur') :
+                                                            ann.type === 'uji_kompetensi' ? (training.tanggal_pengumuman_hasil_uji_kompetensi ? new Date(training.tanggal_pengumuman_hasil_uji_kompetensi).toLocaleDateString('id-ID') : 'Belum diatur') :
+                                                                (ann.scheduled_date ? new Date(ann.scheduled_date).toLocaleDateString('id-ID') : 'Segera (Manual)')
                                                 }
                                             </span>
                                         )}
@@ -237,7 +234,7 @@ export default function AnnouncementManager({ trainingId, announcements, trainin
                                         <button onClick={() => handleDelete(ann.id)} className="text-red-400 hover:text-red-600 transition" title="Hapus"><Trash2 size={16} /></button>
                                     </div>
                                 </div>
-                                
+
                                 {ann.content && (
                                     <p className="text-gray-700 text-sm mt-3 whitespace-pre-wrap">{ann.content}</p>
                                 )}

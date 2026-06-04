@@ -46,10 +46,8 @@ export default function VerificationActionPanelV2({ user, status }: { user: any,
                 title: 'Verifikasi Berhasil',
                 text: 'Kuota telah terpenuhi. Sistem otomatis menggagalkan sisa pendaftar. Silakan unggah dokumen list pencaker yang sudah lulus.'
             })
-            // Force refresh the server components before client-side navigation
-            router.refresh()
-            // Redirect to previous page (list) anchored to participant
-            router.push(`/dashboard/dinas/pelatihan/${user.training_id}#peserta-${user.id}`)
+            // Redirect to previous page (list) anchored to participant with hard reload for reliability
+            window.location.href = `/dashboard/dinas/pelatihan/${user.training_id}#peserta-${user.id}`
         } else {
             // Success
             await SwalAlert.fire({
@@ -59,9 +57,8 @@ export default function VerificationActionPanelV2({ user, status }: { user: any,
                     ? 'Data pencaker berhasil diverifikasi. Status pendaftaran diperbarui menjadi DITERIMA.'
                     : 'Pendaftaran pencaker telah ditolak.'
             })
-            // Request: Redirect to previous page (list)
-            router.refresh()
-            router.push(`/dashboard/dinas/pelatihan/${user.training_id}#peserta-${user.id}`)
+            // Request: Redirect to previous page (list) with hard reload
+            window.location.href = `/dashboard/dinas/pelatihan/${user.training_id}#peserta-${user.id}`
         }
     }
 

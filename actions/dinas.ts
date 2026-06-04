@@ -1071,12 +1071,14 @@ export async function deleteUserAction(formData: FormData) {
 // --- 12. MAINTENANCE / CRON SIMULATION ---
 // --- 12. MAINTENANCE / CRON SIMULATION ---
 export async function autoUpdateTrainingStatusAction() {
-  await verifyAdminRole();
   const supabase = await createAdminClient()
-  const todayDate = new Date()
+  
+  // Fetch system date for QA time travel support
+  const { data: systemDate } = await supabase.rpc('get_system_date')
+  const todayDate = systemDate ? new Date(systemDate) : new Date()
   const today = todayDate.toISOString().split('T')[0]
 
-  const sevenDaysAgoDate = new Date()
+  const sevenDaysAgoDate = new Date(todayDate)
   sevenDaysAgoDate.setDate(todayDate.getDate() - 7)
   const sevenDaysAgo = sevenDaysAgoDate.toISOString().split('T')[0]
 
@@ -1089,13 +1091,13 @@ export async function autoUpdateTrainingStatusAction() {
     .lt('registration_end', today)
 
   // 2. Complete Training (Archive/Legacy)
-  // Update training status 'OPEN' OR 'CLOSED' -> 'FINISHED' if training_end_date < 7 days ago
+  // Update training status 'OPEN' OR 'CLOSED' -> 'FINISHED' if tanggal_pengumuman_hasil_uji_kompetensi < 7 days ago
   // This effectively removes them from Catalog and moves them to Legacy View.
   await supabase
     .from('blk_trainings')
     .update({ status: 'FINISHED' })
     .in('status', ['OPEN', 'CLOSED'])
-    .lt('training_end_date', sevenDaysAgo)
+    .lt('tanggal_pengumuman_hasil_uji_kompetensi', sevenDaysAgo)
 
   // 3. Complete Registrations (SELESAI)
   // Find trainings that have ENDED (status FINISHED or training_end_date passed)

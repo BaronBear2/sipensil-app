@@ -5,6 +5,7 @@ import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { FileText, Calendar, MapPin, Clock, Download, ExternalLink, ArrowLeft, AlertCircle, CheckCircle, XCircle, History, ChevronDown, ChevronUp } from 'lucide-react'
 import Link from 'next/link'
+import PageHeader from '@/components/ui/PageHeader'
 
 // Helper to format date
 const formatDate = (dateString: string | null) => {
@@ -25,10 +26,8 @@ export default function MyTrainingsPage() {
     const [historyRegistrations, setHistoryRegistrations] = useState<any[]>([])
     const [rejectedRegistrations, setRejectedRegistrations] = useState<any[]>([])
 
-    // Drawer state
-    const [isHistoryOpen, setIsHistoryOpen] = useState(false)
-    const [isPassedOpen, setIsPassedOpen] = useState(false)
-    const [isRejectedOpen, setIsRejectedOpen] = useState(false)
+    // Drawer state replaced with Tab state
+    const [activeTab, setActiveTab] = useState<'aktif' | 'selesai' | 'gagal'>('aktif')
 
     // For Cancelling
     const [isCancelling, setIsCancelling] = useState(false)
@@ -421,24 +420,15 @@ export default function MyTrainingsPage() {
 
     return (
         <div className="min-h-screen bg-gray-50 font-sans pb-20 animate-fade-in">
-            {/* Header */}
-            <div className="bg-white border-b sticky top-0 z-30 shadow-sm">
-                <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <Link href="/dashboard/pencaker" className="p-2 rounded-lg hover:bg-gray-100 transition text-gray-600 border border-gray-200 bg-white">
-                            <ArrowLeft size={20} />
-                        </Link>
-                        <div>
-                            <h1 className="text-lg md:text-xl font-bold text-gray-800 leading-tight tracking-tight">Pelatihan Saya</h1>
-                            <p className="text-xs text-gray-500 font-medium">Kelola pendaftaran dan riwayat pelatihan Anda.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <PageHeader 
+                title="Pelatihan Saya" 
+                description="Kelola pendaftaran dan riwayat pelatihan Anda." 
+                backLink="/dashboard/pencaker" 
+            />
 
-            <div className="max-w-4xl mx-auto px-4 py-8">
+            <div className="max-w-4xl mx-auto px-4 py-4">
 
-                {activeRegistrations.length === 0 && historyRegistrations.length === 0 && rejectedRegistrations.length === 0 ? (
+                {activeRegistrations.length === 0 && historyRegistrations.length === 0 && passedRegistrations.length === 0 && rejectedRegistrations.length === 0 ? (
                     <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-gray-300">
                         {/* Empty State */}
                         <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
@@ -451,95 +441,64 @@ export default function MyTrainingsPage() {
                         </Link>
                     </div>
                 ) : (
-                    <div className="space-y-10">
-                        {/* SECTION 1: ACTIVE */}
-                        <section>
-                            <div className="flex items-center gap-2 mb-4">
-                                <span className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
-                                    <Clock size={16} />
-                                </span>
-                                <h2 className="text-lg font-bold text-gray-800">Pelatihan Saya Saat Ini</h2>
-                            </div>
-                            {activeRegistrations.length > 0 ? (
-                                <div className="space-y-4">
-                                    {activeRegistrations.map(reg => <TrainingCard key={reg.id} reg={reg} />)}
-                                </div>
-                            ) : (
-                                <p className="text-gray-400 text-sm italic ml-10">Tidak ada pelatihan aktif.</p>
+                    <div>
+                        {/* Tabs UI */}
+                        <div className="flex overflow-x-auto no-scrollbar gap-2 mb-8 bg-white p-2 rounded-2xl shadow-sm border border-gray-100 sticky top-20 z-20">
+                            <button 
+                                onClick={() => setActiveTab('aktif')}
+                                className={`flex-1 min-w-[120px] whitespace-nowrap px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 ${activeTab === 'aktif' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                            >
+                                <Clock size={16} /> Sedang Berjalan ({activeRegistrations.length})
+                            </button>
+                            <button 
+                                onClick={() => setActiveTab('selesai')}
+                                className={`flex-1 min-w-[120px] whitespace-nowrap px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 ${activeTab === 'selesai' ? 'bg-green-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                            >
+                                <CheckCircle size={16} /> Selesai ({passedRegistrations.length + historyRegistrations.length})
+                            </button>
+                            <button 
+                                onClick={() => setActiveTab('gagal')}
+                                className={`flex-1 min-w-[120px] whitespace-nowrap px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 ${activeTab === 'gagal' ? 'bg-red-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+                            >
+                                <XCircle size={16} /> Ditolak / Gagal ({rejectedRegistrations.length})
+                            </button>
+                        </div>
+
+                        {/* Content Area */}
+                        <div className="space-y-4 animate-fade-in">
+                            {activeTab === 'aktif' && (
+                                activeRegistrations.length > 0 ? (
+                                    activeRegistrations.map(reg => <TrainingCard key={reg.id} reg={reg} />)
+                                ) : (
+                                    <div className="text-center py-10 bg-white rounded-xl border border-dashed border-gray-200 text-gray-400">
+                                        <p>Tidak ada pelatihan yang sedang berjalan.</p>
+                                    </div>
+                                )
                             )}
-                        </section>
 
-                        {/* SECTION 1.5: PASSED */}
-                        {(passedRegistrations.length > 0) && (
-                            <section>
-                                <button
-                                    onClick={() => setIsPassedOpen(!isPassedOpen)}
-                                    className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm mb-4"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <CheckCircle size={18} className="text-gray-400" />
-                                        <h2 className="text-base font-bold text-gray-700">Pelatihan Yang Sudah Lulus ({passedRegistrations.length})</h2>
-                                    </div>
-                                    <div className="text-gray-400">
-                                        {isPassedOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                                    </div>
-                                </button>
-
-                                {isPassedOpen && (
-                                    <div className="space-y-4 animate-fade-in">
+                            {activeTab === 'selesai' && (
+                                passedRegistrations.length > 0 || historyRegistrations.length > 0 ? (
+                                    <>
                                         {passedRegistrations.map(reg => <TrainingCard key={reg.id} reg={reg} />)}
-                                    </div>
-                                )}
-                            </section>
-                        )}
-
-                        {/* SECTION 2: REJECTED (Reordered) */}
-                        {(rejectedRegistrations.length > 0) && (
-                            <section>
-                                <button
-                                    onClick={() => setIsRejectedOpen(!isRejectedOpen)}
-                                    className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm mb-4"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <XCircle size={18} className="text-gray-400" />
-                                        <h2 className="text-base font-bold text-gray-700">Pelatihan Gagal/Pendaftaran Ditolak ({rejectedRegistrations.length})</h2>
-                                    </div>
-                                    <div className="text-gray-400">
-                                        {isRejectedOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                                    </div>
-                                </button>
-
-                                {isRejectedOpen && (
-                                    <div className="space-y-4 animate-fade-in">
-                                        {rejectedRegistrations.map(reg => <TrainingCard key={reg.id} reg={reg} isRejected={true} />)}
-                                    </div>
-                                )}
-                            </section>
-                        )}
-
-                        {/* SECTION 3: HISTORY (Collapsible) */}
-                        {(historyRegistrations.length > 0) && (
-                            <section>
-                                <button
-                                    onClick={() => setIsHistoryOpen(!isHistoryOpen)}
-                                    className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm mb-4"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <History size={18} className="text-gray-400" />
-                                        <h2 className="text-base font-bold text-gray-700">Riwayat Pelatihan Lainnya ({historyRegistrations.length})</h2>
-                                    </div>
-                                    <div className="text-gray-400">
-                                        {isHistoryOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                                    </div>
-                                </button>
-
-                                {isHistoryOpen && (
-                                    <div className="space-y-4 animate-fade-in">
                                         {historyRegistrations.map(reg => <TrainingCard key={reg.id} reg={reg} isHistory={true} />)}
+                                    </>
+                                ) : (
+                                    <div className="text-center py-10 bg-white rounded-xl border border-dashed border-gray-200 text-gray-400">
+                                        <p>Belum ada riwayat pelatihan selesai.</p>
                                     </div>
-                                )}
-                            </section>
-                        )}
+                                )
+                            )}
+
+                            {activeTab === 'gagal' && (
+                                rejectedRegistrations.length > 0 ? (
+                                    rejectedRegistrations.map(reg => <TrainingCard key={reg.id} reg={reg} isRejected={true} />)
+                                ) : (
+                                    <div className="text-center py-10 bg-white rounded-xl border border-dashed border-gray-200 text-gray-400">
+                                        <p>Tidak ada riwayat pelatihan ditolak atau gagal.</p>
+                                    </div>
+                                )
+                            )}
+                        </div>
                     </div>
                 )}
             </div>

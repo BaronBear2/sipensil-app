@@ -21,6 +21,7 @@ type MenuItem = {
 }
 
 const MENU_ITEMS: MenuItem[] = [
+    { name: 'Beranda Utama', href: '/', icon: Home, theme: 'red' },
     { name: 'Dashboard', href: '/dashboard/dinas', icon: Home, theme: 'red' },
     { name: 'Menu Pelatihan', href: '/dashboard/dinas/pelatihan', icon: ClipboardList, theme: 'red' },
     { name: 'Manajemen User', href: '/dashboard/dinas/users', icon: Users, theme: 'red' },

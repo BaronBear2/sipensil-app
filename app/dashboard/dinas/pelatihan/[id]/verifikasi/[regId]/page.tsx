@@ -2,6 +2,7 @@ import { createAdminClient } from '@/utils/supabase/server'
 import { ArrowLeft, User, MapPin, Calendar, Phone, Briefcase, FileText, CheckCircle, XCircle, Clock, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
 import VerificationActionPanelV2 from '@/components/admin/VerificationActionPanelV2'
+import PageHeader from '@/components/ui/PageHeader'
 
 export default async function VerificationDetailPage({ params }: { params: Promise<{ id: string, regId: string }> }) {
     const supabase = await createAdminClient()
@@ -113,20 +114,16 @@ export default async function VerificationDetailPage({ params }: { params: Promi
     ]
 
     return (
-        <div className="max-w-5xl mx-auto space-y-6">
-            <div className="flex items-center gap-4">
-                <Link href={`/dashboard/dinas/pelatihan/${id}`} className="p-2 rounded-lg hover:bg-gray-100 transition border border-gray-200 bg-white">
-                    <ArrowLeft size={24} className="text-gray-600" />
-                </Link>
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Detail Verifikasi Pencaker</h1>
-                    <p className="text-gray-500 text-sm">Tinjau data dan berkas sebelum menyetujui.</p>
-                </div>
-            </div>
+        <div className="font-sans pb-20">
+            <PageHeader 
+                title="Detail Verifikasi Pencaker" 
+                description="Tinjau data dan berkas sebelum menyetujui." 
+                backLink={`/dashboard/dinas/pelatihan/${id}`} 
+            />
 
-            <hr className="border-gray-200" />
+            <div className="max-w-6xl mx-auto space-y-6 px-4">
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                 {/* LEFT: DATA DIRI */}
                 <div className="lg:col-span-2 space-y-6">
@@ -304,6 +301,7 @@ export default async function VerificationDetailPage({ params }: { params: Promi
                     <VerificationActionPanelV2 user={userForAction} status={reg.status} />
                 </div>
 
+                </div>
             </div>
         </div>
     )

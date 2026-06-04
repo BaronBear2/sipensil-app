@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
-import { Home, User, Briefcase, GraduationCap, FileText, Settings, LogOut, ChevronDown, ChevronRight, Menu, X, LayoutDashboard } from 'lucide-react'
+import { Home, User, Briefcase, GraduationCap, FileText, Settings, LogOut, ChevronDown, ChevronRight, Menu, X, LayoutDashboard, CornerDownRight } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import logoSipensil from '@/assets/logo/logo-sipensil.jpeg'
@@ -23,11 +23,11 @@ const MENU_ITEMS: MenuItem[] = [
     { name: 'Profil Saya', href: '/dashboard/pencaker/profile', icon: User },
     // { name: 'Kartu Kuning (AK-1)', href: '/dashboard/pencaker/kartu-kuning', icon: FileText }, 
     {
-        name: 'Pelatihan BLK',
+        name: 'Pelatihan',
         icon: GraduationCap,
         children: [
-            { name: 'Katalog Pelatihan', href: '/dashboard/pencaker/programs' },
-            { name: 'Pelatihan Saya', href: '/dashboard/pencaker/pelatihan-saya' },
+            { name: 'Katalog Pelatihan', href: '/dashboard/pencaker/programs', icon: CornerDownRight },
+            { name: 'Pelatihan Saya', href: '/dashboard/pencaker/pelatihan-saya', icon: CornerDownRight },
         ]
     },
 ]

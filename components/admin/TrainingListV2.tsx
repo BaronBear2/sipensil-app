@@ -124,7 +124,7 @@ export default function TrainingListV2({ trainings, categories = [] }: { trainin
                             </div>
 
                             <div className="p-5 flex-1 flex flex-col">
-                                <h3 className="font-bold text-gray-800 text-lg leading-tight mb-4 line-clamp-2 min-h-[3.5rem]" title={item.title}>
+                                <h3 className="font-bold text-gray-800 text-lg leading-tight mb-4 line-clamp-2 min-h-[2rem]" title={item.title}>
                                     {item.title}
                                 </h3>
 
