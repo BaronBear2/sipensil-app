@@ -43,6 +43,12 @@ async function uploadImage(file: File): Promise<string | null> {
   }
 }
 
+// Helper for Progress Sync (Stubbed to prevent build errors)
+async function syncRegistrationProgress(regId: string, trainingId: string | undefined | null) {
+  // TODO: Implement progress synchronization if needed
+  console.log(`Syncing progress for regId: ${regId}, trainingId: ${trainingId}`);
+}
+
 // --- 1. VERIFIKASI PROFILE (Pencaker Gate) ---
 // 1. VERIFIKASI AKUN PENCAKER (GATE PELATIHAN)
 export async function verifyProfileAction(formData: FormData) {
