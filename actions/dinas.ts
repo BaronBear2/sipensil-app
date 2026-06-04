@@ -746,9 +746,21 @@ export async function adminUpdateUserAction(formData: FormData) {
   if (error) return { error: error.message }
 
   // 3. Update Details based on Role
-  // 3. Update Details based on Role
   if (targetRole === 'PENCAKER') {
-    const { error: detailError } = await supabase.from('profile_pencaker').upsert({
+    // Handle File Uploads
+    const ktpFile = formData.get('ktp_file') as File | null
+    const ijazahFile = formData.get('ijazah_file') as File | null
+    const photoFile = formData.get('photo_file') as File | null
+
+    let ktp_url = undefined
+    let ijazah_url = undefined
+    let photo_url = undefined
+
+    if (ktpFile && ktpFile.size > 0) ktp_url = await uploadDocument(ktpFile)
+    if (ijazahFile && ijazahFile.size > 0) ijazah_url = await uploadDocument(ijazahFile)
+    if (photoFile && photoFile.size > 0) photo_url = await uploadDocument(photoFile)
+
+    const updateData: any = {
       user_id: userId,
       nik: formData.get('nik') as string,
       phone: formData.get('phone') as string,
@@ -759,52 +771,24 @@ export async function adminUpdateUserAction(formData: FormData) {
       address_dom: formData.get('address_dom') as string,
       religion: formData.get('religion') as string,
       education: formData.get('education') as string,
-      ktp_url: formData.get('ktp_url') as string,
-      ijazah_url: formData.get('ijazah_url') as string,
-      photo_url: formData.get('photo_url') as string,
-    }, { onConflict: 'user_id' })
+    }
+    
+    if (ktp_url) updateData.ktp_url = ktp_url
+    if (ijazah_url) updateData.ijazah_url = ijazah_url
+    if (photo_url) updateData.photo_url = photo_url
+
+    const { error: detailError } = await supabase.from('profile_pencaker').upsert(updateData, { onConflict: 'user_id' })
     if (detailError) return { error: detailError.message }
 
     // Also update main profile photo if provided
-    if (formData.get('photo_url')) {
-      await supabase.from('profiles').update({ photo_url: formData.get('photo_url') as string }).eq('id', userId)
+    if (photo_url) {
+      await supabase.from('profiles').update({ photo_url: photo_url }).eq('id', userId)
     }
 
   } else if (targetRole === 'PERUSAHAAN') {
-    const { error: detailError } = await supabase.from('profile_perusahaan').upsert({
-      user_id: userId,
-      company_name: formData.get('company_name') as string,
-      nib: formData.get('nib') as string,
-      phone: formData.get('phone') as string, // Official Phone
-      address_office: formData.get('address') as string, // Mapped to address_office
-      email_official: formData.get('email_official') as string,
-      sector: formData.get('sector') as string,
-      director_name: formData.get('director_name') as string,
-      pic_name: formData.get('pic_name') as string,
-      pic_phone: formData.get('pic_phone') as string,
-    }, { onConflict: 'user_id' })
-    if (detailError) return { error: detailError.message }
-
+    // profile_perusahaan table was dropped, so we do nothing or handle it differently if needed.
   } else if (targetRole === 'LPK') {
-    const { error: detailError } = await supabase.from('profile_lpk').upsert({
-      user_id: userId,
-      lpk_name: formData.get('lpk_name') as string,
-      phone: formData.get('phone') as string, // General Phone
-      address_office: formData.get('address') as string, // Mapped to address_office
-      lpk_type: formData.get('lpk_type') as string,
-      fax: formData.get('fax') as string,
-      email_official: formData.get('email_official') as string,
-      nips: formData.get('nips') as string,
-      license_number: formData.get('license_number') as string,
-      license_date: formData.get('license_date') ? formData.get('license_date') : null,
-      director_name: formData.get('director_name') as string,
-      director_phone: formData.get('director_phone') as string,
-      operational_pj: formData.get('operational_pj') as string,
-      operational_pj_title: formData.get('operational_pj_title') as string,
-      operational_pj_phone: formData.get('operational_pj_phone') as string,
-      operational_pj_email: formData.get('operational_pj_email') as string,
-    }, { onConflict: 'user_id' })
-    if (detailError) return { error: detailError.message }
+    // profile_lpk table was dropped, so we do nothing or handle it differently if needed.
   }
 
   revalidatePath('/dashboard/dinas', 'layout')

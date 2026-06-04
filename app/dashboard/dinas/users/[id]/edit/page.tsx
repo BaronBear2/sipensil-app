@@ -1,8 +1,9 @@
 import { createAdminClient } from '@/utils/supabase/server'
-import { ArrowLeft, User, Building, Briefcase } from 'lucide-react'
+import { User, Building, Briefcase } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import EditUserForm from '@/components/admin/EditUserForm'
+import PageHeader from '@/components/ui/PageHeader'
 
 export default async function EditUserPage({ params }: { params: Promise<{ id: string }> }) {
     const supabase = await createAdminClient()
@@ -13,9 +14,7 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
         .from('profiles')
         .select(`
             *,
-            profile_pencaker(*),
-            profile_perusahaan(*),
-            profile_lpk(*)
+            profile_pencaker(*)
         `)
         .eq('id', id)
         .single()
@@ -35,29 +34,23 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
         roleName = 'Pencaker'
         RoleIcon = User
     } else if (role === 'PERUSAHAAN') {
-        const perusahaanRaw = profile.profile_perusahaan
-        roleData = Array.isArray(perusahaanRaw) ? perusahaanRaw[0] : (perusahaanRaw || {})
+        roleData = {}
         roleName = 'Perusahaan'
         RoleIcon = Briefcase
     } else if (role === 'LPK') {
-        const lpkRaw = profile.profile_lpk
-        roleData = Array.isArray(lpkRaw) ? lpkRaw[0] : (lpkRaw || {})
+        roleData = {}
         roleName = 'LPK'
         RoleIcon = Building
     }
 
     return (
-        <div className="max-w-3xl mx-auto space-y-6">
-            {/* Header */}
-            <div className="flex items-center gap-4">
-                <Link href="/dashboard/dinas/users" className="p-2 bg-white border rounded-xl hover:bg-gray-50 text-gray-600 transition">
-                    <ArrowLeft size={20} />
-                </Link>
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Edit Data User</h1>
-                    <p className="text-gray-500 text-sm">Update informasi akun dan profil pengguna.</p>
-                </div>
-            </div>
+        <div className="space-y-6">
+            <PageHeader 
+                title="Edit Data User"
+                description="Update informasi akun dan profil pengguna."
+                backLink="/dashboard/dinas/users"
+            />
+            <div className="max-w-3xl mx-auto space-y-6 px-4">
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="p-6 border-b border-gray-50 bg-gray-50/50 flex items-center gap-3">
@@ -73,6 +66,7 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
                 </div>
 
                 <EditUserForm profile={profile} role={role} roleData={roleData} />
+            </div>
             </div>
         </div>
     )

@@ -205,15 +205,14 @@ export default function EditUserForm({ profile, role, roleData }: EditUserFormPr
                             {['ktp_url', 'ijazah_url', 'photo_url'].map((field) => (
                                 <div key={field}>
                                     <label className="block text-xs font-bold text-gray-700 mb-2 capitalize">
-                                        {field.replace('_url', '').replace('_', ' ')} (URL)
+                                        {field.replace('_url', '').replace('_', ' ')}
                                     </label>
-                                    <div className="flex gap-2">
+                                    <div className="flex items-center gap-2">
                                         <input
-                                            type="text"
-                                            name={field}
-                                            defaultValue={roleData[field] || ''}
-                                            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                                            placeholder={`Link to ${field.replace('_url', '')}`}
+                                            type="file"
+                                            name={field.replace('_url', '_file')}
+                                            accept={field === 'photo_url' ? 'image/jpeg,image/png' : 'application/pdf,image/jpeg,image/png'}
+                                            className="w-full px-4 py-2 border border-gray-200 rounded-xl text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                                         />
                                         {roleData[field] && (
                                             <Link

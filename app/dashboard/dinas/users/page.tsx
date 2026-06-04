@@ -20,8 +20,6 @@ export default async function UsersAdminPage({ searchParams }: { searchParams: P
         .select(`
             *,
             profile_pencaker(*),
-            profile_perusahaan(*),
-            profile_lpk(*),
             training_registrations(*, blk_trainings(title, status))
         `, { count: 'exact' })
         .order('created_at', { ascending: false })
@@ -45,15 +43,10 @@ export default async function UsersAdminPage({ searchParams }: { searchParams: P
 
     const users = data ? data.map((p: any) => {
         const pencakerData = Array.isArray(p.profile_pencaker) ? p.profile_pencaker[0] : p.profile_pencaker;
-        const perusahaanData = Array.isArray(p.profile_perusahaan) ? p.profile_perusahaan[0] : p.profile_perusahaan;
-        const lpkData = Array.isArray(p.profile_lpk) ? p.profile_lpk[0] : p.profile_lpk;
 
         return {
             ...p,
-            // Merge specialized profiles based on role for easier display in table
-            ...(currentRole === 'PENCAKER' ? (pencakerData || {}) : {}),
-            ...(currentRole === 'PERUSAHAAN' ? (perusahaanData || {}) : {}),
-            ...(currentRole === 'LPK' ? (lpkData || {}) : {})
+            ...(pencakerData || {})
         }
     }) : []
 
