@@ -50,14 +50,9 @@ async function syncRegistrationProgress(regId: string, trainingId: string | unde
 }
 
 // --- 1. VERIFIKASI PROFILE (Pencaker Gate) ---
-// 1. VERIFIKASI AKUN PENCAKER (GATE PELATIHAN)
 export async function verifyProfileAction(formData: FormData) {
   await verifyAdminRole();
-  const supabase = await createClient()
-
-  // Cek Admin
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/auth/login')
+  const supabase = await createAdminClient()
 
   const userId = formData.get('userId') as string
   const action = formData.get('action') as string
@@ -150,11 +145,7 @@ export async function verifyProfileAction(formData: FormData) {
 // 1.5 VERIFIKASI TRAINING REGISTRATION (PER CLASS) - PHASE 5
 export async function verifyTrainingRegistrationAction(formData: FormData) {
   await verifyAdminRole();
-  const supabase = await createClient()
-
-  // Cek Admin
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("Unauthorized")
+  const supabase = await createAdminClient()
 
   const regId = formData.get('regId') as string
   const action = formData.get('action') as string
@@ -248,7 +239,7 @@ export async function verifyTrainingRegistrationAction(formData: FormData) {
 }
 export async function revertTrainingRegistrationAction(formData: FormData) {
   await verifyAdminRole();
-  const supabase = await createClient()
+  const supabase = await createAdminClient()
 
   const regId = formData.get('regId') as string
 
@@ -345,9 +336,7 @@ export async function revertTrainingRegistrationAction(formData: FormData) {
 
 export async function createTrainingAction(formData: FormData) {
   await verifyAdminRole();
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("Unauthorized")
+  const supabase = await createAdminClient()
 
   const title = formData.get('title') as string
   const provider = formData.get('provider') as string
@@ -462,9 +451,7 @@ export async function createTrainingAction(formData: FormData) {
 
 export async function updateTrainingAction(formData: FormData) {
   await verifyAdminRole();
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("Unauthorized")
+  const supabase = await createAdminClient()
 
   const id = formData.get('id') as string
   const title = formData.get('title') as string
@@ -628,7 +615,7 @@ export async function updateTrainingAction(formData: FormData) {
 
 export async function deleteTrainingAction(formData: FormData) {
   await verifyAdminRole();
-  const supabase = await createClient()
+  const supabase = await createAdminClient()
   const id = formData.get('id') as string
 
   // 1. Check for dependency (Safe Guard)
@@ -660,7 +647,7 @@ export async function deleteTrainingAction(formData: FormData) {
 
 export async function archiveTrainingAction(formData: FormData) {
   await verifyAdminRole();
-  const supabase = await createClient()
+  const supabase = await createAdminClient()
   const id = formData.get('id') as string
 
   // 1. Force status to FINISHED regardless of date
@@ -683,7 +670,7 @@ export async function archiveTrainingAction(formData: FormData) {
 
 export async function unarchiveTrainingAction(formData: FormData) {
   await verifyAdminRole();
-  const supabase = await createClient()
+  const supabase = await createAdminClient()
   const id = formData.get('id') as string
 
   // 1. Restore status to OPEN
@@ -705,7 +692,7 @@ export async function unarchiveTrainingAction(formData: FormData) {
 // --- 6. MANAJEMEN PESERTA (KICK) ---
 export async function kickParticipantAction(formData: FormData) {
   await verifyAdminRole();
-  const supabase = await createClient()
+  const supabase = await createAdminClient()
   const regId = formData.get('regId') as string
   const reason = formData.get('reason') as string
 
@@ -1129,9 +1116,7 @@ export async function autoUpdateTrainingStatusAction() {
 
 export async function bulkRejectPendingAction(trainingId: string) {
   await verifyAdminRole();
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("Unauthorized")
+  const supabase = await createAdminClient()
 
   const { error } = await supabase
     .from('training_registrations')

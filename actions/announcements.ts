@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 export async function generateDefaultDraftsAction(formData: FormData) {
@@ -8,7 +8,7 @@ export async function generateDefaultDraftsAction(formData: FormData) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Unauthorized")
 
-    const adminClient = await createClient()
+    const adminClient = await createAdminClient()
     const { data: qaTime } = await adminClient.from('qa_system_time').select('overridden_time').eq('id', 1).single()
     const nowStr = qaTime?.overridden_time ? new Date(qaTime.overridden_time).toISOString() : new Date().toISOString()
 
@@ -40,14 +40,14 @@ export async function generateDefaultDraftsAction(formData: FormData) {
 
         // Only insert if they don't exist
         for (const t of types) {
-            const { data: existing } = await supabase.from('training_announcements')
+            const { data: existing } = await adminClient.from('training_announcements')
                 .select('id')
                 .eq('training_id', trainingId)
                 .eq('type', t.type)
                 .limit(1)
 
             if (!existing || existing.length === 0) {
-                await supabase.from('training_announcements').insert({
+                await adminClient.from('training_announcements').insert({
                     training_id: trainingId,
                     type: t.type,
                     content: t.content,
@@ -87,7 +87,7 @@ export async function updateDraftAction(formData: FormData) {
         document_url = await uploadDocument(file, trainingId, type || 'draft')
     }
 
-    const adminClient = await createClient()
+    const adminClient = await createAdminClient()
     const { data: qaTime } = await adminClient.from('qa_system_time').select('overridden_time').eq('id', 1).single()
     const nowStr = qaTime?.overridden_time ? new Date(qaTime.overridden_time).toISOString() : new Date().toISOString()
 
@@ -96,15 +96,15 @@ export async function updateDraftAction(formData: FormData) {
     if (scheduledDate) updateData.scheduled_date = scheduledDate
     else updateData.scheduled_date = null
 
-    const { error } = await supabase.from('training_announcements').update(updateData).eq('id', id)
+    const { error } = await adminClient.from('training_announcements').update(updateData).eq('id', id)
     if (error) return { error: error.message }
 
     if (type === 'administrasi') {
-        await supabase.from('blk_trainings').update({ tanggal_pengumuman_kelulusan_administrasi: scheduledDate || null }).eq('id', trainingId)
+        await adminClient.from('blk_trainings').update({ tanggal_pengumuman_kelulusan_administrasi: scheduledDate || null }).eq('id', trainingId)
     } else if (type === 'seleksi_awal') {
-        await supabase.from('blk_trainings').update({ tanggal_pengumuman_kelulusan_seleksi_awal: scheduledDate || null }).eq('id', trainingId)
+        await adminClient.from('blk_trainings').update({ tanggal_pengumuman_kelulusan_seleksi_awal: scheduledDate || null }).eq('id', trainingId)
     } else if (type === 'uji_kompetensi') {
-        await supabase.from('blk_trainings').update({ tanggal_pengumuman_hasil_uji_kompetensi: scheduledDate || null }).eq('id', trainingId)
+        await adminClient.from('blk_trainings').update({ tanggal_pengumuman_hasil_uji_kompetensi: scheduledDate || null }).eq('id', trainingId)
     }
 
     revalidatePath(`/dashboard/dinas/pelatihan/${trainingId}/pengumuman`)
@@ -124,11 +124,11 @@ export async function forcePublishDraftAction(formData: FormData) {
     const trainingId = formData.get('trainingId') as string
     if (!id) return { error: "ID required" }
 
-    const adminClient = await createClient()
+    const adminClient = await createAdminClient()
     const { data: qaTime } = await adminClient.from('qa_system_time').select('overridden_time').eq('id', 1).single()
     const nowStr = qaTime?.overridden_time ? new Date(qaTime.overridden_time).toISOString() : new Date().toISOString()
 
-    const { error } = await supabase.from('training_announcements').update({
+    const { error } = await adminClient.from('training_announcements').update({
         is_published: true,
         published_at: nowStr
     }).eq('id', id)
@@ -189,13 +189,13 @@ export async function publishAnnouncementAction(formData: FormData) {
         document_url = await uploadDocument(file, trainingId, type)
     }
 
-    const adminClient = await createClient()
+    const adminClient = await createAdminClient()
     const { data: qaTime } = await adminClient.from('qa_system_time').select('overridden_time').eq('id', 1).single()
     const nowStr = qaTime?.overridden_time ? new Date(qaTime.overridden_time).toISOString() : new Date().toISOString()
 
     let error;
     if (type !== 'informasi_umum') {
-        const { data: existingArr } = await supabase.from('training_announcements')
+        const { data: existingArr } = await adminClient.from('training_announcements')
             .select('id')
             .eq('training_id', trainingId)
             .eq('type', type)
@@ -208,14 +208,14 @@ export async function publishAnnouncementAction(formData: FormData) {
             if (document_url) updateData.document_url = document_url
             if (scheduledDate) updateData.scheduled_date = scheduledDate
 
-            const { error: updateError } = await supabase.from('training_announcements').update(updateData).eq('id', existing.id)
+            const { error: updateError } = await adminClient.from('training_announcements').update(updateData).eq('id', existing.id)
             error = updateError;
         } else {
             const insertData: any = {
                 training_id: trainingId, type, content, document_url, is_published: true, published_at: nowStr
             }
             if (scheduledDate) insertData.scheduled_date = scheduledDate
-            const { error: insertError } = await supabase.from('training_announcements').insert(insertData)
+            const { error: insertError } = await adminClient.from('training_announcements').insert(insertData)
             error = insertError;
         }
     } else {
@@ -223,7 +223,7 @@ export async function publishAnnouncementAction(formData: FormData) {
             training_id: trainingId, type, content, document_url, is_published: true, published_at: nowStr
         }
         if (scheduledDate) insertData.scheduled_date = scheduledDate
-        const { error: insertError } = await supabase.from('training_announcements').insert(insertData)
+        const { error: insertError } = await adminClient.from('training_announcements').insert(insertData)
         error = insertError;
     }
 
@@ -234,11 +234,11 @@ export async function publishAnnouncementAction(formData: FormData) {
     // The cron logic can just check if an announcement of that type exists.
 
     if (type === 'administrasi') {
-        await supabase.from('blk_trainings').update({ tanggal_pengumuman_kelulusan_administrasi: scheduledDate || null }).eq('id', trainingId)
+        await adminClient.from('blk_trainings').update({ tanggal_pengumuman_kelulusan_administrasi: scheduledDate || null }).eq('id', trainingId)
     } else if (type === 'seleksi_awal') {
-        await supabase.from('blk_trainings').update({ tanggal_pengumuman_kelulusan_seleksi_awal: scheduledDate || null }).eq('id', trainingId)
+        await adminClient.from('blk_trainings').update({ tanggal_pengumuman_kelulusan_seleksi_awal: scheduledDate || null }).eq('id', trainingId)
     } else if (type === 'uji_kompetensi') {
-        await supabase.from('blk_trainings').update({ tanggal_pengumuman_hasil_uji_kompetensi: scheduledDate || null }).eq('id', trainingId)
+        await adminClient.from('blk_trainings').update({ tanggal_pengumuman_hasil_uji_kompetensi: scheduledDate || null }).eq('id', trainingId)
     }
 
     revalidatePath(`/dashboard/dinas/pelatihan/${trainingId}/pengumuman`)
@@ -259,8 +259,9 @@ export async function deleteAnnouncementAction(formData: FormData) {
     }
 
     const id = formData.get('id') as string
+    const adminClient = await createAdminClient()
 
-    const { error } = await supabase.from('training_announcements').delete().eq('id', id)
+    const { error } = await adminClient.from('training_announcements').delete().eq('id', id)
     if (error) return { error: error.message }
 
     revalidatePath(`/dashboard/dinas/pelatihan`)
@@ -282,10 +283,12 @@ export async function triggerManualCronAction(formData: FormData) {
         return { error: "Unauthorized: Admin access required" }
     }
 
-    const { data: training } = await supabase.from('blk_trainings').select('*').eq('id', trainingId).single()
+    const adminClient = await createAdminClient()
+
+    const { data: training } = await adminClient.from('blk_trainings').select('*').eq('id', trainingId).single()
     if (!training) return { error: 'Pelatihan tidak ditemukan' }
 
-    const { data: qaTime } = await supabase.from('qa_system_time').select('overridden_time').eq('id', 1).single()
+    const { data: qaTime } = await adminClient.from('qa_system_time').select('overridden_time').eq('id', 1).single()
     const nowStr = qaTime?.overridden_time ? new Date(qaTime.overridden_time).toISOString() : new Date().toISOString()
 
     let processedAny = false
@@ -305,7 +308,7 @@ export async function triggerManualCronAction(formData: FormData) {
         const allowedStatuses = ['DITERIMA']
 
         // 1. Safe Bulk Update: Update users at currentStep to nextStep
-        const { data: usersToPass } = await supabase.from('training_registrations')
+        const { data: usersToPass } = await adminClient.from('training_registrations')
             .select('id, profiles(full_name)')
             .eq('training_id', trainingId)
             .in('status', allowedStatuses)
@@ -315,7 +318,7 @@ export async function triggerManualCronAction(formData: FormData) {
             let statusToSet = 'DITERIMA'
             if (check.type === 'uji_kompetensi') statusToSet = 'LULUS'
 
-            const { error: bulkError } = await supabase.from('training_registrations')
+            const { error: bulkError } = await adminClient.from('training_registrations')
                 .update({
                     status: statusToSet,
                     progress_step: check.nextStep,
@@ -332,7 +335,7 @@ export async function triggerManualCronAction(formData: FormData) {
         }
 
         // Fetch ALL users who passed this stage (both manually verified and auto-passed)
-        const { data: allPassedUsers } = await supabase.from('training_registrations')
+        const { data: allPassedUsers } = await adminClient.from('training_registrations')
             .select('id, profiles(full_name)')
             .eq('training_id', trainingId)
             .gte('progress_step', check.nextStep)
@@ -348,7 +351,7 @@ export async function triggerManualCronAction(formData: FormData) {
         }
 
         // 2. Check if announcement already exists
-        const { data: existingAnnouncements } = await supabase.from('training_announcements')
+        const { data: existingAnnouncements } = await adminClient.from('training_announcements')
             .select('*')
             .eq('training_id', trainingId)
             .eq('type', check.type)
@@ -381,14 +384,14 @@ export async function triggerManualCronAction(formData: FormData) {
             }
             const newContent = baseContent + `\n\n${pdfListMsg}`;
 
-            await supabase.from('training_announcements').update({
+            await adminClient.from('training_announcements').update({
                 content: newContent,
                 document_url: document_url,
                 is_published: true,
                 published_at: existing.published_at || nowStr
             }).eq('id', existing.id)
         } else {
-            await supabase.from('training_announcements').insert({
+            await adminClient.from('training_announcements').insert({
                 training_id: trainingId,
                 type: check.type,
                 content: `Pengumuman Sistem Otomatis\n\n${pdfListMsg}`,
