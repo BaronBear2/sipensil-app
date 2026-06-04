@@ -112,7 +112,7 @@ export default function PublicFooter() {
                 </div>
 
                 <div className="border-t border-slate-900 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs">
-                    <p className="text-slate-500">&copy; 2025 Dinas Ketenagakerjaan Kabupaten Bekasi. Hak Cipta Dilindungi Undang-Undang.</p>
+                    <p className="text-slate-500">&copy; 2026 Dinas Ketenagakerjaan Kabupaten Bekasi. Hak Cipta Dilindungi Undang-Undang.</p>
                     <div className="flex items-center gap-1 text-slate-600">
                         <span>Made with</span>
                         <Heart size={10} className="text-red-600 fill-red-600 animate-pulse" />

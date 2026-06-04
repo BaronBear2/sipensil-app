@@ -10,6 +10,9 @@ export default async function PelatihanAdminPage() {
     // Run Maintenance Logic (Fire and forget essentially, or await)
     await autoUpdateTrainingStatusAction()
 
+    const { data: systemDate } = await supabase.rpc('get_system_date')
+    const today = systemDate ? new Date(systemDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+
     const { data } = await supabase
         .from('blk_trainings')
         .select('*, training_registrations(status)')
@@ -84,7 +87,9 @@ export default async function PelatihanAdminPage() {
                         <Link href="/dashboard/dinas/pelatihan/create" className="inline-block bg-red-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-red-700 shadow-lg hover:shadow-red-600/30 transition-all transform hover:-translate-y-0.5">Buat Pelatihan Pertama</Link>
                     </div>
                 ) : (
-                    <TrainingListV2 trainings={processedData} categories={categories || []} />
+                    <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 p-6 md:p-8 border border-slate-100">
+                        <TrainingListV2 trainings={processedData} categories={categories || []} systemDateStr={today} />
+                    </div>
                 )}
             </div>
         </div>

@@ -37,7 +37,11 @@ export default async function UsersAdminPage({ searchParams }: { searchParams: P
         dbQuery = dbQuery.or(`full_name.ilike.%${query}%,email.ilike.%${query}%`)
     }
 
-    const { data, count } = await dbQuery
+    const { data, count, error } = await dbQuery
+    
+    if (error) {
+        console.error("DB Error fetching users:", error)
+    }
 
     const users = data ? data.map((p: any) => {
         const pencakerData = Array.isArray(p.profile_pencaker) ? p.profile_pencaker[0] : p.profile_pencaker;

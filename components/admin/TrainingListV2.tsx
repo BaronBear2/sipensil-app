@@ -6,10 +6,12 @@ import { deleteTrainingAction, archiveTrainingAction } from '@/actions/dinas'
 import { useState } from 'react'
 import { SwalAlert, SwalConfirm, SwalToast } from '@/utils/swal'
 
-export default function TrainingListV2({ trainings, categories = [] }: { trainings: any[], categories?: any[] }) {
+export default function TrainingListV2({ trainings, categories = [], systemDateStr }: { trainings: any[], categories?: any[], systemDateStr?: string }) {
     const [isDeleting, setIsDeleting] = useState(false)
     const [isArchiving, setIsArchiving] = useState(false)
     const [selectedCategory, setSelectedCategory] = useState<string>('ALL')
+
+    const todayStr = systemDateStr || new Date().toISOString().split('T')[0]
 
     const filteredTrainings = trainings.filter(item =>
         selectedCategory === 'ALL' ? true : item.category === selectedCategory
@@ -155,7 +157,7 @@ export default function TrainingListV2({ trainings, categories = [] }: { trainin
                                 </div>
 
                                 <div className="mb-4">
-                                    {item.status === 'OPEN' ? (
+                                    {todayStr >= item.registration_start ? (
                                         <Link href={`/dashboard/dinas/pelatihan/${item.id}`} className="w-full flex items-center justify-center gap-2 bg-green-600 text-white py-2.5 rounded-lg font-bold text-sm hover:bg-green-700 shadow-md transition">
                                             Verifikasi Pencaker
                                         </Link>
