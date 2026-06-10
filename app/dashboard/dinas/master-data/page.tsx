@@ -42,7 +42,7 @@ export default async function MasterDataPage() {
                 </div>
                 <div className="relative z-10">
                     <h1 className="text-3xl md:text-4xl font-extrabold mb-2 tracking-tight text-white">
-                        Master Data
+                        Kelola Parameter
                     </h1>
                     <p className="text-red-100 font-medium text-lg max-w-xl">
                         Kelola referensi data yang digunakan di seluruh sistem pelatihan.
@@ -51,8 +51,8 @@ export default async function MasterDataPage() {
             </div>
 
             <div className="max-w-7xl mx-auto px-6 -mt-16 relative z-20">
-                <MasterDataClient 
-                    categories={categories || []} 
+                <MasterDataClient
+                    categories={categories || []}
                     locations={locations || []}
                     requirements={requirements || []}
                     notes={notes || []}

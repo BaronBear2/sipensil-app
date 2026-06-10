@@ -261,7 +261,7 @@ export default function TrainingForm({ initialData, actionFn, isEdit = false, ca
                             {locations.map((loc, idx) => (
                                 <option key={idx} value={loc.name}>{loc.name}</option>
                             ))}
-                            {locations.length === 0 && <option value="" disabled>Data Alamat Kosong. Buat di Master Data.</option>}
+                            {locations.length === 0 && <option value="" disabled>Data Alamat Kosong. Buat di Kelola Parameter.</option>}
                             {/* Fallback for old data not in master */}
                             {formData.provider && !locations.find(l => l.name === formData.provider) && (
                                 <option value={formData.provider}>{formData.provider} (Lama)</option>
