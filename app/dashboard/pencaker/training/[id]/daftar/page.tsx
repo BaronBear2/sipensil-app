@@ -7,6 +7,7 @@ import { ArrowLeft, Upload, CheckCircle, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 import StatusModal from '@/components/ui/StatusModal'
 import { applyTraining } from '@/actions/training'
+import { getSystemTime } from '@/actions/qa'
 
 export default function PendaftaranDigitalPage({ params }: { params: Promise<{ id: string }> }) {
     const supabase = createClient()
@@ -54,6 +55,24 @@ export default function PendaftaranDigitalPage({ params }: { params: Promise<{ i
 
             if (p?.profile_pencaker?.address_ktp) {
                 setKtpAddress(p.profile_pencaker.address_ktp)
+            }
+
+            // Client Date Validation
+            let todayStr = await getSystemTime()
+            if (!todayStr) {
+                const d = new Date()
+                const yyyy = d.getFullYear()
+                const mm = String(d.getMonth() + 1).padStart(2, '0')
+                const dd = String(d.getDate()).padStart(2, '0')
+                todayStr = `${yyyy}-${mm}-${dd}`
+            }
+
+            if (t.registration_start && todayStr < t.registration_start) {
+                setStatusModal({ isOpen: true, type: 'error', message: 'Pendaftaran untuk pelatihan ini belum dibuka.' })
+                setRedirectOnClose(`/dashboard/pencaker/training/${t.id}`)
+            } else if (t.registration_end && todayStr > t.registration_end) {
+                setStatusModal({ isOpen: true, type: 'error', message: 'Masa pendaftaran pelatihan ini sudah berakhir.' })
+                setRedirectOnClose(`/dashboard/pencaker/training/${t.id}`)
             }
 
             setLoading(false)

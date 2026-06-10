@@ -3,6 +3,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { getSystemTime } from '@/actions/qa'
 
 export async function applyTraining(formData: FormData) {
   const supabase = await createClient()
@@ -37,25 +38,30 @@ export async function applyTraining(formData: FormData) {
     return { error: 'Anda sedang berada di pelatihan. Selesaikan dulu, atau kontak admin untuk mengeluarkan anda dari pelatihan' }
   }
 
-  // 5. VALIDASI SLOT & TANGGAL
   const { data: training } = await supabase
     .from('blk_trainings')
-    .select('quota, filled, registration_end')
+    .select('quota, filled, registration_start, registration_end')
     .eq('id', trainingId)
     .single()
 
   if (!training) return { error: 'Pelatihan tidak ditemukan.' }
 
-  // Cek Tanggal Pendaftaran
-  if (training.registration_end) {
-    const today = new Date()
-    const endDate = new Date(training.registration_end)
-    // Set end date to end of day
-    endDate.setHours(23, 59, 59, 999)
+  // 6. CEK TANGGAL PENDAFTARAN (Mulai & Selesai)
+  let todayStr = await getSystemTime()
+  if (!todayStr) {
+      const d = new Date()
+      const yyyy = d.getFullYear()
+      const mm = String(d.getMonth() + 1).padStart(2, '0')
+      const dd = String(d.getDate()).padStart(2, '0')
+      todayStr = `${yyyy}-${mm}-${dd}`
+  }
 
-    if (today > endDate) {
-      return { error: 'Masa pendaftaran pelatihan ini sudah berakhir.' }
-    }
+  if (training.registration_start && todayStr < training.registration_start) {
+    return { error: 'Pendaftaran untuk pelatihan ini belum dibuka.' }
+  }
+
+  if (training.registration_end && todayStr > training.registration_end) {
+    return { error: 'Masa pendaftaran pelatihan ini sudah berakhir.' }
   }
 
   // Cek Kuota
