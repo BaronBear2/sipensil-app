@@ -5,6 +5,7 @@ import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Calendar, FileText, CheckCircle, Award, Users, AlertTriangle, Clock } from 'lucide-react'
 import Link from 'next/link'
+import { getSystemTime } from '@/actions/qa'
 // import Navbar from '@/components/Navbar'
 import StatusModal from '@/components/ui/StatusModal'
 import Modal from '@/components/ui/Modal' // Added
@@ -58,8 +59,8 @@ export default function TrainingDetailPage({ params }: { params: Promise<{ id: s
                 .maybeSingle()
             setExistingReg(reg)
 
-            // Fetch System Date for QA Time Travel sync
-            const { data: sysDate } = await supabase.rpc('get_system_date')
+            // Fetch System Date for QA Time Travel sync (via secure server action)
+            const sysDate = await getSystemTime()
             if (sysDate) {
                 setSystemDate(sysDate) // e.g., "2026-06-02"
             } else {

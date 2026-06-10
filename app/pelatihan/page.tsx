@@ -5,6 +5,7 @@ import PublicFooter from '@/components/PublicFooter'
 import { createClient } from '@/utils/supabase/server'
 import PelatihanClient from '@/components/pelatihan/PelatihanClient'
 import { autoUpdateTrainingStatusAction } from '@/actions/dinas'
+import { getSystemTime } from '@/actions/qa'
 
 export default async function PelatihanPage() {
     const supabase = await createClient()
@@ -12,8 +13,11 @@ export default async function PelatihanPage() {
     // Run maintenance
     await autoUpdateTrainingStatusAction()
 
-    const { data: systemDate } = await supabase.rpc('get_system_date')
-    const today = systemDate ? new Date(systemDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+    let today = await getSystemTime()
+    if (!today) {
+        const d = new Date()
+        today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    }
     
     // Fetch Active Trainings
     const { data: trainings } = await supabase

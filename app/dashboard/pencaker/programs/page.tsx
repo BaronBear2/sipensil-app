@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { autoUpdateTrainingStatusAction } from '@/actions/dinas'
+import { getSystemTime } from '@/actions/qa'
 
 import TrainingCard from '@/components/TrainingCard'
 import { BookOpen, ClipboardList, ArrowLeft, Search } from 'lucide-react'
@@ -19,8 +20,11 @@ export default async function BLKProgramsPage() {
     await autoUpdateTrainingStatusAction()
 
     const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-    const { data: systemDate } = await supabase.rpc('get_system_date')
-    const today = systemDate ? new Date(systemDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+    let today = await getSystemTime()
+    if (!today) {
+        const d = new Date()
+        today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    }
     const { data: trainings } = await supabase
         .from('blk_trainings')
         .select('*')
