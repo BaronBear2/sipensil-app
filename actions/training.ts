@@ -104,7 +104,8 @@ export async function applyTraining(formData: FormData) {
         ijazah_url: ijazah_url,
         ktp_url: ktp_url,
         additional_documents: additional_documents,
-        admin_notes: null // Clear previous rejection note
+        admin_notes: null, // Clear previous rejection note
+        created_at: new Date(todayStr).toISOString()
       })
       .eq('id', rejectedRegistration.id)
 
@@ -124,7 +125,8 @@ export async function applyTraining(formData: FormData) {
         ktp_address: ktp_address,
         ijazah_url: ijazah_url,
         ktp_url: ktp_url,
-        additional_documents: additional_documents
+        additional_documents: additional_documents,
+        created_at: new Date(todayStr).toISOString()
       })
 
     if (insertError) {
