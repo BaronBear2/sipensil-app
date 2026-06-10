@@ -1031,6 +1031,40 @@ export async function deleteUserAction(formData: FormData) {
 
   console.log(`[deleteUserAction] Admin ${user.email} initiating FORCE DELETION for ${userId}`)
 
+  try {
+    // 1. Delete all storage objects owned by the user first to avoid Postgres trigger errors
+    // Supabase explicitly blocks deleting from storage.objects via SQL (protect_storage_objects trigger).
+    const { data: userObjects, error: objError } = await adminClient
+      .schema('storage')
+      .from('objects')
+      .select('name, bucket_id')
+      .eq('owner', userId)
+
+    if (userObjects && userObjects.length > 0) {
+      // Group objects by bucket
+      const objectsByBucket = userObjects.reduce((acc: any, obj: any) => {
+        if (!acc[obj.bucket_id]) acc[obj.bucket_id] = []
+        acc[obj.bucket_id].push(obj.name)
+        return acc
+      }, {})
+
+      // Delete objects bucket by bucket
+      for (const bucket in objectsByBucket) {
+        const { error: removeError } = await adminClient.storage
+          .from(bucket)
+          .remove(objectsByBucket[bucket])
+          
+        if (removeError) {
+          console.error(`[deleteUserAction] Failed to remove storage objects in bucket ${bucket}:`, removeError)
+        }
+      }
+      console.log(`[deleteUserAction] Cleaned up ${userObjects.length} storage objects for user ${userId}.`)
+    }
+  } catch (err) {
+    console.error('[deleteUserAction] Error cleaning up storage objects:', err)
+  }
+
+  // 2. Call the RPC to force delete the user and their associated database records
   const { data: result, error: rpcError } = await adminClient.rpc('force_delete_user', {
     target_user_id: userId
   })
