@@ -64,19 +64,8 @@ export default async function VerificationDetailPage({ params }: { params: Promi
 
     let computedStep = reg.progress_step || 1
 
-    const todayStr = new Date().toISOString().split('T')[0]
-    const adminDate = training?.tanggal_pengumuman_kelulusan_administrasi ? new Date(training.tanggal_pengumuman_kelulusan_administrasi).toISOString().split('T')[0] : null
-    const seleksiDate = training?.tanggal_pengumuman_kelulusan_seleksi_awal ? new Date(training.tanggal_pengumuman_kelulusan_seleksi_awal).toISOString().split('T')[0] : null
-    const ujiDate = training?.tanggal_pengumuman_hasil_uji_kompetensi ? new Date(training.tanggal_pengumuman_hasil_uji_kompetensi).toISOString().split('T')[0] : null
-
-    // Time-based progression evaluation for the UI
-    if (computedStep === 1 && adminDate && todayStr >= adminDate) {
-        computedStep = 2
-    }
-    if (computedStep === 2 && seleksiDate && todayStr >= seleksiDate) {
-        computedStep = 3
-    }
-    if (computedStep === 3 && ujiDate && todayStr >= ujiDate) {
+    // If the user is LULUS or SELESAI, they are definitely at step 4
+    if (reg.status === 'LULUS' || reg.status === 'SELESAI') {
         computedStep = 4
     }
 

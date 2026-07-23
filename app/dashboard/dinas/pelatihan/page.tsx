@@ -3,6 +3,7 @@ import TrainingListV2 from '@/components/admin/TrainingListV2'
 import Link from 'next/link'
 import { Plus, BookOpen, ClipboardList } from 'lucide-react'
 import { autoUpdateTrainingStatusAction } from '@/actions/dinas'
+import QATimeController from '@/components/QATimeController'
 
 export default async function PelatihanAdminPage() {
     const supabase = await createClient()
@@ -80,7 +81,10 @@ export default async function PelatihanAdminPage() {
             </div>
 
             {/* Content Section - Floating Up */}
-            <div className="max-w-7xl mx-auto px-6 -mt-20 relative z-20">
+            <div className="max-w-7xl mx-auto px-6 -mt-20 relative z-20 space-y-6">
+                {/* QA TIME TRAVEL PANEL */}
+                <QATimeController />
+
                 {!processedData || processedData.length === 0 ? (
                     <div className="text-center py-24 bg-white/80 backdrop-blur-sm rounded-3xl border border-dashed border-red-200 shadow-xl">
                         <p className="text-gray-500 font-medium mb-5 text-lg">Belum ada pelatihan yang dibuat.</p>

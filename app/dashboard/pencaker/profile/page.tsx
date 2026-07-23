@@ -42,6 +42,7 @@ function ProfileContent() {
       address_ktp: '',
       address_dom: '',
       account_status: 'unverified',
+      verification_status: 'UNVERIFIED',
       rejection_message: '',
       ktp_url: '',
       ijazah_url: '',
@@ -66,10 +67,33 @@ function ProfileContent() {
 
          if (profile) {
             const pencaker = profile.profile_pencaker || {}
+            let verifStatus = profile.verification_status || 'UNVERIFIED'
+
+            // If profile is UNVERIFIED, check if pencaker has passed Tahap 1 in any training
+            // and hasn't edited profile since
+            if (verifStatus === 'UNVERIFIED' && !profile.last_data_update) {
+               const { data: approvedReg } = await supabase
+                  .from('training_registrations')
+                  .select('id')
+                  .eq('user_id', user.id)
+                  .or('progress_step.gte.2,status.in.(DITERIMA,LULUS,SELESAI)')
+                  .limit(1)
+
+               if (approvedReg && approvedReg.length > 0) {
+                  verifStatus = 'VERIFIED'
+                  // Auto sync database for legacy users
+                  await supabase.from('profiles').update({
+                     verification_status: 'VERIFIED',
+                     account_status: 'verified'
+                  }).eq('id', user.id)
+               }
+            }
+
             setFormData({
                full_name: profile.full_name || '',
                email: profile.email || '',
                account_status: profile.account_status || 'unverified',
+               verification_status: verifStatus,
                rejection_message: profile.rejection_message || '',
                nik: pencaker.nik || '',
                phone: pencaker.phone || '',
@@ -213,9 +237,8 @@ function ProfileContent() {
          .update({
             full_name: formData.full_name,
             photo_url: formData.photo_url,
-            // Status update dihandle oleh server action resubmit jika perlu, atau default unverified
-            // Kita set unverified client side juga biar responsif, tapi resubmitAction akan memastikan training_reg juga kereset
             account_status: 'unverified',
+            verification_status: 'UNVERIFIED',
             rejection_message: null,
             last_data_update: new Date().toISOString()
          })
@@ -280,12 +303,16 @@ function ProfileContent() {
 
    // Logic Status Color
    const getStatusColor = (status: string) => {
-      if (status === 'verified') return 'bg-green-50 text-green-700 border-green-200'
-      if (status === 'pending') return 'bg-yellow-50 text-yellow-700 border-yellow-200'
+      const s = (status || '').toUpperCase()
+      if (s === 'VERIFIED') return 'bg-green-50 text-green-700 border-green-200'
+      if (s === 'PENDING') return 'bg-yellow-50 text-yellow-700 border-yellow-200'
+      if (s === 'REJECTED') return 'bg-red-50 text-red-700 border-red-200'
       return 'bg-gray-50 text-gray-700 border-gray-200'
    }
 
    if (loading) return <div className="p-10 text-center text-gray-500">Memuat data profil...</div>
+
+   const currentVerifStatus = (formData.verification_status || formData.account_status || 'UNVERIFIED').toUpperCase()
 
    return (
       <div className="min-h-screen bg-gray-50 py-8 px-4 font-sans animate-fade-in pb-20">
@@ -314,10 +341,10 @@ function ProfileContent() {
                </div>
 
                {/* Status Bar */}
-               <div className={`px-6 py-4 text-sm font-bold flex flex-col md:flex-row justify-between items-center border-b ${getStatusColor(formData.account_status || 'unverified')}`}>
+               <div className={`px-6 py-4 text-sm font-bold flex flex-col md:flex-row justify-between items-center border-b ${getStatusColor(currentVerifStatus)}`}>
                   <div className="flex items-center gap-2 mb-2 md:mb-0">
                      <ShieldCheck size={18} />
-                     <span>STATUS AKUN: {(formData.account_status || 'UNVERIFIED').toUpperCase()}</span>
+                     <span>STATUS AKUN: {currentVerifStatus}</span>
                      {formData.account_status === 'rejected' && (
                         <span className="ml-2 text-xs bg-red-200 text-red-800 px-2 py-1 rounded">Cek Alasan Ditolak</span>
                      )}

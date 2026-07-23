@@ -31,10 +31,16 @@ const MENU_ITEMS: MenuItem[] = [
 
 export default function PerusahaanSidebar() {
     const router = useRouter()
-    const supabase = createClient()
+    const pathname = usePathname()
     const [isMobileOpen, setIsMobileOpen] = useState(false)
 
+    // Auto-close menu on route change for mobile devices
+    React.useEffect(() => {
+        setIsMobileOpen(false)
+    }, [pathname])
+
     const handleLogout = async () => {
+        const supabase = createClient()
         await supabase.auth.signOut()
         router.push('/')
         router.refresh()
@@ -42,7 +48,6 @@ export default function PerusahaanSidebar() {
 
     return (
         <>
-            {/* Mobile Toggle */}
             {/* Mobile Toggle */}
             <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b flex justify-between items-center px-4 z-50 shadow-sm">
                 <div className="flex items-center gap-3">
@@ -60,7 +65,7 @@ export default function PerusahaanSidebar() {
             {/* Sidebar Container */}
             <aside className={`
                 fixed md:sticky top-0 left-0 h-screen w-64 bg-white border-r border-gray-100 
-                flex flex-col z-[90] transition-transform duration-300 transform
+                flex flex-col z-[90] max-md:transition-transform max-md:duration-200
                 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
             `}>
                 <div className="p-6 border-b border-gray-100 shrink-0">
@@ -78,14 +83,14 @@ export default function PerusahaanSidebar() {
                 <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
                     <div className="mb-2 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Menu Perusahaan</div>
                     {MENU_ITEMS.map((item, index) => (
-                        <SidebarItem key={index} item={item} />
+                        <SidebarItem key={index} item={item} pathname={pathname} />
                     ))}
                 </nav>
 
                 <div className="p-4 border-t border-gray-100 shrink-0 mb-6">
                     <button
                         onClick={handleLogout}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 w-full transition-all"
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 w-full transition-all cursor-pointer"
                     >
                         <LogOut size={18} />
                         Logout
@@ -104,37 +109,34 @@ export default function PerusahaanSidebar() {
     )
 }
 
-function SidebarItem({ item, depth = 0 }: { item: MenuItem, depth?: number }) {
-    const pathname = usePathname()
-    const [isOpen, setIsOpen] = useState(false)
-
-    // Check if this item is active
-    const isActive = (item: MenuItem): boolean => {
-        if (item.href) return pathname === item.href || pathname.startsWith(item.href + '/')
-        return item.children ? item.children.some(isActive) : false
+const isItemActive = (item: MenuItem, currentPathname: string): boolean => {
+    if (item.href) {
+        if (item.href === '/' || item.href === '/dashboard/perusahaan') return currentPathname === item.href
+        return currentPathname === item.href || currentPathname.startsWith(item.href + '/')
     }
+    return item.children ? item.children.some(child => isItemActive(child, currentPathname)) : false
+}
 
-    React.useEffect(() => {
-        if (isActive(item)) {
-            setIsOpen(true)
-        }
-    }, [pathname])
+const SidebarItem = React.memo(function SidebarItem({ item, pathname, depth = 0 }: { item: MenuItem, pathname: string, depth?: number }) {
+    const active = isItemActive(item, pathname)
+    const [userToggled, setUserToggled] = useState<boolean | null>(null)
+    const isOpen = userToggled !== null ? userToggled : active
 
-    const isCurrentActive = item.href ? pathname === item.href : false
+    const isCurrentActive = item.href ? (item.href === '/' || item.href === '/dashboard/perusahaan' ? pathname === item.href : pathname === item.href || pathname.startsWith(item.href + '/')) : false
 
     if (item.children) {
         return (
             <div className="space-y-1">
                 <button
-                    onClick={() => setIsOpen(!isOpen)}
-                    className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-bold transition-all 
-                        ${isActive(item) ? 'bg-orange-50 text-orange-800' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
+                    onClick={() => setUserToggled(!isOpen)}
+                    className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer
+                        ${active ? 'bg-orange-50 text-orange-800' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
                         ${depth > 0 ? 'text-xs my-0.5' : ''}
                     `}
                     style={{ paddingLeft: `${16 + (depth * 12)}px` }}
                 >
                     <div className="flex items-center gap-3">
-                        {item.icon && <item.icon size={18} className={isActive(item) ? 'text-orange-600' : 'text-gray-400'} />}
+                        {item.icon && <item.icon size={18} className={active ? 'text-orange-600' : 'text-gray-400'} />}
                         <span>{item.name}</span>
                     </div>
                     {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
@@ -143,7 +145,7 @@ function SidebarItem({ item, depth = 0 }: { item: MenuItem, depth?: number }) {
                 {isOpen && (
                     <div className="space-y-1">
                         {item.children.map((child, idx) => (
-                            <SidebarItem key={idx} item={child} depth={depth + 1} />
+                            <SidebarItem key={idx} item={child} pathname={pathname} depth={depth + 1} />
                         ))}
                     </div>
                 )}
@@ -165,4 +167,4 @@ function SidebarItem({ item, depth = 0 }: { item: MenuItem, depth?: number }) {
             {item.name}
         </Link>
     )
-}
+})

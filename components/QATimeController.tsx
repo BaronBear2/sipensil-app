@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Clock, Calendar, RefreshCw, AlertTriangle } from 'lucide-react'
+import { Clock, Calendar, RefreshCw, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react'
 import { getSystemTime, setSystemTime } from '@/actions/qa'
 import { SwalToast } from '@/utils/swal'
 
@@ -12,6 +12,7 @@ export default function QATimeController() {
     const [inputDate, setInputDate] = useState('')
     const [loading, setLoading] = useState(false)
     const [currentTime, setCurrentTime] = useState('')
+    const [isCollapsed, setIsCollapsed] = useState(true)
 
     useEffect(() => {
         const fetchTime = async () => {
@@ -60,68 +61,82 @@ export default function QATimeController() {
     }
 
     return (
-        <div className="bg-slate-900 border border-slate-800 text-slate-100 rounded-2xl p-4 md:p-6 shadow-2xl relative overflow-hidden transition-all duration-300 hover:shadow-slate-950">
-            {/* Background Glow */}
-            <div className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl opacity-10 pointer-events-none -mr-20 -mt-20 transition-colors duration-500 ${overriddenDate ? 'bg-amber-500' : 'bg-blue-500'}`}></div>
-
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
-                <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                        <span className="p-2 bg-slate-800/80 rounded-lg text-slate-300">
-                            <Clock className={`h-5 w-5 animate-pulse ${overriddenDate ? 'text-amber-400' : 'text-blue-400'}`} />
-                        </span>
-                        <div>
-                            <h4 className="font-bold text-sm tracking-wide text-slate-200">PANEL DEBUGGING QA TIME TRAVEL</h4>
-                            <p className="text-xs text-slate-400">Gunakan panel ini untuk mensimulasikan waktu sistem untuk pengujian progress otomatis.</p>
+        <div className="bg-white/95 backdrop-blur-md border border-red-100 rounded-2xl p-4 shadow-sm transition-all duration-300 hover:shadow-md">
+            {/* Header bar (Collapsible Toggle) */}
+            <div
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className="flex items-center justify-between cursor-pointer select-none"
+            >
+                <div className="flex items-center gap-3">
+                    <span className={`p-2 rounded-xl transition-colors ${overriddenDate ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-600'}`}>
+                        <Clock className={`h-4 w-4 ${overriddenDate ? 'animate-pulse text-amber-500' : 'text-red-500'}`} />
+                    </span>
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-xs md:text-sm tracking-wide text-slate-800">PANEL QA TIME TRAVEL</h4>
+                            {overriddenDate ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                    <AlertTriangle className="h-3 w-3 text-amber-500" />
+                                    Simulasi: {new Date(overriddenDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                </span>
+                            ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                                    Waktu Nyata
+                                </span>
+                            )}
                         </div>
                     </div>
+                </div>
 
-                    <div className="flex flex-wrap items-center gap-2 mt-2">
-                        <span className="text-xs text-slate-400">Status Waktu:</span>
-                        {overriddenDate ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30 animate-pulse">
-                                <AlertTriangle className="h-3 w-3" />
-                                Terpantau Teroverride: {new Date(overriddenDate).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
-                            </span>
-                        ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/30">
-                                Waktu Asli: {currentTime}
-                            </span>
+                <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-slate-400 hover:text-slate-600 transition">
+                        {isCollapsed ? 'Buka Panel' : 'Sembunyikan'}
+                    </span>
+                    <button className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 transition">
+                        {isCollapsed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+                    </button>
+                </div>
+            </div>
+
+            {/* Collapsible Content */}
+            {!isCollapsed && (
+                <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fade-in">
+                    <p className="text-xs text-slate-500">
+                        Atur simulasi tanggal sistem untuk menguji urutan progress otomatis.
+                    </p>
+
+                    <div className="flex flex-wrap items-center gap-2.5">
+                        <div className="relative">
+                            <input
+                                type="date"
+                                value={inputDate}
+                                onChange={(e) => setInputDate(e.target.value)}
+                                className="bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent pr-8"
+                            />
+                            <Calendar className="absolute right-2.5 top-2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                        </div>
+
+                        <button
+                            onClick={handleApply}
+                            disabled={loading}
+                            className="bg-red-600 hover:bg-red-700 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs transition duration-200 shadow-sm active:scale-95 cursor-pointer disabled:opacity-50"
+                        >
+                            {loading ? 'Proses...' : 'Terapkan'}
+                        </button>
+
+                        {overriddenDate && (
+                            <button
+                                onClick={handleReset}
+                                disabled={loading}
+                                className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-xl text-xs transition duration-200 border border-slate-200 flex items-center gap-1.5 active:scale-95 cursor-pointer disabled:opacity-50"
+                            >
+                                <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
+                                Reset
+                            </button>
                         )}
                     </div>
                 </div>
-
-                <div className="flex flex-wrap items-center gap-3">
-                    <div className="relative">
-                        <input
-                            type="date"
-                            value={inputDate}
-                            onChange={(e) => setInputDate(e.target.value)}
-                            className="bg-slate-800 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-8 shadow-inner"
-                        />
-                        <Calendar className="absolute right-2.5 top-2.5 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
-                    </div>
-
-                    <button
-                        onClick={handleApply}
-                        disabled={loading}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg text-xs transition duration-200 shadow-lg shadow-blue-500/20 active:translate-y-0.5 cursor-pointer"
-                    >
-                        {loading ? 'Processing...' : 'Simulasikan Waktu'}
-                    </button>
-
-                    {overriddenDate && (
-                        <button
-                            onClick={handleReset}
-                            disabled={loading}
-                            className="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold px-4 py-2 rounded-lg text-xs transition duration-200 border border-slate-750 flex items-center gap-1.5 active:translate-y-0.5 cursor-pointer"
-                        >
-                            <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
-                            Reset Waktu
-                        </button>
-                    )}
-                </div>
-            </div>
+            )}
         </div>
     )
 }

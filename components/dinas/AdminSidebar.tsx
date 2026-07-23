@@ -1,10 +1,10 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, memo } from 'react'
 import Link from 'next/link'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import Image from 'next/image'
-import { Home, Users, ClipboardList, Building, FileText, Settings, LogOut, ChevronDown, ChevronRight, GraduationCap, FileCheck, Layers } from 'lucide-react'
+import { Home, Users, ClipboardList, Settings, LogOut, ChevronDown, ChevronRight, Layers } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import logoSipensil from '@/assets/logo/logo-sipensil.jpeg'
@@ -17,7 +17,7 @@ type MenuItem = {
     href?: string
     icon?: any
     children?: MenuItem[]
-    theme?: ThemeColor // Optional theme override
+    theme?: ThemeColor
 }
 
 const MENU_ITEMS: MenuItem[] = [
@@ -28,63 +28,42 @@ const MENU_ITEMS: MenuItem[] = [
     { name: 'Kelola Parameter', href: '/dashboard/dinas/master-data', icon: Settings, theme: 'red' },
 ]
 
-// Helpers for Activity Check
-const isItemActive = (targetHref: string | undefined, pathname: string, searchParams: any): boolean => {
+const isPathActive = (targetHref: string | undefined, currentPathname: string): boolean => {
     if (!targetHref) return false
-
-    const [targetPath, targetQuery] = targetHref.split('?')
-
-    // 1. Path must match EXACTLY
-    if (pathname !== targetPath) return false
-
-    // 2. If target has query params, they MUST match exactly with current searchParams
-    if (targetQuery) {
-        const targetParams = new URLSearchParams(targetQuery)
-        for (const [key, value] of targetParams.entries()) {
-            if (searchParams.get(key) !== value) {
-                return false
-            }
-        }
-    }
-
-    return true
+    const [targetPath] = targetHref.split('?')
+    if (targetPath === '/' || targetPath === '/dashboard/dinas') return currentPathname === targetPath
+    return currentPathname === targetPath || currentPathname.startsWith(targetPath + '/')
 }
 
-const checkRecursiveActive = (menuItem: MenuItem, pathname: string, searchParams: any): boolean => {
+const isRecursiveActive = (menuItem: MenuItem, currentPathname: string): boolean => {
     if (menuItem.children) {
-        return menuItem.children.some(child => checkRecursiveActive(child, pathname, searchParams))
+        return menuItem.children.some(child => isRecursiveActive(child, currentPathname))
     }
-    return isItemActive(menuItem.href, pathname, searchParams)
+    return isPathActive(menuItem.href, currentPathname)
 }
-
 
 export default function AdminSidebar() {
     const router = useRouter()
-    const supabase = createClient()
     const pathname = usePathname()
-    const searchParams = useSearchParams()
 
     const [openMenuName, setOpenMenuName] = useState<string | null>(null)
-    const [isMobileOpen, setIsMobileOpen] = useState(false) // Mobile Menu State
+    const [isMobileOpen, setIsMobileOpen] = useState(false)
 
     const handleLogout = async () => {
+        const supabase = createClient()
         await supabase.auth.signOut()
         router.push('/')
         router.refresh()
     }
 
-    // Auto-open top level menu on load
+    // Sync active menu with pathname
     useEffect(() => {
-        const activeItem = MENU_ITEMS.find(item => checkRecursiveActive(item, pathname, searchParams))
+        const activeItem = MENU_ITEMS.find(item => isRecursiveActive(item, pathname))
         if (activeItem) {
             setOpenMenuName(activeItem.name)
         }
-    }, [pathname, searchParams])
-
-    // Close mobile menu on route change
-    useEffect(() => {
         setIsMobileOpen(false)
-    }, [pathname, searchParams])
+    }, [pathname])
 
     const handleToggle = (name: string) => {
         setOpenMenuName(prev => prev === name ? null : name)
@@ -92,7 +71,7 @@ export default function AdminSidebar() {
 
     return (
         <>
-            {/* MOBILE HEADER (Visible only on small screens) */}
+            {/* MOBILE HEADER */}
             <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-100 z-50 flex items-center justify-between px-4">
                 <div className="flex items-center gap-3">
                     <Image src={logoSipensil} alt="Logo Sipensil" className="h-8 w-auto" priority />
@@ -100,13 +79,13 @@ export default function AdminSidebar() {
                 </div>
                 <button
                     onClick={() => setIsMobileOpen(!isMobileOpen)}
-                    className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                    className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg cursor-pointer"
                 >
                     <Layers size={24} />
                 </button>
             </div>
 
-            {/* BACKDROP (Visible only when mobile menu is open) */}
+            {/* BACKDROP */}
             {isMobileOpen && (
                 <div
                     className="fixed inset-0 bg-black/50 z-40 md:hidden animate-fade-in"
@@ -117,7 +96,7 @@ export default function AdminSidebar() {
             {/* SIDEBAR */}
             <aside className={`
                 fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 min-h-screen flex flex-col 
-                transform transition-transform duration-300 ease-in-out
+                max-md:transition-transform max-md:duration-200 max-md:ease-in-out
                 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
                 md:translate-x-0 md:sticky md:top-0 md:h-screen
             `}>
@@ -139,6 +118,7 @@ export default function AdminSidebar() {
                         <SidebarItem
                             key={index}
                             item={item}
+                            pathname={pathname}
                             isOpen={openMenuName === item.name}
                             onToggle={() => handleToggle(item.name)}
                         />
@@ -148,7 +128,7 @@ export default function AdminSidebar() {
                 <div className="p-4 border-t border-gray-100 shrink-0 mb-6">
                     <button
                         onClick={handleLogout}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 w-full transition-all"
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 w-full transition-colors cursor-pointer"
                     >
                         <LogOut size={18} />
                         Logout
@@ -159,7 +139,6 @@ export default function AdminSidebar() {
     )
 }
 
-// Theme Styles Map
 const THEME_STYLES = {
     red: {
         activeBg: 'bg-red-50',
@@ -193,47 +172,31 @@ const THEME_STYLES = {
 
 interface SidebarItemProps {
     item: MenuItem
+    pathname: string
     depth?: number
     isOpen?: boolean
     onToggle?: () => void
-    inheritedTheme?: ThemeColor // Theme passed down from parent
+    inheritedTheme?: ThemeColor
 }
 
-function SidebarItem({ item, depth = 0, isOpen = false, onToggle, inheritedTheme = 'red' }: SidebarItemProps) {
-    const pathname = usePathname()
-    const searchParams = useSearchParams()
-
-    // Internal state for children accordion
-    const [openChildName, setOpenChildName] = useState<string | null>(null)
-
-    // Determine current theme (Self override OR inherited)
+const SidebarItem = memo(function SidebarItem({
+    item,
+    pathname,
+    depth = 0,
+    isOpen = false,
+    onToggle,
+    inheritedTheme = 'red'
+}: SidebarItemProps) {
     const currentTheme = item.theme || inheritedTheme
     const themeStyle = THEME_STYLES[currentTheme] || THEME_STYLES['red']
-
-    // Auto-expand children if parent is opened or path matches
-    useEffect(() => {
-        if (item.children) {
-            const activeChild = item.children.find(child => checkRecursiveActive(child, pathname, searchParams))
-            if (activeChild) {
-                setOpenChildName(activeChild.name)
-            }
-        }
-    }, [pathname, searchParams, item.children])
-
-
-    const isCurrentActive = isItemActive(item.href, pathname, searchParams)
-
-    const handleChildToggle = (name: string) => {
-        setOpenChildName(prev => prev === name ? null : name)
-    }
+    const isCurrentActive = isPathActive(item.href, pathname)
 
     if (item.children) {
-        // Parent Item (Menu Group)
         return (
             <div className="space-y-1">
                 <button
                     onClick={onToggle}
-                    className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-bold transition-all 
+                    className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-bold transition-colors cursor-pointer
                         ${isCurrentActive ? `${themeStyle.activeBg} ${themeStyle.activeText}` : `text-gray-600 ${themeStyle.hoverBg} hover:text-gray-900`}
                         ${depth > 0 ? 'text-xs my-0.5' : ''}
                     `}
@@ -252,10 +215,10 @@ function SidebarItem({ item, depth = 0, isOpen = false, onToggle, inheritedTheme
                             <SidebarItem
                                 key={idx}
                                 item={child}
+                                pathname={pathname}
                                 depth={depth + 1}
-                                isOpen={openChildName === child.name}
-                                onToggle={() => handleChildToggle(child.name)}
-                                inheritedTheme={currentTheme} // Pass down theme
+                                isOpen={isRecursiveActive(child, pathname)}
+                                inheritedTheme={currentTheme}
                             />
                         ))}
                     </div>
@@ -264,11 +227,10 @@ function SidebarItem({ item, depth = 0, isOpen = false, onToggle, inheritedTheme
         )
     }
 
-    // Leaf Item (Link)
     return (
         <Link
             href={item.href || '#'}
-            className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-all
+            className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors
                 ${isCurrentActive ? `${themeStyle.activeBg} ${themeStyle.activeText} shadow-sm` : `text-gray-500 ${themeStyle.hoverBg} hover:text-gray-900`}
                 ${depth > 0 ? 'text-xs my-0.5' : ''}
             `}
@@ -279,4 +241,4 @@ function SidebarItem({ item, depth = 0, isOpen = false, onToggle, inheritedTheme
             {item.name}
         </Link>
     )
-}
+})

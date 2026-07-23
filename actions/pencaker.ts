@@ -20,6 +20,7 @@ export async function resubmitApplicationAction() {
         .from('profiles')
         .update({
             account_status: 'unverified',
+            verification_status: 'UNVERIFIED',
             rejection_message: null,
             last_data_update: new Date().toISOString()
         })

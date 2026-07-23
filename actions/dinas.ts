@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import path from 'path'
 import fs from 'fs/promises'
+import { encryptUrl, decryptUrl } from '@/utils/crypto'
 
 async function verifyAdminRole() {
   const supabase = await createClient();
@@ -62,17 +63,13 @@ export async function verifyProfileAction(formData: FormData) {
 
 
   const newStatus = action === 'approve' ? 'verified' : 'rejected'
-  // NOTE: Logic update status pelatihan
-  // Jika approve profile -> approve pelatihan? 
-  // User request: "Ketika menolak verifikasi pelatihan blk, kolomnya masih disitu."
-  // This implies the item didn't move or status didn't update properly.
-  // The query in Tab 1 likely filters by 'PENDING'. If we update to 'DITOLAK', it should disappear.
-
+  const newVerifStatus = action === 'approve' ? 'VERIFIED' : 'UNVERIFIED'
   // 1. Update Profile Status
   const { error } = await supabase
     .from('profiles')
     .update({
       account_status: newStatus,
+      verification_status: newVerifStatus,
       rejection_message: action === 'reject' ? reason : null
     })
     .eq('id', userId)
@@ -85,7 +82,7 @@ export async function verifyProfileAction(formData: FormData) {
   const regId = formData.get('regId') as string
   if (regId) {
     const statusUpdate = action === 'approve' ? 'DITERIMA' : 'DITOLAK'
-    
+
     // Fetch training_id and details for notifications
     const { data: regData } = await supabase.from('training_registrations').select('training_id, user_id, blk_trainings(title)').eq('id', regId).single()
 
@@ -103,7 +100,7 @@ export async function verifyProfileAction(formData: FormData) {
     if (action === 'approve' && regData?.training_id) {
       // Handled automatically by Postgres DB Trigger `sync_training_quota`
       // await supabase.rpc('increment_quota', { row_id: regData.training_id })
-      
+
       // Check Quota Logic
       const { data: trainingData } = await supabase.from('blk_trainings').select('quota').eq('id', regData.training_id).single()
       if (trainingData && trainingData.quota > 0) {
@@ -118,14 +115,14 @@ export async function verifyProfileAction(formData: FormData) {
 
       // Kirim Notifikasi Dalam Aplikasi (In-App)
       if (regData?.user_id) {
-          const blkTraining = regData.blk_trainings as any;
-          const title = blkTraining?.title || (Array.isArray(blkTraining) && blkTraining[0]?.title) || 'Pelatihan'
-          const message = `Selamat! Pendaftaran Anda untuk pelatihan "${title}" telah Lulus Administrasi (Tahap 1). Silakan masuk ke menu Pelatihan Saya untuk melihat detail selanjutnya.`
-          await supabase.from('notifications').insert({
-              user_id: regData.user_id,
-              title: 'Lulus Administrasi',
-              message: message
-          })
+        const blkTraining = regData.blk_trainings as any;
+        const title = blkTraining?.title || (Array.isArray(blkTraining) && blkTraining[0]?.title) || 'Pelatihan'
+        const message = `Selamat! Pendaftaran Anda untuk pelatihan "${title}" telah Lulus Administrasi (Tahap 1). Silakan masuk ke menu Pelatihan Saya untuk melihat detail selanjutnya.`
+        await supabase.from('notifications').insert({
+          user_id: regData.user_id,
+          title: 'Lulus Administrasi',
+          message: message
+        })
       }
     }
   } else {
@@ -195,16 +192,22 @@ export async function verifyTrainingRegistrationAction(formData: FormData) {
       }
     }
 
-    // Kirim Notifikasi Dalam Aplikasi (In-App)
+    // Kirim Notifikasi Dalam Aplikasi (In-App) & Update verification_status on profile
     const { data: regData } = await supabase.from('training_registrations').select('user_id').eq('id', regId).single()
     if (regData?.user_id) {
-        const title = trainingData?.title || 'Pelatihan'
-        const message = `Selamat! Pendaftaran Anda untuk pelatihan "${title}" telah Lulus Administrasi (Tahap 1). Silakan masuk ke menu Pelatihan Saya untuk melihat detail selanjutnya.`
-        await supabase.from('notifications').insert({
-            user_id: regData.user_id,
-            title: 'Lulus Administrasi',
-            message: message
-        })
+      // Update profile verification_status to VERIFIED since user passed Tahap 1
+      await supabase.from('profiles').update({
+        verification_status: 'VERIFIED',
+        account_status: 'verified'
+      }).eq('id', regData.user_id)
+
+      const title = trainingData?.title || 'Pelatihan'
+      const message = `Selamat! Pendaftaran Anda untuk pelatihan "${title}" telah Lulus Administrasi (Tahap 1). Silakan masuk ke menu Pelatihan Saya untuk melihat detail selanjutnya.`
+      await supabase.from('notifications').insert({
+        user_id: regData.user_id,
+        title: 'Lulus Administrasi',
+        message: message
+      })
     }
     await syncRegistrationProgress(regId, trainingId)
   } else if (action === 'approve_seleksi') {
@@ -264,7 +267,7 @@ export async function revertTrainingRegistrationAction(formData: FormData) {
 
   // Restrict revert only if DITOLAK
   if (reg.status !== 'DITOLAK') {
-      return { error: "Hanya peserta yang ditolak yang bisa dibatalkan penolakannya." }
+    return { error: "Hanya peserta yang ditolak yang bisa dibatalkan penolakannya." }
   }
 
   // Time Constraint Check 1: 24 Hours
@@ -300,7 +303,7 @@ export async function revertTrainingRegistrationAction(formData: FormData) {
     if (announcementDateStr) {
       const scheduledDateStr = new Date(announcementDateStr).toISOString().split('T')[0]
       if (todayStr >= scheduledDateStr) {
-         return { error: "Gagal membatalkan penolakan: Masa pengumuman untuk tahap ini telah dimulai atau berlalu." }
+        return { error: "Gagal membatalkan penolakan: Masa pengumuman untuk tahap ini telah dimulai atau berlalu." }
       }
     }
   }
@@ -309,8 +312,8 @@ export async function revertTrainingRegistrationAction(formData: FormData) {
   const originalStatus = reg.progress_step > 1 ? 'DITERIMA' : 'PENDING'
 
   const { error } = await supabase.from('training_registrations').update({
-      status: originalStatus,
-      admin_notes: null
+    status: originalStatus,
+    admin_notes: null
   }).eq('id', regId)
 
   if (error) return { error: error.message }
@@ -480,7 +483,7 @@ export async function updateTrainingAction(formData: FormData) {
   const { data: currentTraining } = await supabase.from('blk_trainings')
     .select('tanggal_pengumuman_kelulusan_seleksi_awal, tanggal_pengumuman_hasil_uji_kompetensi')
     .eq('id', id).single()
-  
+
   let targetRollbackStep: number | null = null;
   if (currentTraining) {
     const now = new Date()
@@ -517,7 +520,7 @@ export async function updateTrainingAction(formData: FormData) {
 
   // 1. Update Data
   const additional_documents = JSON.parse(formData.get('additional_documents_json') as string || '[]')
-  
+
   const { error } = await supabase.from('blk_trainings').update({
     title, min_age, max_age,
     provider: formData.get('provider'),
@@ -756,9 +759,18 @@ export async function adminUpdateUserAction(formData: FormData) {
     let ijazah_url = undefined
     let photo_url = undefined
 
-    if (ktpFile && ktpFile.size > 0) ktp_url = await uploadDocument(ktpFile)
-    if (ijazahFile && ijazahFile.size > 0) ijazah_url = await uploadDocument(ijazahFile)
-    if (photoFile && photoFile.size > 0) photo_url = await uploadDocument(photoFile)
+    if (ktpFile && ktpFile.size > 0) {
+      const rawUrl = await uploadDocument(ktpFile)
+      if (rawUrl) ktp_url = encryptUrl(rawUrl)
+    }
+    if (ijazahFile && ijazahFile.size > 0) {
+      const rawUrl = await uploadDocument(ijazahFile)
+      if (rawUrl) ijazah_url = encryptUrl(rawUrl)
+    }
+    if (photoFile && photoFile.size > 0) {
+      const rawUrl = await uploadDocument(photoFile)
+      if (rawUrl) photo_url = encryptUrl(rawUrl)
+    }
 
     const updateData: any = {
       user_id: userId,
@@ -772,7 +784,7 @@ export async function adminUpdateUserAction(formData: FormData) {
       religion: formData.get('religion') as string,
       education: formData.get('education') as string,
     }
-    
+
     if (ktp_url) updateData.ktp_url = ktp_url
     if (ijazah_url) updateData.ijazah_url = ijazah_url
     if (photo_url) updateData.photo_url = photo_url
@@ -814,10 +826,10 @@ async function uploadDocument(file: File): Promise<string | null> {
 
   // Validate Type (PDF, DOC, DOCX, Images)
   const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png']
-  if (!allowedTypes.includes(file.type)) return null 
+  if (!allowedTypes.includes(file.type)) return null
 
   const buffer = Buffer.from(await file.arrayBuffer())
-  
+
   // Prevent Path Traversal by removing all slashes and restricted characters
   const safeOriginalName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '')
   const filename = `${Date.now()}-${safeOriginalName}`
@@ -833,14 +845,14 @@ async function uploadDocument(file: File): Promise<string | null> {
   }
 }
 
-// --- 9. IM JAPAN REQUIREMENTS CRUD ---
+// --- 9. IM JAPAN REQUIREMENTS CRUD --- (DEPRECATED)
 
 
 
 
 
 
-// --- 10. LPK ACTIONS ---
+// --- 10. LPK ACTIONS --- (DEPRECATED)
 
 
 // Data LPK CRUD
@@ -1013,8 +1025,7 @@ export async function deleteUserAction(formData: FormData) {
     return { error: 'Unauthorized: Harap login terlebih dahulu' }
   }
 
-  // Check if caller is truly an admin (Dinas) by checking public.profiles or metadata
-  // Role matches app/dashboard/dinas/layout.tsx
+  // Check if caller is truly an admin (Dinas)
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')
@@ -1029,58 +1040,73 @@ export async function deleteUserAction(formData: FormData) {
   const adminClient = await createAdminClient()
   const userId = formData.get('userId') as string
 
+  if (!userId) {
+    return { error: 'User ID tidak ditemukan.' }
+  }
+
   console.log(`[deleteUserAction] Admin ${user.email} initiating FORCE DELETION for ${userId}`)
 
   try {
-    // 1. Delete all storage objects owned by the user first to avoid Postgres trigger errors
-    // Supabase explicitly blocks deleting from storage.objects via SQL (protect_storage_objects trigger).
-    const { data: userObjects, error: objError } = await adminClient
-      .schema('storage')
-      .from('objects')
-      .select('name, bucket_id')
-      .eq('owner', userId)
+    // A. Clean up storage objects owned by the user first via Storage API
+    try {
+      const { data: userObjects } = await adminClient
+        .schema('storage')
+        .from('objects')
+        .select('name, bucket_id')
+        .eq('owner', userId)
 
-    if (userObjects && userObjects.length > 0) {
-      // Group objects by bucket
-      const objectsByBucket = userObjects.reduce((acc: any, obj: any) => {
-        if (!acc[obj.bucket_id]) acc[obj.bucket_id] = []
-        acc[obj.bucket_id].push(obj.name)
-        return acc
-      }, {})
+      if (userObjects && userObjects.length > 0) {
+        const objectsByBucket = userObjects.reduce((acc: Record<string, string[]>, obj: any) => {
+          if (!acc[obj.bucket_id]) acc[obj.bucket_id] = []
+          acc[obj.bucket_id].push(obj.name)
+          return acc
+        }, {})
 
-      // Delete objects bucket by bucket
-      for (const bucket in objectsByBucket) {
-        const { error: removeError } = await adminClient.storage
-          .from(bucket)
-          .remove(objectsByBucket[bucket])
-          
-        if (removeError) {
-          console.error(`[deleteUserAction] Failed to remove storage objects in bucket ${bucket}:`, removeError)
+        for (const bucket in objectsByBucket) {
+          await adminClient.storage
+            .from(bucket)
+            .remove(objectsByBucket[bucket])
         }
+        console.log(`[deleteUserAction] Cleaned up ${userObjects.length} storage objects for user ${userId}.`)
       }
-      console.log(`[deleteUserAction] Cleaned up ${userObjects.length} storage objects for user ${userId}.`)
+
+      // Unlink owner reference in storage.objects if any remain to prevent protect_storage_objects trigger failure
+      await adminClient
+        .schema('storage')
+        .from('objects')
+        .update({ owner: null })
+        .eq('owner', userId)
+    } catch (storageErr) {
+      console.warn('[deleteUserAction] Warning cleaning storage objects:', storageErr)
     }
-  } catch (err) {
-    console.error('[deleteUserAction] Error cleaning up storage objects:', err)
+
+    // B. Clean up public table references manually to avoid FK constraint errors
+    await adminClient.from('notifications').delete().eq('user_id', userId)
+    await adminClient.from('training_registrations').delete().eq('user_id', userId)
+    await adminClient.from('profile_pencaker').delete().eq('user_id', userId)
+    await adminClient.from('profiles').delete().eq('id', userId)
+
+    // C. Delete user from Auth Admin
+    const { error: deleteAuthErr } = await adminClient.auth.admin.deleteUser(userId)
+    if (deleteAuthErr) {
+      console.warn(`[deleteUserAction] Auth admin delete warning: ${deleteAuthErr.message}`)
+      // Try RPC fallback if auth admin delete encounters an issue
+      const { data: rpcResult, error: rpcError } = await adminClient.rpc('force_delete_user', {
+        target_user_id: userId
+      })
+      if (rpcError) {
+        console.error(`[deleteUserAction] RPC Fallback failed: ${rpcError.message}`)
+      } else if (rpcResult && typeof rpcResult === 'string' && rpcResult.startsWith('Error')) {
+        console.error(`[deleteUserAction] RPC Fallback DB Error: ${rpcResult}`)
+      }
+    }
+
+    revalidatePath('/dashboard/dinas/users')
+    return { success: true }
+  } catch (err: any) {
+    console.error('[deleteUserAction] Error during user deletion:', err)
+    return { error: `Gagal menghapus user: ${err?.message || 'Terjadi kesalahan sistem.'}` }
   }
-
-  // 2. Call the RPC to force delete the user and their associated database records
-  const { data: result, error: rpcError } = await adminClient.rpc('force_delete_user', {
-    target_user_id: userId
-  })
-
-  if (rpcError) {
-    console.error(`[deleteUserAction] RPC Call Failed: ${rpcError.message}`)
-    return { error: `Gagal memproses permintaan (RPC Error): ${rpcError.message}` }
-  }
-
-  if (result && result.startsWith('Error')) {
-    console.error(`[deleteUserAction] DB Error: ${result}`)
-    return { error: `Gagal menghapus user (DB): ${result}` }
-  }
-
-  revalidatePath('/dashboard/dinas/users')
-  return { success: true }
 }
 
 
@@ -1090,7 +1116,7 @@ export async function deleteUserAction(formData: FormData) {
 // --- 12. MAINTENANCE / CRON SIMULATION ---
 export async function autoUpdateTrainingStatusAction() {
   const supabase = await createAdminClient()
-  
+
   // Fetch system date for QA time travel support
   const { data: systemDate } = await supabase.rpc('get_system_date')
   const todayDate = systemDate ? new Date(systemDate) : new Date()
@@ -1156,9 +1182,9 @@ export async function bulkRejectPendingAction(trainingId: string) {
 
   const { error } = await supabase
     .from('training_registrations')
-    .update({ 
-      status: 'DITOLAK', 
-      admin_notes: 'Mohon maaf, kuota angkatan telah terpenuhi.' 
+    .update({
+      status: 'DITOLAK',
+      admin_notes: 'Mohon maaf, kuota angkatan telah terpenuhi.'
     })
     .eq('training_id', trainingId)
     .eq('status', 'PENDING')
